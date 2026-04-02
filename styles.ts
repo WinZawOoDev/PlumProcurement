@@ -7,7 +7,7 @@ export const useStyles = makeStyles((theme) => ({
     screenContainer: {
         flex: 1,
         flexDirection: 'column',
-        padding: 5,
-        backgroundColor: theme.colors.background,
+        padding: 15,
+        backgroundColor: theme.colors.background
     }
 }));

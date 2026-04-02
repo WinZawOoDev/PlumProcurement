@@ -20,7 +20,7 @@ const RootStack = createBottomTabNavigator({
   initialRouteName: 'Purchase',
   screenOptions: {
     headerShown: false,
-    tabBarActiveTintColor: 'tomato',
+    tabBarActiveTintColor: theme.lightColors?.primary,
     tabBarStyle: {
       minHeight: 70,
       paddingTop: 5,
@@ -85,7 +85,7 @@ function Navigation() {
       <NavigationIndependentTree>
         <StatusBar
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor='white'
+          backgroundColor={theme.colors.background}
         />
         <Navigator />
       </NavigationIndependentTree>

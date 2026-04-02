@@ -8,11 +8,17 @@ const WEB_FONT_STACK =
 export const theme = createTheme({
     mode: 'light',
     lightColors: {
-        primary: 'red',
-        background: 'white',
+        primary: '#4E2A47',
+        secondary: '#546E7A',
+        tertiary: '#2A3C13',
+        neutral: '#F8F9FA',
+        background: '#F8F9FA',
     },
     darkColors: {
-        primary: 'blue',
+        primary: '#4E2A47',
+        secondary: '#546E7A',
+        tertiary: '#2A3C13',
+        neutral: '#F8F9FA',
         background: 'black'
     },
     components: {
