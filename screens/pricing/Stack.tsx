@@ -4,7 +4,7 @@ import PurchasePrice from "./PurchasePrice";
 
 const PriceStack = createNativeStackNavigator({
   screenOptions: {
-    headerShown: true
+    headerShown: false
   },
   screens: {
     Seller: {

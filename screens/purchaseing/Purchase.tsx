@@ -3,33 +3,36 @@ import React, { useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link } from '@react-navigation/native';
 import { Button, Text } from '@rneui/base';
+import { useStyles } from '../../styles';
 
 export default function Purchase() {
+
     const safeAreaInsets = useSafeAreaInsets();
 
     const [count, setCount] = useState(0)
+    const styles = useStyles()
 
     return (
-        <View style={{ flex: 1, paddingBottom: safeAreaInsets.bottom }}>
+        <View style={styles.screenContainer}>
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Text h4>
                     Let's count the Plums
                 </Text>
             </View>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <View style={{ backgroundColor: '#F2F2F5', padding: 100, borderRadius: '100%', alignItems: 'center', alignContent: 'center' }}>
-                    <Text style={{ fontWeight: "bold", fontSize: 50, }}>
+            <View style={{ flex: 3, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ display: 'flex', backgroundColor: '#F2F2F5', width: 300, height: 300, padding: 'auto', margin: 'auto', borderRadius: '100%', alignItems: 'center', alignContent: 'center' }}>
+                    <Text style={{ fontWeight: "bold", color: 'black', fontSize: 50 }}>
                         {count}
                     </Text>
                 </View>
             </View>
-            <View>
+            {/* <View style={{flex: 3, justifyContent: 'center', alignItems: 'center' }}>
                 <Link screen='Details' params={{}} style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: "red", fontSize: 18, fontWeight: 'bold' }}>
                         Go to Details
                     </Text>
                 </Link>
-            </View>
+            </View> */}
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Button
                     containerStyle={{ marginVertical: 20, width: '80%', }}

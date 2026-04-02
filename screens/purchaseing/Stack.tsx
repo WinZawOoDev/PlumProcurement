@@ -5,7 +5,7 @@ import PurchaseDetails from "./PurchaseDetails";
 
 const PurchaseStack = createNativeStackNavigator({
   screenOptions: {
-    headerShown: true
+    headerShown: false,
   },
   screens: {
     Purchase: {

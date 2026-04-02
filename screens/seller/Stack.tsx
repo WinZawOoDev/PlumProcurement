@@ -4,7 +4,7 @@ import Sellers from "./Sellers";
 
 const SellerStack = createNativeStackNavigator({
   screenOptions: {
-    headerShown: true
+    headerShown: false
   },
   screens: {
     Seller: {
