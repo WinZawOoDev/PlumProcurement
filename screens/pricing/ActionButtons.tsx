@@ -3,11 +3,13 @@ import React from 'react'
 import { useStyles } from '../../styles'
 import { Button, useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
+import { useNavigation } from '@react-navigation/native'
 
 export default function ActionButtons() {
 
     const styles = useStyles()
     const { theme } = useTheme()
+    const navigation = useNavigation()
 
     return (
         <View style={{
@@ -40,6 +42,8 @@ export default function ActionButtons() {
                     color: 'white',
                     marginLeft: 10
                 }}
+                //@ts-expect-error
+                onPress={() => navigation.navigate('CreatePrice')}
             />
             <Button
                 containerStyle={{
