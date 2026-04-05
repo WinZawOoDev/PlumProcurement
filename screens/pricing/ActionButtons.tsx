@@ -61,7 +61,7 @@ export default function ActionButtons() {
                     shadowOpacity: 0,
                     borderWidth: 0,
                 }}
-                icon={<Ionicons name='search-outline' size={25} color={theme.colors.secondary} />}
+                icon={<Ionicons name='search-outline' size={30} color={theme.colors.tertiary} />}
                 iconContainerStyle={{
                     marginHorizontal: 10
                 }}

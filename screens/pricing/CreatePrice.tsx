@@ -1,7 +1,8 @@
 import { View } from 'react-native'
 import React from 'react'
-import { Button, Input, useTheme, Text } from '@rneui/themed'
+import { Button, Input, useTheme, Text, ButtonGroup } from '@rneui/themed'
 import { Controller, useForm } from 'react-hook-form'
+import { Picker } from '@react-native-picker/picker'
 
 export default function CreatePrice() {
 
@@ -11,9 +12,11 @@ export default function CreatePrice() {
         defaultValues: {
             price: '',
             unit: '',
-            category: ''
+            category: 'java'
         }
     })
+
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     return (
         <View
@@ -25,7 +28,7 @@ export default function CreatePrice() {
                 paddingHorizontal: 12,
                 paddingBlock: 15,
                 flexDirection: 'column',
-                gap: 10
+                gap: 10,
             }}>
             <Controller
                 name='category'
@@ -34,29 +37,46 @@ export default function CreatePrice() {
                     required: true
                 }}
                 render={({ field: { onBlur, onChange, value } }) => (
-                    <Input
-                        label='Category'
-                        labelStyle={{
-                            fontWeight: '600',
-                            color: theme.colors.primary
-                        }}
-                        placeholder='select category'
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        inputContainerStyle={{
-                            borderBottomWidth: 0,
-                            backgroundColor: theme.colors.secondary,
-                            borderRadius: 4,
-                            paddingBlock: 2,
-                            marginTop: 10
-                        }}
-                        inputStyle={{
-                            paddingHorizontal: 15,
-                            fontSize: 18,
-                            paddingBlock: 10
-                        }}
-                    />
+                    <View style={{
+                        width: '100%',
+                        paddingHorizontal: 10,
+                        marginBottom: 20
+                    }}>
+                        <Text
+                            style={{
+                                fontWeight: '600',
+                                color: theme.colors.primary,
+                                marginBottom: 8,
+                                fontSize: 16
+                            }}
+                        >
+                            Category
+                        </Text>
+                        <View
+                            style={{
+                                width: 'auto',
+                                backgroundColor: theme.colors.secondary,
+                                borderRadius: 4,
+                                padding: 1
+                            }}
+                        >
+                            <Picker
+                                selectedValue={value}
+                                onValueChange={onChange}
+                                style={{
+                                    backgroundColor: theme.colors.secondary,
+                                    width: '100%',
+                                }}
+                                mode='dialog'
+                            >
+                                <Picker.Item label='Grains' value='grains' />
+                                <Picker.Item label='Fruits' value='fruits' />
+                                <Picker.Item label='Vegetables' value='vegetables' />
+                                <Picker.Item label='Dairy' value='dairy' />
+                                <Picker.Item label='Meat' value='meat' />
+                            </Picker>
+                        </View>
+                    </View>
                 )}
             />
             <Controller
@@ -66,29 +86,55 @@ export default function CreatePrice() {
                     required: true
                 }}
                 render={({ field: { onBlur, onChange, value } }) => (
-                    <Input
-                        label='Unit'
-                        labelStyle={{
-                            fontWeight: '600',
-                            color: theme.colors.primary
+                    <View
+                        style={{
+                            width: '100%',
                         }}
-                        placeholder='e.g. kg, bushel, etc.'
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        inputContainerStyle={{
-                            borderBottomWidth: 0,
-                            backgroundColor: theme.colors.secondary,
-                            borderRadius: 4,
-                            paddingBlock: 2,
-                            marginTop: 10
-                        }}
-                        inputStyle={{
-                            paddingHorizontal: 15,
-                            fontSize: 18,
-                            paddingBlock: 10
-                        }}
-                    />
+                    >
+                        <Text
+                            style={{
+                                fontWeight: '600',
+                                color: theme.colors.primary,
+                                marginBottom: 8,
+                                paddingHorizontal: 10,
+                                fontSize: 16,
+                            }}
+                        >
+                            Unit Selection
+                        </Text>
+                        <ButtonGroup
+                            buttons={['PER KG', 'PER UNIT', 'PER BUNCH']}
+                            selectedIndex={selectedIndex}
+                            onPress={(value) => setSelectedIndex(value)}
+                            containerStyle={{
+                                height: 55,
+                                borderRadius: 5,
+                                padding: 1,
+                                backgroundColor: theme.colors.secondary,
+                            }}
+                            buttonContainerStyle={{
+                                padding: 2
+                            }}
+                            buttonStyle={{
+                                borderWidth: 0,
+                                backgroundColor: theme.colors.secondary,
+                            }}
+                            selectedButtonStyle={{
+                                backgroundColor: theme.colors.white,
+                                borderRadius: 4,
+                                borderWidth: 0.5,
+                                borderColor: theme.colors.secondary
+                            }}
+                            selectedTextStyle={{
+                                fontWeight: 'bold',
+                                color: theme.colors.black,
+                                fontSize: 14
+                            }}
+                            innerBorderStyle={{
+                                color: theme.colors.secondary
+                            }}
+                        />
+                    </View>
                 )}
             />
             <Controller
@@ -113,8 +159,8 @@ export default function CreatePrice() {
                             borderBottomWidth: 0,
                             backgroundColor: theme.colors.secondary,
                             borderRadius: 4,
-                            paddingBlock: 2,
-                            marginTop: 10
+                            paddingBlock: 5,
+                            marginTop: 10,
                         }}
                         inputStyle={{
                             paddingHorizontal: 15,
@@ -163,7 +209,9 @@ export default function CreatePrice() {
                     buttonStyle={{
                         paddingBlock: 15,
                         borderRadius: 5,
-                        backgroundColor: theme.colors.secondary
+                        backgroundColor: theme.colors.secondary,
+                        borderWidth: 0.5,
+                        borderColor: theme.colors.primary
                     }}
                 />
             </View>
