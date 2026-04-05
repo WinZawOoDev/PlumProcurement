@@ -34,12 +34,12 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                     color: theme.colors.primary,
                     fontSize: 16,
                     fontFamily: 'Manrope',
-                }}>
-                {category}
+                }}
+            >
+                #{category}
             </Card.Title>
-            <Card.Divider />
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.secondary }}>
+                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
                     Price
                 </Text>
                 <Text style={{ marginBottom: 10, fontWeight: 'bold', fontSize: 15, lineHeight: 17, fontFamily: 'Inter' }}>
@@ -48,7 +48,7 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                 </Text>
             </View>
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.secondary }}>
+                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
                     Unit
                 </Text>
                 <Text style={{ marginBottom: 10, fontWeight: 'bold', fontSize: 15, lineHeight: 17, fontFamily: 'Inter' }}>
@@ -56,7 +56,7 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                 </Text>
             </View>
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.secondary }}>
+                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
                     Category
                 </Text>
                 <Text style={{ marginBottom: 10, fontWeight: 'condensed', fontSize: 14, lineHeight: 17, fontFamily: 'Inter' }}>
@@ -64,7 +64,7 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                 </Text>
             </View>
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.secondary }}>
+                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
                     Status
                 </Text>
                 <Badge

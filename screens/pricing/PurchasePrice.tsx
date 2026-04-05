@@ -2,7 +2,7 @@ import { View, Text, FlatList } from 'react-native'
 import React from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import PriceCard, { Price } from './PriceCard'
 import ActionButtons from './ActionButtons'
 
@@ -21,17 +21,21 @@ export default function PurchasePrices() {
   const { theme } = useTheme()
 
   return (
-    <View style={{ ...styles.screenContainer, paddingTop: safeAreaInsets.top }}>
-      <View style={{ paddingHorizontal: 12, paddingBlock: 15 }}>
-        <TitleAndDescription />
-        <ActionButtons />
-        <FlatList
-          data={prices}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <PriceCard {...item} />}
-        />
+    <SafeAreaProvider>
+      <View style={{ ...styles.screenContainer, paddingTop: safeAreaInsets.top }}>
+        <View style={{ paddingHorizontal: 12, paddingBlock: 15 }}>
+          <TitleAndDescription />
+          <ActionButtons />
+          <SafeAreaView style={{ marginBottom: 20 }}>
+            <FlatList
+              data={prices}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <PriceCard {...item} />}
+            />
+          </SafeAreaView>
+        </View>
       </View>
-    </View>
+    </SafeAreaProvider>
   )
 }
 

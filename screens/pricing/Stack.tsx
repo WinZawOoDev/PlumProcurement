@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import PurchasePrice from "./PurchasePrice";
-import CreatePrice from "./CreatePrice";
+import CreatePrice, { CreatePriceHeaderTitle } from "./CreatePrice";
+import { theme } from "../../theme";
 
 const PriceStack = createNativeStackNavigator({
   screenOptions: {
@@ -14,8 +15,15 @@ const PriceStack = createNativeStackNavigator({
     CreatePrice: {
       screen: CreatePrice,
       options: {
-        title: 'Create Price',
-        headerShown: true
+        headerTitle: () => <CreatePriceHeaderTitle />,
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: theme.lightColors?.neutral,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerShadowVisible: false,
+        headerTintColor: theme.lightColors?.primary
       }
     }
   }

@@ -17,7 +17,8 @@ import { navTheme, theme } from './theme';
 
 
 const RootStack = createBottomTabNavigator({
-  initialRouteName: 'Purchase',
+  // initialRouteName: 'Purchase',
+  initialRouteName: 'Price',
   screenOptions: {
     headerShown: false,
     tabBarActiveTintColor: theme.lightColors?.primary,

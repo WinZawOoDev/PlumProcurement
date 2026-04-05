@@ -9,14 +9,14 @@ export const theme = createTheme({
     mode: 'light',
     lightColors: {
         primary: '#4E2A47',
-        secondary: '#546E7A',
+        secondary: '#E7E8E9',
         tertiary: '#2A3C13',
         neutral: '#F8F9FA',
         background: '#F8F9FA',
     },
     darkColors: {
         primary: '#4E2A47',
-        secondary: '#546E7A',
+        secondary: '#E7E8E9',
         tertiary: '#2A3C13',
         neutral: '#F8F9FA',
         background: 'black'
