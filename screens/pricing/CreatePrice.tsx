@@ -1,22 +1,23 @@
 import { View } from 'react-native'
 import React from 'react'
-import { Button, Input, useTheme, Text, ButtonGroup } from '@rneui/themed'
+import { Button, Input, useTheme, Text, ButtonGroup, CheckBox } from '@rneui/themed'
 import { Controller, useForm } from 'react-hook-form'
 import { Picker } from '@react-native-picker/picker'
+import Ionicons from '@react-native-vector-icons/ionicons'
+import { useNavigation } from '@react-navigation/native'
 
 export default function CreatePrice() {
 
     const { theme } = useTheme()
-
     const { control, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             price: '',
-            unit: '',
-            category: 'java'
+            unit: 0,
+            category: 'java',
+            isAvailable: false
         }
     })
-
-    const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const navigation = useNavigation()
 
     return (
         <View
@@ -104,8 +105,8 @@ export default function CreatePrice() {
                         </Text>
                         <ButtonGroup
                             buttons={['PER KG', 'PER UNIT', 'PER BUNCH']}
-                            selectedIndex={selectedIndex}
-                            onPress={(value) => setSelectedIndex(value)}
+                            selectedIndex={value}
+                            onPress={(value) => onChange(value)}
                             containerStyle={{
                                 height: 55,
                                 borderRadius: 5,
@@ -170,8 +171,35 @@ export default function CreatePrice() {
                     />
                 )}
             />
+            <Controller
+                name='isAvailable'
+                control={control}
+                rules={{
+                    required: true
+                }}
+                render={({ field: { onBlur, onChange, value } }) => (
+                    <CheckBox
+                        title="Available"
+                        checked={value}
+                        checkedIcon={<Ionicons name='checkbox-outline' size={24} color={theme.colors.black} />}
+                        uncheckedIcon={<Ionicons name='square-outline' size={24} color={theme.colors.black} />}
+                        onPress={() => onChange(!value)}
+                        textStyle={{
+                            fontWeight: '600',
+                            color: theme.colors.primary,
+                            fontSize: 16
+                        }}
+                        containerStyle={{
+                            alignSelf: 'flex-start',
+                            borderWidth: 1,
+                            borderColor: theme.colors.secondary,
+                            borderRadius: 4
+                        }}
+                    />
+                )}
+            />
             <View style={{
-                marginTop: 20,
+                marginTop: 30,
                 width: '100%',
                 paddingHorizontal: 12,
                 display: 'flex',
@@ -181,7 +209,7 @@ export default function CreatePrice() {
                 <Button
                     title='Save Price'
                     size='md'
-                    onPress={handleSubmit((data) => console.log(data))}
+                    onPress={() => handleSubmit((data) => console.log(data))}
                     containerStyle={{
                         shadowColor: 'transparent',
                         elevation: 0,
@@ -196,7 +224,7 @@ export default function CreatePrice() {
                 <Button
                     title='Cancel'
                     size='md'
-                    onPress={handleSubmit((data) => console.log(data))}
+                    onPress={() => navigation.goBack()}
                     titleStyle={{
                         color: theme.colors.primary,
                         fontWeight: 'bold'
