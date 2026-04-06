@@ -6,10 +6,17 @@ import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useNavigation } from '@react-navigation/native'
 
+type FormData = {
+    price: string,
+    unit: number,
+    category: string,
+    isAvailable: boolean
+}
+
 export default function CreatePrice() {
 
     const { theme } = useTheme()
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: {
             price: '',
             unit: 0,
@@ -18,6 +25,10 @@ export default function CreatePrice() {
         }
     })
     const navigation = useNavigation()
+
+    const handleSavePrice = (data: FormData) => {
+        console.log("🚀 ~ handleSavePrice ~ data:", data)
+    }
 
     return (
         <View
@@ -34,9 +45,9 @@ export default function CreatePrice() {
             <Controller
                 name='category'
                 control={control}
-                rules={{
-                    required: true
-                }}
+                // rules={{
+                //     required: true
+                // }}
                 render={({ field: { onBlur, onChange, value } }) => (
                     <View style={{
                         width: '100%',
@@ -83,9 +94,9 @@ export default function CreatePrice() {
             <Controller
                 name='unit'
                 control={control}
-                rules={{
-                    required: true
-                }}
+                // rules={{
+                //     required: true
+                // }}
                 render={({ field: { onBlur, onChange, value } }) => (
                     <View
                         style={{
@@ -141,9 +152,9 @@ export default function CreatePrice() {
             <Controller
                 name='price'
                 control={control}
-                rules={{
-                    required: true
-                }}
+                // rules={{
+                //     required: true
+                // }}
                 render={({ field: { onBlur, onChange, value } }) => (
                     <Input
                         label='Price'
@@ -174,9 +185,9 @@ export default function CreatePrice() {
             <Controller
                 name='isAvailable'
                 control={control}
-                rules={{
-                    required: true
-                }}
+                // rules={{
+                //     required: true
+                // }}
                 render={({ field: { onBlur, onChange, value } }) => (
                     <CheckBox
                         title="Available"
@@ -209,7 +220,7 @@ export default function CreatePrice() {
                 <Button
                     title='Save Price'
                     size='md'
-                    onPress={() => handleSubmit((data) => console.log(data))}
+                    onPress={handleSubmit(handleSavePrice)}
                     containerStyle={{
                         shadowColor: 'transparent',
                         elevation: 0,
