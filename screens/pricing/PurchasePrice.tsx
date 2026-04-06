@@ -5,7 +5,7 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import PriceCard, { Price } from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { fetchPrices, initializeDatabase } from '../../database'
+import { fetchPrices, initializePrices } from '../../database'
 
 const prices: Price[] = [
   { id: 1, price: 20000, unit: 'kg', category: 'Fruits', status: 'Available' },
@@ -21,17 +21,14 @@ export default function PurchasePrices() {
   const styles = useStyles()
   const { theme } = useTheme()
 
+  async function getPrices() {
+    await initializePrices()
+    const data = await fetchPrices()
+    console.log('Fetched prices:', data)
+  }
+
   useEffect(() => {
-    initializeDatabase().then(() => {
-      console.log('Database initialized successfully')
-    }).catch((error) => {
-      console.error('Error initializing database:', error)
-    })
-    fetchPrices().then((data) => {
-      console.log('Fetched prices:', data)
-    }).catch((error) => {
-      console.error('Error fetching prices:', error)
-    })
+    getPrices()
   }, [])
 
   return (

@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useNavigation } from '@react-navigation/native'
+import { createPrice } from '../../database'
 
 type FormData = {
     price: string,
@@ -24,10 +25,12 @@ export default function CreatePrice() {
             isAvailable: false
         }
     })
+
     const navigation = useNavigation()
 
-    const handleSavePrice = (data: FormData) => {
+    const handleSavePrice = async (data: FormData) => {
         console.log("🚀 ~ handleSavePrice ~ data:", data)
+        await createPrice({ ...data, status: false })
     }
 
     return (
