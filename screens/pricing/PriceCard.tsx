@@ -1,16 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import { Badge, Card, useTheme } from '@rneui/themed'
+import { IPrice } from '../../database'
 
-export type Price = {
-    id: number,
-    price: number,
-    unit: string,
-    category: string,
-    status: 'Available' | 'Unavailable'
-}
 
-export default function PriceCard({ price, unit, category, status }: Omit<Price, 'id'>) {
+export default function PriceCard({ price, unit, category, isAvailable }: Omit<IPrice, 'id'>) {
 
     const { theme } = useTheme()
 
@@ -34,6 +28,7 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                     color: theme.colors.primary,
                     fontSize: 16,
                     fontFamily: 'Manrope',
+                    textTransform: 'capitalize'
                 }}
             >
                 #{category}
@@ -68,7 +63,7 @@ export default function PriceCard({ price, unit, category, status }: Omit<Price,
                     Status
                 </Text>
                 <Badge
-                    value={status}
+                    value={isAvailable ? 'Available' : 'Unavailable'}
                     badgeStyle={{ backgroundColor: theme.colors.neutral }}
                     textStyle={{ fontSize: 12, fontWeight: 'thin', color: theme.colors.black, fontFamily: 'Inter' }}
                 />

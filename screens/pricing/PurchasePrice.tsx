@@ -1,35 +1,35 @@
-import { View, Text, FlatList } from 'react-native'
-import React, { useEffect } from 'react'
+import { RefreshControl, View, Text, FlatList } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import PriceCard, { Price } from './PriceCard'
+import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { fetchPrices, initializePrices, truncatePrices } from '../../database'
+import { fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
+import { useNavigation } from '@react-navigation/native'
 
-const prices: Price[] = [
-  { id: 1, price: 20000, unit: 'kg', category: 'Fruits', status: 'Available' },
-  { id: 2, price: 15000, unit: 'kg', category: 'Vegetables', status: 'Unavailable' },
-  { id: 3, price: 30000, unit: 'kg', category: 'Grains', status: 'Available' },
-  { id: 4, price: 25000, unit: 'kg', category: 'Dairy', status: 'Unavailable' },
-  { id: 5, price: 18000, unit: 'kg', category: 'Meat', status: 'Available' },
-];
 
 export default function PurchasePrices() {
 
   const safeAreaInsets = useSafeAreaInsets();
   const styles = useStyles()
   const { theme } = useTheme()
+  const navigation = useNavigation()
+
+  const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
 
   async function getPrices() {
+    setPrice(prev => ({ ...prev, isLoading: true }))
     await initializePrices()
     const data = await fetchPrices()
     console.log('Fetched prices:', data)
+    setPrice({ list: data, isLoading: false })
   }
 
   useEffect(() => {
     getPrices()
   }, [])
+
 
   return (
     <SafeAreaProvider>
@@ -39,14 +39,41 @@ export default function PurchasePrices() {
           <ActionButtons />
           <SafeAreaView style={{ marginBottom: 20 }}>
             <FlatList
-              data={prices}
+              data={price.list}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => <PriceCard {...item} />}
+              ListEmptyComponent={<EmptyPriceList />}
+              refreshControl={
+                <RefreshControl
+                  refreshing={price.isLoading}
+                  onRefresh={getPrices}
+                  colors={[theme.colors.primary]}
+                />
+              }
             />
           </SafeAreaView>
         </View>
       </View>
     </SafeAreaProvider>
+  )
+}
+
+
+function EmptyPriceList() {
+
+  const { theme } = useTheme()
+
+  return (
+    <View style={{
+      flex: 1,
+      width: '100%',
+      backgroundColor: theme.colors.secondary,
+      height: 200,
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <Text style={{ alignSelf: 'center' }}>Empty Price</Text>
+    </View>
   )
 }
 
