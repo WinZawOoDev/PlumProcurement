@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { View, ToastAndroid } from 'react-native'
 import React from 'react'
 import { Button, Input, useTheme, Text, ButtonGroup, CheckBox } from '@rneui/themed'
 import { Controller, useForm } from 'react-hook-form'
@@ -28,15 +28,19 @@ export default function CreatePrice() {
 
     const navigation = useNavigation()
 
+    const [saving, setSaving] = React.useState(false)
+
     const handleSavePrice = async (data: FormData) => {
-        console.log("🚀 ~ handleSavePrice ~ data:", data)
+        setSaving(true)
         const created = await createPrice({
             category: data.category,
             price: parseFloat(data.price),
             unit: ['PER KG', 'PER UNIT', 'PER BUNCH'][data.unit],
             isAvailable: data.isAvailable
         })
-        console.log("🚀 ~ handleSavePrice ~ created:", created)
+        ToastAndroid.show('Price saved successfully!', ToastAndroid.SHORT);
+        setSaving(false)
+        navigation.goBack()
     }
 
     return (
@@ -229,6 +233,7 @@ export default function CreatePrice() {
                 <Button
                     title='Save Price'
                     size='md'
+                    disabled={saving}
                     onPress={handleSubmit(handleSavePrice)}
                     containerStyle={{
                         shadowColor: 'transparent',
@@ -244,6 +249,7 @@ export default function CreatePrice() {
                 <Button
                     title='Cancel'
                     size='md'
+                    disabled={saving}
                     onPress={() => navigation.goBack()}
                     titleStyle={{
                         color: theme.colors.primary,
