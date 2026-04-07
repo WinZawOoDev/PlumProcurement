@@ -30,7 +30,13 @@ export default function CreatePrice() {
 
     const handleSavePrice = async (data: FormData) => {
         console.log("🚀 ~ handleSavePrice ~ data:", data)
-        await createPrice({ ...data, status: false })
+        const created = await createPrice({
+            category: data.category,
+            price: parseFloat(data.price),
+            unit: ['PER KG', 'PER UNIT', 'PER BUNCH'][data.unit],
+            isAvailable: data.isAvailable
+        })
+        console.log("🚀 ~ handleSavePrice ~ created:", created)
     }
 
     return (

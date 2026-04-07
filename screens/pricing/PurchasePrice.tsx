@@ -5,7 +5,7 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import PriceCard, { Price } from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { fetchPrices, initializePrices } from '../../database'
+import { fetchPrices, initializePrices, truncatePrices } from '../../database'
 
 const prices: Price[] = [
   { id: 1, price: 20000, unit: 'kg', category: 'Fruits', status: 'Available' },

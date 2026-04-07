@@ -1,9 +1,16 @@
-import { NitroSQLiteConnection, open } from 'react-native-nitro-sqlite'
-
+import { open } from 'react-native-nitro-sqlite'
 
 const initDb = () => open({ name: 'plum_procurement.sqlite' });
 
-export async function initializePrices() {
+export interface IPrice {
+    id: number;
+    price: number;
+    unit: string;
+    category: string;
+    isAvailable: boolean;
+}
+
+export async function initializePrices(): Promise<void> {
     const db = initDb()
     await db.executeAsync(`
         CREATE TABLE IF NOT EXISTS prices ( 
@@ -11,27 +18,32 @@ export async function initializePrices() {
             price REAL,
             unit TEXT,
             category TEXT,
-            status BOOLEAN
+            isAvailable BOOLEAN
         )
     `)
     db.close()
 }
 
-export async function fetchPrices() {
+export async function fetchPrices(): Promise<IPrice[]> {
     const db = initDb()
     const { results } = await db.executeAsync(`SELECT * FROM prices`);
     db.close();
-    return results
+    return results as unknown as IPrice[]
 }
 
-
-export async function createPrice(priceData: any) {
-    const { price, unit, category, status } = priceData;
+export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number> {
+    const { price, unit, category, isAvailable } = priceData;
     const db = initDb()
-    await db.executeAsync(`
-        INSERT INTO prices (price, unit, category, status)
+    const { insertId } = await db.executeAsync(`
+        INSERT INTO prices (price, unit, category, isAvailable)
         VALUES (?, ?, ?, ?)
-    `, [price, unit, category, status]);
+    `, [price, unit, category, isAvailable]);
+    db.close()
+    return insertId as number;
+}
+
+export async function truncatePrices(): Promise<void> {
+    const db = initDb()
+    await db.executeAsync(`DELETE FROM prices`)
     db.close()
 }
-
