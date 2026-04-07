@@ -1,4 +1,4 @@
-import { View, ToastAndroid } from 'react-native'
+import { View, ToastAndroid, KeyboardAvoidingView, Platform } from 'react-native'
 import React from 'react'
 import { Button, Input, useTheme, Text, ButtonGroup, CheckBox } from '@rneui/themed'
 import { Controller, useForm } from 'react-hook-form'
@@ -44,7 +44,8 @@ export default function CreatePrice() {
     }
 
     return (
-        <View
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{
                 flex: 1,
                 justifyContent: 'center',
@@ -54,7 +55,8 @@ export default function CreatePrice() {
                 paddingBlock: 15,
                 flexDirection: 'column',
                 gap: 10,
-            }}>
+            }}
+        >
             <Controller
                 name='category'
                 control={control}
@@ -269,7 +271,7 @@ export default function CreatePrice() {
                     }}
                 />
             </View>
-        </View>
+        </KeyboardAvoidingView>
     )
 }
 
