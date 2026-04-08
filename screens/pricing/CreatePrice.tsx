@@ -4,8 +4,10 @@ import { Button, Input, useTheme, Text, ButtonGroup, CheckBox } from '@rneui/the
 import { Controller, useForm } from 'react-hook-form'
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
-import { useNavigation } from '@react-navigation/native'
+import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { createPrice } from '../../database'
+import { SafeAreaListener } from 'react-native-safe-area-context'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
 type FormData = {
     price: string,
@@ -26,7 +28,7 @@ export default function CreatePrice() {
         }
     })
 
-    const navigation = useNavigation()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
 
     const [saving, setSaving] = React.useState(false)
 
@@ -40,7 +42,7 @@ export default function CreatePrice() {
         })
         ToastAndroid.show('Price saved successfully!', ToastAndroid.SHORT);
         setSaving(false)
-        navigation.goBack()
+        navigation.popTo('PurchasePrice', { refresh: true })
     }
 
     return (

@@ -1,4 +1,4 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import PurchasePrice from "./PurchasePrice";
 import CreatePrice, { CreatePriceHeaderTitle } from "./CreatePrice";
 import { theme } from "../../theme";
@@ -10,7 +10,10 @@ const PriceStack = createNativeStackNavigator({
   screens: {
     PurchasePrice: {
       screen: PurchasePrice,
-      options: { title: 'Prices' }
+      options: { title: 'Prices' },
+      initialParams: {
+        refresh: false
+      }
     },
     CreatePrice: {
       screen: CreatePrice,

@@ -2,19 +2,19 @@ import { RefreshControl, View, Text, FlatList } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
-import { useNavigation } from '@react-navigation/native'
-
+import { useRoute } from '@react-navigation/native'
 
 export default function PurchasePrices() {
 
-  const safeAreaInsets = useSafeAreaInsets();
+
   const styles = useStyles()
   const { theme } = useTheme()
-  const navigation = useNavigation()
+  const route = useRoute();
+
 
   const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
 
@@ -31,30 +31,44 @@ export default function PurchasePrices() {
   }, [])
 
 
+  useEffect(() => {
+
+    //@ts-expect-error
+    const isRefresh = route.params?.refresh;
+
+    if (isRefresh) {
+      getPrices()
+    }
+
+  }, [route.params])
+
+
   return (
-    <SafeAreaProvider>
-      <View style={{ ...styles.screenContainer, paddingTop: safeAreaInsets.top }}>
-        <View style={{ paddingHorizontal: 12, paddingBlock: 15 }}>
-          <TitleAndDescription />
-          <ActionButtons />
-          <SafeAreaView style={{ marginBottom: 20 }}>
-            <FlatList
-              data={price.list}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <PriceCard {...item} />}
-              ListEmptyComponent={<EmptyPriceList />}
-              refreshControl={
-                <RefreshControl
-                  refreshing={price.isLoading}
-                  onRefresh={getPrices}
-                  colors={[theme.colors.primary]}
-                />
-              }
+    <SafeAreaView
+      edges={{ bottom: "maximum" }}
+      style={{ ...styles.screenContainer, height: '100%' }} >
+      <View style={{ paddingHorizontal: 12, paddingBlock: 15 }}>
+        <TitleAndDescription />
+        <ActionButtons />
+        <FlatList
+          data={price.list}
+          keyExtractor={(item) => item.id.toString()}
+          initialScrollIndex={0}
+          renderItem={({ item }) => <PriceCard {...item} />}
+          ListEmptyComponent={<EmptyPriceList />}
+          refreshControl={
+            <RefreshControl
+              refreshing={price.isLoading}
+              onRefresh={getPrices}
+              colors={[theme.colors.primary]}
             />
-          </SafeAreaView>
-        </View>
+          }
+          style={{
+            marginBottom: 130,
+          }}
+        />
       </View>
-    </SafeAreaProvider>
+    </SafeAreaView>
   )
 }
 
