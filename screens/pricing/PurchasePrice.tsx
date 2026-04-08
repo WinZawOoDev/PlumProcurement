@@ -10,11 +10,9 @@ import { useRoute } from '@react-navigation/native'
 
 export default function PurchasePrices() {
 
-
   const styles = useStyles()
   const { theme } = useTheme()
   const route = useRoute();
-
 
   const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
 
@@ -53,6 +51,7 @@ export default function PurchasePrices() {
         <FlatList
           data={price.list}
           keyExtractor={(item) => item.id.toString()}
+          refreshing={price.isLoading}
           initialScrollIndex={0}
           renderItem={({ item }) => <PriceCard {...item} />}
           ListEmptyComponent={<EmptyPriceList />}

@@ -6,8 +6,9 @@ import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { createPrice } from '../../database'
-import { SafeAreaListener } from 'react-native-safe-area-context'
+import { SafeAreaListener, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useHeaderHeight } from '@react-navigation/elements'
 
 type FormData = {
     price: string,
@@ -44,6 +45,7 @@ export default function CreatePrice() {
         setSaving(false)
         navigation.popTo('PurchasePrice', { refresh: true })
     }
+
 
     return (
         <KeyboardAvoidingView

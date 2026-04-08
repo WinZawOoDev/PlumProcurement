@@ -5,7 +5,8 @@ import { theme } from "../../theme";
 
 const PriceStack = createNativeStackNavigator({
   screenOptions: {
-    headerShown: false
+    headerShown: false,
+    headerTransparent: true
   },
   screens: {
     PurchasePrice: {
@@ -21,7 +22,7 @@ const PriceStack = createNativeStackNavigator({
         headerTitle: () => <CreatePriceHeaderTitle />,
         headerShown: true,
         headerStyle: {
-          backgroundColor: theme.lightColors?.neutral,
+          backgroundColor: theme.lightColors?.background,
           elevation: 0,
           shadowOpacity: 0,
         },
