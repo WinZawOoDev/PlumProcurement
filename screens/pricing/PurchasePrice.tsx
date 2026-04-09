@@ -5,7 +5,7 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
+import { dropTblPrices, fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
 import { useRoute } from '@react-navigation/native'
 
 export default function PurchasePrices() {
@@ -17,6 +17,8 @@ export default function PurchasePrices() {
   const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
 
   async function getPrices() {
+    // await dropTblPrices()
+    // await truncatePrices()
     setPrice(prev => ({ ...prev, isLoading: true }))
     await initializePrices()
     const data = await fetchPrices()

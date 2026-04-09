@@ -39,7 +39,7 @@ export default function CreatePrice() {
             category: data.category,
             price: parseFloat(data.price),
             unit: ['PER KG', 'PER UNIT', 'PER BUNCH'][data.unit],
-            isAvailable: data.isAvailable
+            is_available: data.isAvailable
         })
         ToastAndroid.show('Price saved successfully!', ToastAndroid.SHORT);
         setSaving(false)

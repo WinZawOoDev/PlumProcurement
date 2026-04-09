@@ -4,7 +4,7 @@ import { Badge, Card, useTheme } from '@rneui/themed'
 import { IPrice } from '../../database'
 
 
-export default function PriceCard({ price, unit, category, isAvailable }: Omit<IPrice, 'id'>) {
+export default function PriceCard({ price, unit, category, is_available }: Omit<IPrice, 'id'>) {
 
     const { theme } = useTheme()
 
@@ -63,7 +63,7 @@ export default function PriceCard({ price, unit, category, isAvailable }: Omit<I
                     Status
                 </Text>
                 <Badge
-                    value={isAvailable ? 'Available' : 'Unavailable'}
+                    value={is_available ? 'Available' : 'Unavailable'}
                     badgeStyle={{ backgroundColor: theme.colors.neutral }}
                     textStyle={{ fontSize: 12, fontWeight: 'thin', color: theme.colors.black, fontFamily: 'Inter' }}
                 />
