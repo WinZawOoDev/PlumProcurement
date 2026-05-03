@@ -1,8 +1,7 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { Badge, Card, useTheme } from '@rneui/themed'
+import { Badge, Button, Card, useTheme } from '@rneui/themed'
 import { IPrice } from '../../database'
-
 
 export default function PriceCard({ price, unit, category, is_available }: Omit<IPrice, 'id'>) {
 
@@ -19,20 +18,40 @@ export default function PriceCard({ price, unit, category, is_available }: Omit<
             shadowOpacity: 0,
             backgroundColor: theme.colors.white
         }}>
-            <Card.Title
+            <View
                 style={{
-                    letterSpacing: 0.5,
-                    alignSelf: 'flex-start',
-                    textAlign: 'left',
-                    fontWeight: 'bold',
-                    color: theme.colors.primary,
-                    fontSize: 16,
-                    fontFamily: 'Manrope',
-                    textTransform: 'capitalize'
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}
             >
-                #{category}
-            </Card.Title>
+                <Card.Title
+                    style={{
+                        letterSpacing: 0.5,
+                        alignSelf: 'flex-start',
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        color: theme.colors.primary,
+                        fontSize: 16,
+                        fontFamily: 'Manrope',
+                        textTransform: 'capitalize'
+                    }}
+                >
+                    #{category}
+                </Card.Title>
+                <Button
+                    buttonStyle={{
+                        backgroundColor: theme.colors.neutral,
+                    }}
+                    title="Edit"
+                    titleStyle={{
+                        color: theme.colors.black,
+                        fontWeight: '600',
+                        fontSize: 14,
+                    }}
+                />
+            </View>
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
                     Price

@@ -7,6 +7,7 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { dropTblPrices, fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
 import { useRoute } from '@react-navigation/native'
+import EditPrice from './EditPrice'
 
 export default function PurchasePrices() {
 
@@ -22,7 +23,7 @@ export default function PurchasePrices() {
     setPrice(prev => ({ ...prev, isLoading: true }))
     await initializePrices()
     const data = await fetchPrices()
-    console.log('Fetched prices:', data)
+    // console.log('Fetched prices:', data)
     setPrice({ list: data, isLoading: false })
   }
 
@@ -30,16 +31,12 @@ export default function PurchasePrices() {
     getPrices()
   }, [])
 
-
   useEffect(() => {
-
     //@ts-expect-error
     const isRefresh = route.params?.refresh;
-
     if (isRefresh) {
       getPrices()
     }
-
   }, [route.params])
 
 
@@ -68,6 +65,7 @@ export default function PurchasePrices() {
             marginBottom: 130,
           }}
         />
+        <EditPrice />
       </View>
     </SafeAreaView>
   )
