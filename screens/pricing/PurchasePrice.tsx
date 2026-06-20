@@ -5,149 +5,93 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { dropTblPrices, fetchPrices, initializePrices, IPrice, truncatePrices } from '../../database'
+import { fetchPrices, initializePrices, IPrice } from '../../database'
 import { useRoute } from '@react-navigation/native'
 import EditPrice from './EditPrice'
+import { SAFE_AREA, UI_TEXT } from '../../constants'
 
 export default function PurchasePrices() {
+    const styles = useStyles()
+    const { theme } = useTheme()
+    const route = useRoute()
 
-  const styles = useStyles()
-  const { theme } = useTheme()
-  const route = useRoute();
+    const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
 
-  const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
-
-  async function getPrices() {
-    // await dropTblPrices()
-    // await truncatePrices()
-    setPrice(prev => ({ ...prev, isLoading: true }))
-    await initializePrices()
-    const data = await fetchPrices()
-    // console.log('Fetched prices:', data)
-    setPrice({ list: data, isLoading: false })
-  }
-
-  useEffect(() => {
-    getPrices()
-  }, [])
-
-  useEffect(() => {
-    //@ts-expect-error
-    const isRefresh = route.params?.refresh;
-    if (isRefresh) {
-      getPrices()
+    async function getPrices() {
+        setPrice(prev => ({ ...prev, isLoading: true }))
+        try {
+            await initializePrices()
+            const data = await fetchPrices()
+            setPrice({ list: data, isLoading: false })
+        } catch (error) {
+            console.error('Failed to fetch prices:', error)
+            setPrice({ list: [], isLoading: false })
+        }
     }
-  }, [route.params])
 
+    useEffect(() => {
+        getPrices()
+    }, [])
 
-  return (
-    <SafeAreaView
-      edges={{ bottom: "maximum" }}
-      style={{ ...styles.screenContainer, height: '100%' }} >
-      <View style={{ paddingHorizontal: 12, paddingBlock: 15 }}>
-        <TitleAndDescription />
-        <ActionButtons />
-        <FlatList
-          data={price.list}
-          keyExtractor={(item) => item.id.toString()}
-          refreshing={price.isLoading}
-          initialScrollIndex={0}
-          renderItem={({ item }) => <PriceCard {...item} />}
-          ListEmptyComponent={<EmptyPriceList />}
-          refreshControl={
-            <RefreshControl
-              refreshing={price.isLoading}
-              onRefresh={getPrices}
-              colors={[theme.colors.primary]}
-            />
-          }
-          style={{
-            marginBottom: 130,
-          }}
-        />
-        <EditPrice />
-      </View>
-    </SafeAreaView>
-  )
+    useEffect(() => {
+        //@ts-expect-error
+        const isRefresh = route.params?.refresh
+        if (isRefresh) {
+            getPrices()
+        }
+    }, [route.params])
+
+    return (
+        <SafeAreaView
+            edges={SAFE_AREA.EDGES}
+            style={{ ...styles.screenContainer, height: '100%' }}
+        >
+            <View style={styles.priceListContainer}>
+                <TitleAndDescription />
+                <ActionButtons />
+                <FlatList
+                    data={price.list}
+                    keyExtractor={(item) => item.id.toString()}
+                    refreshing={price.isLoading}
+                    initialScrollIndex={0}
+                    renderItem={({ item }) => <PriceCard {...item} />}
+                    ListEmptyComponent={<EmptyPriceList />}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={price.isLoading}
+                            onRefresh={getPrices}
+                            colors={[theme.colors.primary]}
+                        />
+                    }
+                    style={styles.priceListFlatList}
+                />
+                <EditPrice />
+            </View>
+        </SafeAreaView>
+    )
 }
 
-
 function EmptyPriceList() {
+    const styles = useStyles()
 
-  const { theme } = useTheme()
-
-  return (
-    <View style={{
-      flex: 1,
-      width: '100%',
-      backgroundColor: theme.colors.secondary,
-      height: 200,
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <Text style={{ alignSelf: 'center' }}>Empty Price</Text>
-    </View>
-  )
+    return (
+        <View style={styles.emptyPriceListContainer}>
+            <Text style={{ alignSelf: 'center' }}>{UI_TEXT.PLUM_COUNT_TITLE}</Text>
+        </View>
+    )
 }
 
 function TitleAndDescription() {
-  const { theme } = useTheme()
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <Text style={{ fontFamily: 'Manrope', fontSize: 25, fontWeight: '700', color: theme.colors.primary, letterSpacing: 0.5, lineHeight: 40 }}>Price Management</Text>
-      <Text style={{
-        fontFamily: 'Inter',
-        fontWeight: '500',
-        fontSize: 16,
-        lineHeight: 24,
-      }}>
-        Define and adjust market rates for plum
-        varieties.
-      </Text>
-    </View>
-  )
+    const styles = useStyles()
+    return (
+        <View style={styles.titleDescription}>
+            <Text style={styles.titleText}>{UI_TEXT.PRICE_MANAGEMENT}</Text>
+            <Text style={styles.descriptionText}>
+                {UI_TEXT.PRICE_DESCRIPTION}
+            </Text>
+        </View>
+    )
 }
-
-// function SearchPrice() {
-
-//   const { theme } = useTheme()
-
-//   return (
-//     <View
-//       style={{
-//         marginBlock: 30,
-//         paddingBlock: 20,
-//         borderRadius: 8,
-//         backgroundColor: '#F3F4F5',
-//       }}
-//     >
-//       <Input
-//         inputContainerStyle={{
-//           borderBottomWidth: 0,
-//           backgroundColor: theme.colors.white,
-//           borderRadius: 4,
-//           paddingBlock: 2
-//         }}
-//         inputStyle={{
-//           backgroundColor: theme.colors.white,
-//           paddingBlock: 15,
-//         }}
-//         placeholder='Search variety or category...'
-//         placeholderTextColor={'#80747B'}
-//         leftIcon={<Ionicons name='search' size={25} color={'#80747B'} />}
-//         leftIconContainerStyle={{
-//           marginLeft: 15,
-//           marginRight: 5
-//         }}
-//       />
-//       <View
-//         style={{
-//           marginTop: -10,
-//           flexDirection: 'row',
-//           gap: 10,
-//           marginHorizontal: 12
-//         }}
-//       >
 //         <Button
 //           containerStyle={{
 //             shadowColor: 'transparent',

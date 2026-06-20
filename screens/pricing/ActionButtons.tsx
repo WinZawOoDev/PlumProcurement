@@ -1,70 +1,29 @@
 import { View } from 'react-native'
 import React from 'react'
 import { useStyles } from '../../styles'
-import { Button, useTheme } from '@rneui/themed'
+import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useNavigation } from '@react-navigation/native'
+import { IconButton } from '../../components/buttons/Button'
+import { UI_TEXT, ROUTES, DIMENSIONS } from '../../constants'
 
 export default function ActionButtons() {
-
     const styles = useStyles()
     const { theme } = useTheme()
     const navigation = useNavigation()
 
     return (
-        <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: "center"
-        }}>
-            <Button
-                containerStyle={{
-                    shadowColor: 'transparent',
-                }}
-                buttonStyle={{
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    paddingHorizontal: 20,
-                    paddingBlock: 12,
-                    borderRadius: 4,
-                    backgroundColor: theme.colors.primary,
-                    elevation: 0,
-                    shadowOpacity: 0,
-                    borderWidth: 0
-                }}
-                icon={<Ionicons name='add-sharp' size={20} color={'white'} />}
-                title='Add New Price'
-                titleStyle={{
-                    fontWeight: '600',
-                    fontSize: 17,
-                    lineHeight: 20,
-                    fontFamily: 'Inter',
-                    color: 'white',
-                    marginLeft: 10
-                }}
+        <View style={styles.actionButtonsRow}>
+            <IconButton
+                title={UI_TEXT.ADD_NEW_PRICE}
+                icon={<Ionicons name="add-sharp" size={DIMENSIONS.ICON_SIZE_MEDIUM} color="white" />}
+                variant="primary"
                 //@ts-expect-error
-                onPress={() => navigation.navigate('CreatePrice')}
+                onPress={() => navigation.navigate(ROUTES.CREATE_PRICE)}
             />
-            <Button
-                containerStyle={{
-                    shadowColor: 'transparent',
-                    borderRadius: 5,
-                }}
-                buttonStyle={{
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    // paddingHorizontal: 20,
-                    paddingBlock: 12,
-                    borderRadius: 5,
-                    backgroundColor: theme.colors.neutral,
-                    elevation: 0,
-                    shadowOpacity: 0,
-                    borderWidth: 0,
-                }}
-                icon={<Ionicons name='search-outline' size={30} color={theme.colors.tertiary} />}
-                iconContainerStyle={{
-                    marginHorizontal: 10
-                }}
+            <IconButton
+                icon={<Ionicons name="search-outline" size={DIMENSIONS.ICON_SIZE_LARGE} color={theme.colors.tertiary} />}
+                variant="secondary"
             />
         </View>
     )

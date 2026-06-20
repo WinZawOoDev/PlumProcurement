@@ -1,90 +1,58 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { Badge, Button, Card, useTheme } from '@rneui/themed'
+import { Badge, Button, Card } from '@rneui/themed'
 import { IPrice } from '../../database'
+import { useStyles } from '../../styles'
 
 export default function PriceCard({ price, unit, category, is_available }: Omit<IPrice, 'id'>) {
 
-    const { theme } = useTheme()
+    const styles = useStyles()
 
     return (
-        <Card containerStyle={{
-            width: '100%',
-            borderRadius: 8,
-            borderWidth: 0,
-            marginHorizontal: 'auto',
-            shadowColor: 'transparent',
-            elevation: 0,
-            shadowOpacity: 0,
-            backgroundColor: theme.colors.white
-        }}>
-            <View
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}
-            >
-                <Card.Title
-                    style={{
-                        letterSpacing: 0.5,
-                        alignSelf: 'flex-start',
-                        textAlign: 'left',
-                        fontWeight: 'bold',
-                        color: theme.colors.primary,
-                        fontSize: 16,
-                        fontFamily: 'Manrope',
-                        textTransform: 'capitalize'
-                    }}
-                >
+        <Card containerStyle={styles.priceCardContainer}>
+            <View style={styles.priceCardHeader}>
+                <Card.Title style={styles.priceCardTitle}>
                     #{category}
                 </Card.Title>
                 <Button
-                    buttonStyle={{
-                        backgroundColor: theme.colors.neutral,
-                    }}
+                    buttonStyle={styles.priceCardEditButton}
                     title="Edit"
-                    titleStyle={{
-                        color: theme.colors.black,
-                        fontWeight: '600',
-                        fontSize: 14,
-                    }}
+                    titleStyle={styles.priceCardEditButtonTitle}
                 />
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
+            <View style={styles.priceCardRow}>
+                <Text style={styles.priceCardLabel}>
                     Price
                 </Text>
-                <Text style={{ marginBottom: 10, fontWeight: 'bold', fontSize: 15, lineHeight: 17, fontFamily: 'Inter' }}>
+                <Text style={styles.priceCardValue}>
                     {price}
-                    <Text style={{ fontWeight: '700' }}> $</Text>
+                    <Text style={styles.priceCardCurrencySymbol}> $</Text>
                 </Text>
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
+            <View style={styles.priceCardRow}>
+                <Text style={styles.priceCardLabel}>
                     Unit
                 </Text>
-                <Text style={{ marginBottom: 10, fontWeight: 'bold', fontSize: 15, lineHeight: 17, fontFamily: 'Inter' }}>
+                <Text style={styles.priceCardValue}>
                     {unit}
                 </Text>
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
+            <View style={styles.priceCardRow}>
+                <Text style={styles.priceCardLabel}>
                     Category
                 </Text>
-                <Text style={{ marginBottom: 10, fontWeight: 'condensed', fontSize: 14, lineHeight: 17, fontFamily: 'Inter' }}>
+                <Text style={styles.priceCardCategoryValue}>
                     {category}
                 </Text>
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ marginBottom: 10, fontWeight: 'thin', fontSize: 13, lineHeight: 17, fontFamily: 'Inter', color: theme.colors.tertiary }}>
+            <View style={styles.priceCardRow}>
+                <Text style={styles.priceCardLabel}>
                     Status
                 </Text>
                 <Badge
                     value={is_available ? 'Available' : 'Unavailable'}
-                    badgeStyle={{ backgroundColor: theme.colors.neutral }}
-                    textStyle={{ fontSize: 12, fontWeight: 'thin', color: theme.colors.black, fontFamily: 'Inter' }}
+                    badgeStyle={styles.priceCardBadgeStyle}
+                    textStyle={styles.priceCardBadgeText}
                 />
             </View>
         </Card>
