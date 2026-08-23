@@ -1,5 +1,5 @@
-import { RefreshControl, View, Text, FlatList } from 'react-native'
-import React, { useEffect } from 'react'
+import { RefreshControl, View, Text, FlatList, ToastAndroid } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,16 +7,27 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT } from '../../constants'
+import { SAFE_AREA, UI_TEXT, MESSAGES } from '../../constants'
+import { IPrice } from '../../database'
 
 export default function PurchasePrices() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { prices, loading, refresh } = usePrices()
+    const { prices, loading, refresh, removePrice } = usePrices()
+    const [editing, setEditing] = useState<IPrice | null>(null)
 
     useEffect(() => {
         refresh()
     }, [refresh])
+
+    const handleDelete = async (id: number) => {
+        try {
+            await removePrice(id)
+            ToastAndroid.show(MESSAGES.PRICE_DELETE_SUCCESS, ToastAndroid.SHORT)
+        } catch {
+            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+        }
+    }
 
     return (
         <SafeAreaView
@@ -31,7 +42,13 @@ export default function PurchasePrices() {
                     keyExtractor={(item) => item.id.toString()}
                     refreshing={loading}
                     initialScrollIndex={0}
-                    renderItem={({ item }) => <PriceCard {...item} />}
+                    renderItem={({ item }) => (
+                        <PriceCard
+                            {...item}
+                            onEdit={() => setEditing(item)}
+                            onDelete={() => handleDelete(item.id)}
+                        />
+                    )}
                     ListEmptyComponent={<EmptyPriceList />}
                     removeClippedSubviews={true}
                     maxToRenderPerBatch={10}
@@ -47,7 +64,11 @@ export default function PurchasePrices() {
                     }
                     style={styles.priceListFlatList}
                 />
-                <EditPrice />
+                <EditPrice
+                    visible={!!editing}
+                    price={editing}
+                    onClose={() => setEditing(null)}
+                />
             </View>
         </SafeAreaView>
     )

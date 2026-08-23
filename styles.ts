@@ -261,6 +261,12 @@ export const useStyles = makeStyles((theme) => ({
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         textTransform: 'capitalize'
     },
+    priceCardActionsRow: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
     priceCardEditButton: {
         backgroundColor: theme.colors.neutral,
     },
@@ -268,6 +274,12 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.black,
         fontWeight: '600',
         fontSize: 14,
+    },
+    priceCardDeleteButton: {
+        backgroundColor: theme.colors.error,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
     },
     priceCardRow: {
         display: 'flex',

@@ -7,6 +7,8 @@ interface PriceContextValue {
     loading: boolean
     refresh: () => Promise<void>
     addPrice: (data: NewPrice) => Promise<number>
+    editPrice: (id: number, data: Partial<NewPrice>) => Promise<void>
+    removePrice: (id: number) => Promise<void>
 }
 
 const PriceContext = createContext<PriceContextValue | undefined>(undefined)
@@ -34,9 +36,25 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         [refresh]
     )
 
+    const editPrice = useCallback(
+        async (id: number, data: Partial<NewPrice>) => {
+            await priceService.editPrice(id, data)
+            await refresh()
+        },
+        [refresh]
+    )
+
+    const removePrice = useCallback(
+        async (id: number) => {
+            await priceService.removePrice(id)
+            await refresh()
+        },
+        [refresh]
+    )
+
     const value = useMemo(
-        () => ({ prices, loading, refresh, addPrice }),
-        [prices, loading, refresh, addPrice]
+        () => ({ prices, loading, refresh, addPrice, editPrice, removePrice }),
+        [prices, loading, refresh, addPrice, editPrice, removePrice]
     )
 
     return <PriceContext.Provider value={value}>{children}</PriceContext.Provider>

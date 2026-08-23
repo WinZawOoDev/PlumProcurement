@@ -1,11 +1,13 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { View, Text, ToastAndroid } from 'react-native'
+import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import { FormInputField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT } from '../../constants'
+import { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PRICE_PATTERN, FORM_CONFIG } from '../../constants'
+import { usePrices } from '../../context/PriceContext'
+import { IPrice } from '../../database'
 
 type FormData = {
     id: number
@@ -15,44 +17,79 @@ type FormData = {
     isAvailable: boolean
 }
 
-export default function EditPrice() {
+interface EditPriceProps {
+    visible: boolean
+    price: IPrice | null
+    onClose: () => void
+}
+
+export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
     const styles = useStyles()
-    const { control, handleSubmit } = useForm<FormData>({
+    const { editPrice } = usePrices()
+
+    const { control, handleSubmit, reset } = useForm<FormData>({
         defaultValues: {
-            id: 1,
-            price: '3000',
-            unit: 0,
-            category: 'fruits',
-            isAvailable: false
-        }
+            id: 0,
+            price: FORM_CONFIG.PRICE_DEFAULT,
+            unit: FORM_CONFIG.UNIT_DEFAULT,
+            category: FORM_CONFIG.CATEGORY_DEFAULT,
+            isAvailable: FORM_CONFIG.AVAILABLE_DEFAULT,
+        },
+        mode: 'onBlur',
     })
 
-    const handleUpdate = (_data: FormData) => {
-        // TODO: Implement update logic
-    }
+    useEffect(() => {
+        if (price) {
+            reset({
+                id: price.id,
+                price: String(price.price),
+                unit: 0,
+                category: price.category,
+                isAvailable: !!price.is_available,
+            })
+        }
+    }, [price, reset])
 
-    const handleCancel = () => {
-        // TODO: Implement cancel logic
+    const handleUpdate = async (data: FormData) => {
+        try {
+            await editPrice(data.id, { price: parseFloat(data.price) })
+            ToastAndroid.show(MESSAGES.PRICE_UPDATE_SUCCESS, ToastAndroid.SHORT)
+            onClose()
+        } catch {
+            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+        }
     }
 
     return (
-        <BottomSheet isVisible={true} modalProps={{ animationType: 'slide' }} onBackdropPress={() => { }} >
+        <BottomSheet
+            isVisible={visible}
+            modalProps={{ animationType: 'slide' }}
+            onBackdropPress={onClose}
+        >
             <View style={styles.bottomSheetContainer}>
                 <Text style={styles.bottomSheetTitle}>{UI_TEXT.EDIT_PRICE}</Text>
                 <View style={styles.bottomSheetHeaderRow}>
                     <Text style={styles.bottomSheetCategoryText}>
-                        # {UI_TEXT.UNIT}
+                        # {price?.category ?? UI_TEXT.CATEGORY}
                     </Text>
                     <Text style={styles.bottomSheetUnitText}>
-                        {UI_TEXT.UNIT_SELECTION}
+                        {price?.unit ?? UI_TEXT.UNIT}
                     </Text>
                 </View>
                 <FormInputField
                     name="price"
                     control={control}
                     label={UI_TEXT.PRICE}
-                    placeholder="Enter price"
-                    keyboardType="decimal-pad"
+                    placeholder={FORM_CONFIG.PRICE_PLACEHOLDER}
+                    keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
+                    required
+                    rules={{
+                        required: VALIDATION_MESSAGES.PRICE_REQUIRED,
+                        pattern: {
+                            value: PRICE_PATTERN,
+                            message: VALIDATION_MESSAGES.PRICE_INVALID,
+                        },
+                    }}
                 />
                 <PrimaryButton
                     title={UI_TEXT.UPDATE}
@@ -61,7 +98,7 @@ export default function EditPrice() {
                 />
                 <SecondaryButton
                     title={UI_TEXT.CANCEL}
-                    onPress={handleCancel}
+                    onPress={onClose}
                     containerStyle={styles.updateButtonContainerStyle}
                 />
             </View>

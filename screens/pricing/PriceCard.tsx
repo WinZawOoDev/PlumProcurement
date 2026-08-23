@@ -3,8 +3,14 @@ import React from 'react'
 import { Badge, Button, Card } from '@rneui/themed'
 import { IPrice } from '../../database'
 import { useStyles } from '../../styles'
+import { UI_TEXT } from '../../constants'
 
-export default function PriceCard({ price, unit, category, is_available }: Omit<IPrice, 'id'>) {
+interface PriceCardProps extends Omit<IPrice, 'id'> {
+    onEdit?: () => void
+    onDelete?: () => void
+}
+
+export default function PriceCard({ price, unit, category, is_available, onEdit, onDelete }: PriceCardProps) {
 
     const styles = useStyles()
 
@@ -14,11 +20,24 @@ export default function PriceCard({ price, unit, category, is_available }: Omit<
                 <Card.Title style={styles.priceCardTitle}>
                     #{category}
                 </Card.Title>
-                <Button
-                    buttonStyle={styles.priceCardEditButton}
-                    title="Edit"
-                    titleStyle={styles.priceCardEditButtonTitle}
-                />
+                <View style={styles.priceCardActionsRow}>
+                    <Button
+                        buttonStyle={styles.priceCardEditButton}
+                        title="Edit"
+                        titleStyle={styles.priceCardEditButtonTitle}
+                        onPress={onEdit}
+                    />
+                    <Button
+                        buttonStyle={styles.priceCardDeleteButton}
+                        icon={{
+                            name: 'trash-outline',
+                            type: 'ionicon',
+                            color: 'white',
+                            size: 16,
+                        }}
+                        onPress={onDelete}
+                    />
+                </View>
             </View>
             <View style={styles.priceCardRow}>
                 <Text style={styles.priceCardLabel}>
@@ -50,7 +69,7 @@ export default function PriceCard({ price, unit, category, is_available }: Omit<
                     Status
                 </Text>
                 <Badge
-                    value={is_available ? 'Available' : 'Unavailable'}
+                    value={is_available ? UI_TEXT.AVAILABLE_STATUS : UI_TEXT.UNAVAILABLE_STATUS}
                     badgeStyle={styles.priceCardBadgeStyle}
                     textStyle={styles.priceCardBadgeText}
                 />
