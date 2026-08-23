@@ -3,24 +3,28 @@ import {
     createPurchase,
     fetchPurchases,
     initializePurchases,
-    IPurchase,
+    initializeSellers,
+    IPurchaseWithSeller,
 } from '../database'
 
 jest.mock('../database', () => ({
     initializePurchases: jest.fn(),
+    initializeSellers: jest.fn(),
     fetchPurchases: jest.fn(),
     createPurchase: jest.fn(),
 }))
 
-const mockPurchases: IPurchase[] = [
+const mockPurchases: IPurchaseWithSeller[] = [
     {
         id: 1,
         price_id: 10,
+        seller_id: null,
         category: 'fruits',
         unit: 'PER KG',
         unit_price: 3000,
         quantity: 2,
         total: 6000,
+        seller_name: null,
     },
 ]
 
@@ -29,13 +33,15 @@ beforeEach(() => {
 })
 
 describe('PurchaseService.getPurchases', () => {
-    test('initializes table then fetches purchases', async () => {
+    test('initializes tables then fetches purchases', async () => {
         ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
         ;(fetchPurchases as jest.Mock).mockResolvedValue(mockPurchases)
 
         const result = await purchaseService.getPurchases()
 
         expect(initializePurchases).toHaveBeenCalledTimes(1)
+        expect(initializeSellers).toHaveBeenCalledTimes(1)
         expect(fetchPurchases).toHaveBeenCalledTimes(1)
         expect(result).toEqual(mockPurchases)
     })
@@ -47,6 +53,7 @@ describe('PurchaseService.recordPurchase', () => {
 
         const data = {
             price_id: 10,
+            seller_id: null,
             category: 'fruits',
             unit: 'PER KG',
             unit_price: 3000,
@@ -67,6 +74,7 @@ describe('PurchaseService.recordPurchase', () => {
         await expect(
             purchaseService.recordPurchase({
                 price_id: 10,
+                seller_id: null,
                 category: 'fruits',
                 unit: 'PER KG',
                 unit_price: 3000,

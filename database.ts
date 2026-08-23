@@ -179,6 +179,7 @@ export async function dropTblPrices(): Promise<void> {
 export interface IPurchase {
     id: number;
     price_id: number;
+    seller_id: number | null;
     category: string;
     unit: string;
     unit_price: number;
@@ -186,14 +187,15 @@ export interface IPurchase {
     total: number;
 }
 
-export async function initializePurchases(): Promise<void> {
-    let db;
-    try {
-        db = initDb()
-        await db.executeAsync(`
+export interface IPurchaseWithSeller extends IPurchase {
+    seller_name: string | null;
+}
+
+const PURCHASES_TABLE_SQL = `
             CREATE TABLE IF NOT EXISTS purchases (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 price_id INTEGER NOT NULL,
+                seller_id INTEGER,
                 category TEXT NOT NULL,
                 unit TEXT NOT NULL,
                 unit_price REAL NOT NULL,
@@ -201,7 +203,22 @@ export async function initializePurchases(): Promise<void> {
                 total REAL NOT NULL,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
-        `)
+        `
+
+async function migratePurchasesTable(db: NonNullable<ReturnType<typeof initDb>>): Promise<void> {
+    const { results } = await db.executeAsync(`PRAGMA table_info(purchases)`);
+    const columns = (results as unknown as Array<{ name: string }>).map((col) => col.name);
+    if (!columns.includes('seller_id')) {
+        await db.executeAsync(`ALTER TABLE purchases ADD COLUMN seller_id INTEGER`);
+    }
+}
+
+export async function initializePurchases(): Promise<void> {
+    let db;
+    try {
+        db = initDb()
+        await db.executeAsync(PURCHASES_TABLE_SQL)
+        await migratePurchasesTable(db)
     } catch (error) {
         throw new DatabaseError('Failed to initialize purchases table', error)
     } finally {
@@ -209,14 +226,17 @@ export async function initializePurchases(): Promise<void> {
     }
 }
 
-export async function fetchPurchases(): Promise<IPurchase[]> {
+export async function fetchPurchases(): Promise<IPurchaseWithSeller[]> {
     let db;
     try {
         db = initDb()
         const { results } = await db.executeAsync(`
-            SELECT * FROM purchases ORDER BY id DESC LIMIT 100
+            SELECT p.*, s.name AS seller_name
+            FROM purchases p
+            LEFT JOIN sellers s ON s.id = p.seller_id
+            ORDER BY p.id DESC LIMIT 100
         `);
-        return results as unknown as IPurchase[]
+        return results as unknown as IPurchaseWithSeller[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch purchases', error)
     } finally {
@@ -227,7 +247,7 @@ export async function fetchPurchases(): Promise<IPurchase[]> {
 export async function createPurchase(purchaseData: Omit<IPurchase, 'id'>): Promise<number> {
     let db;
     try {
-        const { price_id, category, unit, unit_price, quantity, total } = purchaseData;
+        const { price_id, seller_id, category, unit, unit_price, quantity, total } = purchaseData;
 
         if (!price_id || !category || !unit) {
             throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
@@ -244,9 +264,9 @@ export async function createPurchase(purchaseData: Omit<IPurchase, 'id'>): Promi
 
         db = initDb()
         const { insertId } = await db.executeAsync(`
-            INSERT INTO purchases (price_id, category, unit, unit_price, quantity, total)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, [price_id, category, unit, unit_price, quantity, total]);
+            INSERT INTO purchases (price_id, seller_id, category, unit, unit_price, quantity, total)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [price_id, seller_id ?? null, category, unit, unit_price, quantity, total]);
 
         return insertId as number;
     } catch (error) {

@@ -600,7 +600,7 @@ export const useStyles = makeStyles((theme) => ({
     },
     plumCountCircle: {
         display: 'flex',
-        backgroundColor: '#F2F2F5',
+        backgroundColor: theme.colors.secondary,
         width: DIMENSIONS.PLUM_COUNT_CIRCLE_SIZE,
         height: DIMENSIONS.PLUM_COUNT_CIRCLE_SIZE,
         padding: 'auto',
@@ -611,7 +611,7 @@ export const useStyles = makeStyles((theme) => ({
     },
     plumCountText: {
         fontWeight: "bold",
-        color: 'black',
+        color: theme.colors.black,
         fontSize: 50
     },
     countButtonContainer: {

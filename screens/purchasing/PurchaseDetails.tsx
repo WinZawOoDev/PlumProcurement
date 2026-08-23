@@ -6,12 +6,12 @@ import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { UI_TEXT, SAFE_AREA } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
-import { IPurchase } from '../../database'
+import { IPurchaseWithSeller } from '../../database'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const [purchases, setPurchases] = useState<IPurchase[]>([])
+    const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([])
     const [loading, setLoading] = useState(false)
 
     const loadPurchases = useCallback(async () => {
@@ -55,12 +55,13 @@ export default function PurchaseDetails() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.purchaseItemRow}>
-                            <View>
+                            <View style={styles.sellerInfo}>
                                 <RNText style={styles.purchaseItemTitle}>
                                     {item.category} ({item.unit})
                                 </RNText>
                                 <RNText style={styles.purchaseItemSubtitle}>
                                     {item.quantity} × {item.unit_price.toFixed(2)}$
+                                    {item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}
                                 </RNText>
                             </View>
                             <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>

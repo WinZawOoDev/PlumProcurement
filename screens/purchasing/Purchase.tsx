@@ -6,24 +6,25 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
-import { useTheme } from '@rneui/themed'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
-import { IPurchase } from '../../database'
+import { sellerService } from '../../services/sellerService'
+import { IPurchaseWithSeller } from '../../database'
 
 const QUANTITY_PATTERN = /^\d+$/
 
 export default function Purchase() {
     const styles = useStyles()
-    const { theme } = useTheme()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices, refresh: refreshPrices } = usePrices()
 
     const [selectedPriceId, setSelectedPriceId] = useState<string>('')
+    const [selectedSellerId, setSelectedSellerId] = useState<string>('')
+    const [sellers, setSellers] = useState<{ id: number; name: string }[]>([])
     const [quantity, setQuantity] = useState('1')
-    const [recent, setRecent] = useState<IPurchase[]>([])
+    const [recent, setRecent] = useState<IPurchaseWithSeller[]>([])
     const [recording, setRecording] = useState(false)
 
     const loadRecent = useCallback(async () => {
@@ -34,10 +35,19 @@ export default function Purchase() {
         }
     }, [])
 
+    const loadSellers = useCallback(async () => {
+        try {
+            setSellers(await sellerService.getSellers())
+        } catch (error) {
+            console.error('Failed to fetch sellers:', error)
+        }
+    }, [])
+
     useEffect(() => {
         loadRecent()
+        loadSellers()
         refreshPrices()
-    }, [loadRecent, refreshPrices])
+    }, [loadRecent, loadSellers, refreshPrices])
 
     const selectedPrice = prices.find((p) => p.id.toString() === selectedPriceId)
     const quantityValue = parseInt(quantity, 10)
@@ -59,6 +69,7 @@ export default function Purchase() {
         try {
             await purchaseService.recordPurchase({
                 price_id: selectedPrice.id,
+                seller_id: selectedSellerId ? parseInt(selectedSellerId, 10) : null,
                 category: selectedPrice.category,
                 unit: selectedPrice.unit,
                 unit_price: selectedPrice.price,
@@ -82,6 +93,27 @@ export default function Purchase() {
                 <View style={styles.titleDescription}>
                     <Text style={styles.titleText}>{UI_TEXT.RECORD_PURCHASE}</Text>
                     <Text style={styles.descriptionText}>{UI_TEXT.PURCHASE_DESCRIPTION}</Text>
+                </View>
+
+                <View style={styles.categoryContainer}>
+                    <Text style={styles.categoryLabel}>{UI_TEXT.SELECT_SELLER}</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={selectedSellerId}
+                            onValueChange={(value) => setSelectedSellerId(value as string)}
+                            style={styles.picker}
+                            mode="dialog"
+                        >
+                            <Picker.Item label={UI_TEXT.NO_SELLER} value="" />
+                            {sellers.map((s) => (
+                                <Picker.Item
+                                    key={s.id}
+                                    label={s.name}
+                                    value={s.id.toString()}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
                 </View>
 
                 <View style={styles.categoryContainer}>
@@ -156,14 +188,21 @@ export default function Purchase() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.purchaseItemRow}>
-                            <RNText style={styles.purchaseItemTitle}>
-                                {item.category} × {item.quantity} ({item.unit})
-                            </RNText>
+                            <View style={styles.sellerInfo}>
+                                <RNText style={styles.purchaseItemTitle}>
+                                    {item.category} × {item.quantity} ({item.unit})
+                                </RNText>
+                                {!!item.seller_name && (
+                                    <RNText style={styles.sellerPhoneText}>
+                                        {UI_TEXT.SOLD_BY}: {item.seller_name}
+                                    </RNText>
+                                )}
+                            </View>
                             <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
                         </View>
                     )}
                     ListEmptyComponent={
-                        <RNText style={[styles.emptyPriceListText, { color: theme.colors.tertiary }]}>
+                        <RNText style={styles.emptyPriceListText}>
                             {UI_TEXT.EMPTY_PURCHASE_LIST}
                         </RNText>
                     }

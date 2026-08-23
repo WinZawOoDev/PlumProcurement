@@ -1,6 +1,10 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
-import { theme } from '../theme'
+import { Appearance, View, Text, StyleSheet } from 'react-native'
+import { makeAppTheme } from '../theme'
+
+const isDark = Appearance.getColorScheme() === 'dark'
+const appTheme = makeAppTheme(isDark)
+const palette = (isDark ? appTheme.darkColors : appTheme.lightColors) ?? {}
 
 interface ErrorBoundaryProps {
     children: React.ReactNode
@@ -43,18 +47,18 @@ const fallbackStyles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.lightColors?.background ?? '#F8F9FA',
+        backgroundColor: palette.background ?? '#121212',
         padding: 24,
     },
     title: {
         fontSize: 18,
         fontWeight: '700',
-        color: theme.lightColors?.primary ?? '#4E2A47',
+        color: palette.primary ?? '#D8A7CA',
         marginBottom: 8,
     },
     message: {
         fontSize: 14,
-        color: '#1C1C1E',
+        color: palette.black ?? '#ECECEC',
         textAlign: 'center',
     },
 })

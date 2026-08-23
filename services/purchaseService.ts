@@ -2,17 +2,19 @@ import {
     createPurchase,
     fetchPurchases,
     initializePurchases,
-    IPurchase,
+    initializeSellers,
+    IPurchaseWithSeller,
 } from '../database'
 
-export type NewPurchase = Omit<IPurchase, 'id'>
+export type NewPurchase = Omit<IPurchaseWithSeller, 'id' | 'seller_name'>
 
 /**
  * Abstraction layer over the purchases database.
  * Components depend on this service instead of importing database.ts directly.
  */
 export class PurchaseService {
-    async getPurchases(): Promise<IPurchase[]> {
+    async getPurchases(): Promise<IPurchaseWithSeller[]> {
+        await initializeSellers()
         await initializePurchases()
         return fetchPurchases()
     }
