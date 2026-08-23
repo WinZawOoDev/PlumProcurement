@@ -124,6 +124,7 @@ export const UI_TEXT = {
   PURCHASE_HISTORY_TITLE: 'Purchase History',
   PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
   VIEW_HISTORY: 'View History',
+  EXPORT_CSV: 'Export CSV',
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
   TOTAL_VALUE: 'Total Value',
   PURCHASES_COUNT: 'Purchases',

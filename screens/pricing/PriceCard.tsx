@@ -4,13 +4,14 @@ import { Badge, Button, Card } from '@rneui/themed'
 import { IPrice } from '../../database'
 import { useStyles } from '../../styles'
 import { UI_TEXT, A11Y_LABELS } from '../../constants'
+import { formatDate } from '../../utils'
 
 interface PriceCardProps extends Omit<IPrice, 'id'> {
     onEdit?: () => void
     onDelete?: () => void
 }
 
-export default function PriceCard({ price, unit, category, is_available, onEdit, onDelete }: PriceCardProps) {
+export default function PriceCard({ price, unit, category, is_available, created_at, onEdit, onDelete }: PriceCardProps) {
 
     const styles = useStyles()
 
@@ -20,6 +21,9 @@ export default function PriceCard({ price, unit, category, is_available, onEdit,
                 <Card.Title style={styles.priceCardTitle}>
                     #{category}
                 </Card.Title>
+                {created_at && (
+                    <Text style={styles.priceCardDateText}>{formatDate(created_at)}</Text>
+                )}
                 <View style={styles.priceCardActionsRow}>
                     <Button
                         buttonStyle={styles.priceCardEditButton}

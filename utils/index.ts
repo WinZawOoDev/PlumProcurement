@@ -97,3 +97,52 @@ export function sleep(ms: number): Promise<void> {
 export function isEmpty(obj: any): boolean {
     return !obj || Object.keys(obj).length === 0
 }
+
+/**
+ * Extract YYYY-MM-DD from a SQLite datetime string
+ */
+export function formatDate(value?: string | null): string {
+    if (!value) return ''
+    return value.slice(0, 10)
+}
+
+function csvEscape(value: unknown): string {
+    const str = String(value ?? '')
+    if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`
+    }
+    return str
+}
+
+/**
+ * Build CSV text from purchase records
+ */
+export function buildPurchasesCsv(
+    purchases: Array<{
+        id: number
+        created_at?: string | null
+        seller_name?: string | null
+        category: string
+        unit: string
+        unit_price: number
+        quantity: number
+        total: number
+    }>
+): string {
+    const header = ['id', 'date', 'seller', 'category', 'unit', 'unit_price', 'quantity', 'total']
+    const rows = purchases.map((p) =>
+        [
+            p.id,
+            formatDate(p.created_at),
+            p.seller_name ?? '',
+            p.category,
+            p.unit,
+            p.unit_price,
+            p.quantity,
+            p.total,
+        ]
+            .map(csvEscape)
+            .join(',')
+    )
+    return [header.join(','), ...rows].join('\n')
+}

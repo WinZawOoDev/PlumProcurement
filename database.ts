@@ -9,6 +9,8 @@ export interface IPrice {
     unit: string;
     category: string;
     is_available: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export class DatabaseError extends Error {
@@ -185,6 +187,7 @@ export interface IPurchase {
     unit_price: number;
     quantity: number;
     total: number;
+    created_at?: string;
 }
 
 export interface IPurchaseWithSeller extends IPurchase {

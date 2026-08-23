@@ -395,6 +395,10 @@ export const useStyles = makeStyles((theme) => ({
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         textTransform: 'capitalize'
     },
+    priceCardDateText: {
+        fontSize: 12,
+        color: theme.colors.tertiary,
+    },
     priceCardActionsRow: {
         display: 'flex',
         flexDirection: 'row',
@@ -556,6 +560,9 @@ export const useStyles = makeStyles((theme) => ({
         paddingVertical: 10,
         paddingHorizontal: 5,
         marginBottom: 10,
+    },
+    exportButtonContainer: {
+        marginBottom: 15,
     },
     recentPurchasesTitle: {
         fontWeight: '700',

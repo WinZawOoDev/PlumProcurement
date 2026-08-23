@@ -8,6 +8,8 @@ import {
     throttle,
     sleep,
     isEmpty,
+    formatDate,
+    buildPurchasesCsv,
 } from '../utils'
 
 describe('formatPrice', () => {
@@ -127,5 +129,69 @@ describe('isEmpty', () => {
 
     test('detects non-empty objects', () => {
         expect(isEmpty({ a: 1 })).toBe(false)
+    })
+})
+
+describe('formatDate', () => {
+    test('extracts date portion from sqlite datetime', () => {
+        expect(formatDate('2026-08-24 13:45:00')).toBe('2026-08-24')
+    })
+
+    test('returns empty string for missing values', () => {
+        expect(formatDate(null)).toBe('')
+        expect(formatDate(undefined)).toBe('')
+        expect(formatDate('')).toBe('')
+    })
+})
+
+describe('buildPurchasesCsv', () => {
+    test('produces header and one row per purchase', () => {
+        const csv = buildPurchasesCsv([
+            {
+                id: 1,
+                created_at: '2026-08-24 10:00:00',
+                seller_name: 'U Ba',
+                category: 'fruits',
+                unit: 'PER KG',
+                unit_price: 3000,
+                quantity: 2,
+                total: 6000,
+            },
+        ])
+        const lines = csv.split('\n')
+        expect(lines[0]).toBe('id,date,seller,category,unit,unit_price,quantity,total')
+        expect(lines[1]).toBe('1,2026-08-24,U Ba,fruits,PER KG,3000,2,6000')
+    })
+
+    test('escapes commas and quotes in seller names', () => {
+        const csv = buildPurchasesCsv([
+            {
+                id: 2,
+                created_at: '2026-08-24 10:00:00',
+                seller_name: 'Ba, "The Trader"',
+                category: 'dairy',
+                unit: 'PER UNIT',
+                unit_price: 500,
+                quantity: 1,
+                total: 500,
+            },
+        ])
+        expect(csv).toContain('"Ba, ""The Trader"""')
+    })
+
+    test('renders null seller as empty field', () => {
+        const csv = buildPurchasesCsv([
+            {
+                id: 3,
+                created_at: '2026-08-24 10:00:00',
+                seller_name: null,
+                category: 'grains',
+                unit: 'PER BUNCH',
+                unit_price: 100,
+                quantity: 5,
+                total: 500,
+            },
+        ])
+        expect(csv.split('\n')[1]).toBe('3,2026-08-24,,grains,PER BUNCH,100,5,500')
     })
 })
