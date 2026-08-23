@@ -26,5 +26,8 @@ export { DatabaseError } from './database'
 export { PriceService, priceService } from './services/priceService'
 export type { NewPrice } from './services/priceService'
 
+// Export context
+export { PriceProvider, usePrices } from './context/PriceContext'
+
 // Export constants
 export * from './constants'

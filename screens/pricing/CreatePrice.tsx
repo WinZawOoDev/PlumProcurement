@@ -6,7 +6,7 @@ import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { DatabaseError } from '../../database'
-import { priceService } from '../../services/priceService'
+import { usePrices } from '../../context/PriceContext'
 import { FormSelectField, FormInputField, FormCheckboxField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
@@ -21,6 +21,7 @@ type FormData = {
 export default function CreatePrice() {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
+    const { addPrice } = usePrices()
     const [saving, setSaving] = useState(false)
 
     const { control, handleSubmit } = useForm<FormData>({
@@ -36,14 +37,14 @@ export default function CreatePrice() {
     const handleSavePrice = async (data: FormData) => {
         setSaving(true)
         try {
-            await priceService.addPrice({
+            await addPrice({
                 category: data.category,
                 price: parseFloat(data.price),
                 unit: UNIT_LIST[data.unit],
                 is_available: data.isAvailable,
             })
             ToastAndroid.show(MESSAGES.PRICE_SAVED_SUCCESS, ToastAndroid.SHORT)
-            navigation.popTo(ROUTES.PURCHASE_PRICE, { refresh: true })
+            navigation.popTo(ROUTES.PURCHASE_PRICE)
         } catch (error) {
             const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
             ToastAndroid.show(message, ToastAndroid.LONG)
@@ -101,6 +102,7 @@ export default function CreatePrice() {
                 <PrimaryButton
                     title={UI_TEXT.SAVE_PRICE}
                     disabled={saving}
+                    loading={saving}
                     onPress={handleSubmit(handleSavePrice)}
                 />
                 <SecondaryButton

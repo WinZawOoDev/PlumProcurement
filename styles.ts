@@ -1,4 +1,5 @@
 import { makeStyles } from "@rneui/themed";
+import { DIMENSIONS, TYPOGRAPHY } from "./constants";
 
 export const useStyles = makeStyles((theme) => ({
     // ===== GLOBAL =====
@@ -37,7 +38,7 @@ export const useStyles = makeStyles((theme) => ({
     pickerWrapper: {
         width: 'auto',
         backgroundColor: theme.colors.secondary,
-        borderRadius: 4,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
         padding: 1
     },
     picker: {
@@ -55,8 +56,8 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 16,
     },
     buttonGroupContainer: {
-        height: 55,
-        borderRadius: 5,
+        height: DIMENSIONS.BUTTON_HEIGHT,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
         padding: 1,
         backgroundColor: theme.colors.secondary,
     },
@@ -84,14 +85,14 @@ export const useStyles = makeStyles((theme) => ({
     priceInputFieldContainer: {
         borderBottomWidth: 0,
         backgroundColor: theme.colors.white,
-        borderRadius: 4
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL
     },
     priceInputField: {
         color: theme.colors.black,
         fontWeight: 'bold',
         fontSize: 25,
-        letterSpacing: 0.5,
-        fontFamily: 'Inter',
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         textAlign: 'center'
     },
     saveButtonContainer: {
@@ -100,8 +101,8 @@ export const useStyles = makeStyles((theme) => ({
     },
     saveButton: {
         backgroundColor: theme.colors.primary,
-        borderRadius: 4,
-        paddingVertical: 12,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
         marginTop: 10
     },
     saveTitleStyle: {
@@ -114,8 +115,8 @@ export const useStyles = makeStyles((theme) => ({
     bottomSheetContainer: {
         width: '100%',
         backgroundColor: theme.colors.white,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        borderTopLeftRadius: DIMENSIONS.BORDER_RADIUS_LARGE,
+        borderTopRightRadius: DIMENSIONS.BORDER_RADIUS_LARGE,
         paddingVertical: 20,
         paddingHorizontal: 25
     },
@@ -123,7 +124,7 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 16,
         fontWeight: '600',
         color: theme.colors.primary,
-        fontFamily: 'Manrope'
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY
     },
     bottomSheetHeaderRow: {
         display: 'flex',
@@ -135,35 +136,35 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 16,
         fontWeight: '600',
         color: theme.colors.tertiary,
-        fontFamily: 'Manrope',
-        letterSpacing: 0.5,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
         lineHeight: 30
     },
     bottomSheetUnitText: {
         fontSize: 14,
         fontWeight: 'bold',
         color: theme.colors.tertiary,
-        fontFamily: 'Inter',
-        letterSpacing: 0.5,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
         lineHeight: 15
     },
     editPriceInputContainer: {
         borderBottomWidth: 0,
         backgroundColor: theme.colors.white,
-        borderRadius: 4
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL
     },
     editPriceInput: {
         color: theme.colors.black,
         fontWeight: 'bold',
         fontSize: 25,
-        letterSpacing: 0.5,
-        fontFamily: 'Inter',
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         textAlign: 'center'
     },
     updateButtonStyle: {
         backgroundColor: theme.colors.primary,
-        borderRadius: 4,
-        paddingVertical: 12,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
         marginTop: 10
     },
     updateButtonContainerStyle: {
@@ -178,8 +179,8 @@ export const useStyles = makeStyles((theme) => ({
     },
     cancelButtonStyle: {
         backgroundColor: theme.colors.neutral,
-        borderRadius: 4,
-        paddingVertical: 12,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
         marginTop: 10
     },
     cancelButtonTitleStyle: {
@@ -199,9 +200,9 @@ export const useStyles = makeStyles((theme) => ({
     addPriceButton: {
         display: 'flex',
         justifyContent: 'flex-start',
-        paddingHorizontal: 20,
-        paddingBlock: 12,
-        borderRadius: 4,
+        paddingHorizontal: DIMENSIONS.BUTTON_PADDING_HORIZONTAL,
+        paddingBlock: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
         backgroundColor: theme.colors.primary,
         elevation: 0,
         shadowOpacity: 0,
@@ -211,19 +212,19 @@ export const useStyles = makeStyles((theme) => ({
         fontWeight: '600',
         fontSize: 17,
         lineHeight: 20,
-        fontFamily: 'Inter',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         color: 'white',
         marginLeft: 10
     },
     searchButtonContainer: {
         shadowColor: 'transparent',
-        borderRadius: 5,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
     },
     searchButton: {
         display: 'flex',
         justifyContent: 'flex-start',
-        paddingBlock: 12,
-        borderRadius: 5,
+        paddingBlock: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
         backgroundColor: theme.colors.neutral,
         elevation: 0,
         shadowOpacity: 0,
@@ -251,13 +252,13 @@ export const useStyles = makeStyles((theme) => ({
         alignItems: 'center'
     },
     priceCardTitle: {
-        letterSpacing: 0.5,
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
         alignSelf: 'flex-start',
         textAlign: 'left',
         fontWeight: 'bold',
         color: theme.colors.primary,
         fontSize: 16,
-        fontFamily: 'Manrope',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         textTransform: 'capitalize'
     },
     priceCardEditButton: {
@@ -279,7 +280,7 @@ export const useStyles = makeStyles((theme) => ({
         fontWeight: 'thin',
         fontSize: 13,
         lineHeight: 17,
-        fontFamily: 'Inter',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         color: theme.colors.tertiary
     },
     priceCardValue: {
@@ -287,7 +288,7 @@ export const useStyles = makeStyles((theme) => ({
         fontWeight: 'bold',
         fontSize: 15,
         lineHeight: 17,
-        fontFamily: 'Inter'
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
     },
     priceCardCurrencySymbol: {
         fontWeight: '700'
@@ -297,7 +298,7 @@ export const useStyles = makeStyles((theme) => ({
         fontWeight: 'condensed',
         fontSize: 14,
         lineHeight: 17,
-        fontFamily: 'Inter'
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
     },
     priceCardBadgeStyle: {
         backgroundColor: theme.colors.neutral
@@ -306,7 +307,7 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 12,
         fontWeight: 'thin',
         color: theme.colors.black,
-        fontFamily: 'Inter'
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
     },
 
     // ===== PRICING - PURCHASE PRICE =====
@@ -318,15 +319,15 @@ export const useStyles = makeStyles((theme) => ({
         marginBottom: 10
     },
     titleText: {
-        fontFamily: 'Manrope',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         fontSize: 25,
         fontWeight: '700',
         color: theme.colors.primary,
-        letterSpacing: 0.5,
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
         lineHeight: 40
     },
     descriptionText: {
-        fontFamily: 'Inter',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         fontWeight: '500',
         fontSize: 16,
         lineHeight: 24,
@@ -335,12 +336,12 @@ export const useStyles = makeStyles((theme) => ({
         flex: 1,
         width: '100%',
         backgroundColor: theme.colors.secondary,
-        height: 200,
+        height: DIMENSIONS.EMPTY_LIST_HEIGHT,
         alignItems: 'center',
         justifyContent: 'center'
     },
     priceListFlatList: {
-        marginBottom: 130,
+        marginBottom: DIMENSIONS.FLAT_LIST_MARGIN_BOTTOM,
     },
 
     // ===== PURCHASE =====
@@ -357,8 +358,8 @@ export const useStyles = makeStyles((theme) => ({
     plumCountCircle: {
         display: 'flex',
         backgroundColor: '#F2F2F5',
-        width: 300,
-        height: 300,
+        width: DIMENSIONS.PLUM_COUNT_CIRCLE_SIZE,
+        height: DIMENSIONS.PLUM_COUNT_CIRCLE_SIZE,
         padding: 'auto',
         margin: 'auto',
         borderRadius: '100%',
@@ -382,7 +383,7 @@ export const useStyles = makeStyles((theme) => ({
     countButtonTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        letterSpacing: 0.5
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING
     },
 
     // ===== SELLERS =====

@@ -1,45 +1,22 @@
 import { RefreshControl, View, Text, FlatList } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { IPrice } from '../../database'
-import { priceService } from '../../services/priceService'
-import { useRoute } from '@react-navigation/native'
+import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
 import { SAFE_AREA, UI_TEXT } from '../../constants'
 
 export default function PurchasePrices() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const route = useRoute()
-
-    const [price, setPrice] = useState<{ list: IPrice[], isLoading: boolean }>({ list: [], isLoading: false })
-
-    async function getPrices() {
-        setPrice(prev => ({ ...prev, isLoading: true }))
-        try {
-            const data = await priceService.getPrices()
-            setPrice({ list: data, isLoading: false })
-        } catch (error) {
-            console.error('Failed to fetch prices:', error)
-            setPrice({ list: [], isLoading: false })
-        }
-    }
+    const { prices, loading, refresh } = usePrices()
 
     useEffect(() => {
-        getPrices()
-    }, [])
-
-    useEffect(() => {
-        //@ts-expect-error
-        const isRefresh = route.params?.refresh
-        if (isRefresh) {
-            getPrices()
-        }
-    }, [route.params])
+        refresh()
+    }, [refresh])
 
     return (
         <SafeAreaView
@@ -50,9 +27,9 @@ export default function PurchasePrices() {
                 <TitleAndDescription />
                 <ActionButtons />
                 <FlatList
-                    data={price.list}
+                    data={prices}
                     keyExtractor={(item) => item.id.toString()}
-                    refreshing={price.isLoading}
+                    refreshing={loading}
                     initialScrollIndex={0}
                     renderItem={({ item }) => <PriceCard {...item} />}
                     ListEmptyComponent={<EmptyPriceList />}
@@ -63,8 +40,8 @@ export default function PurchasePrices() {
                     windowSize={10}
                     refreshControl={
                         <RefreshControl
-                            refreshing={price.isLoading}
-                            onRefresh={getPrices}
+                            refreshing={loading}
+                            onRefresh={refresh}
                             colors={[theme.colors.primary]}
                         />
                     }

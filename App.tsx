@@ -16,6 +16,7 @@ import PurchaseStack from './screens/purchaseing/Stack';
 import { navTheme, theme } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PriceProvider } from './context/PriceContext';
 
 
 const RootStack = createBottomTabNavigator({
@@ -103,9 +104,11 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
-        <SafeAreaProvider>
-          <Navigation />
-        </SafeAreaProvider>
+        <PriceProvider>
+          <SafeAreaProvider>
+            <Navigation />
+          </SafeAreaProvider>
+        </PriceProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
