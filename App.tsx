@@ -72,7 +72,7 @@ const Navigator = createStaticNavigation(RootStack);
 function Navigation() {
 
   const isDarkMode = useColorScheme() === 'dark';
-  const { theme } = useTheme();
+  const { theme: currentTheme } = useTheme();
 
   return (
     <NavigationContainer
@@ -80,8 +80,8 @@ function Navigation() {
         ...navTheme as unknown as Theme,
         colors: {
           ...navTheme.colors,
-          background: theme.colors.background,
-          primary: theme.colors.primary,
+          background: currentTheme.colors.background,
+          primary: currentTheme.colors.primary,
         },
         dark: isDarkMode
       }}
@@ -89,7 +89,7 @@ function Navigation() {
       <NavigationIndependentTree>
         <StatusBar
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={theme.colors.background}
+          backgroundColor={currentTheme.colors.background}
         />
         <Navigator />
       </NavigationIndependentTree>

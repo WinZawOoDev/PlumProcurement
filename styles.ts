@@ -2,6 +2,125 @@ import { makeStyles } from "@rneui/themed";
 import { DIMENSIONS, TYPOGRAPHY } from "./constants";
 
 export const useStyles = makeStyles((theme) => ({
+    // ===== SHARED - BUTTONS =====
+    raisedButtonContainer: {
+        shadowColor: 'transparent',
+        elevation: 0,
+        shadowOpacity: 0,
+    },
+    primaryButton: {
+        backgroundColor: theme.colors.primary,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
+        paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+    },
+    primaryButtonTitle: {
+        color: theme.colors.white,
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    secondaryButton: {
+        backgroundColor: theme.colors.neutral,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
+        paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+        borderWidth: 0.5,
+        borderColor: theme.colors.primary,
+    },
+    secondaryButtonTitle: {
+        color: theme.colors.primary,
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    iconButtonBase: {
+        display: 'flex',
+        justifyContent: 'flex-start',
+        paddingHorizontal: DIMENSIONS.BUTTON_PADDING_HORIZONTAL,
+        paddingBlock: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        elevation: 0,
+        shadowOpacity: 0,
+        borderWidth: 0,
+    },
+    iconButtonPrimary: {
+        backgroundColor: theme.colors.primary,
+    },
+    iconButtonSecondary: {
+        backgroundColor: theme.colors.neutral,
+    },
+    iconButtonTitle: {
+        fontWeight: '600',
+        fontSize: 17,
+        lineHeight: 20,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        marginLeft: 10,
+    },
+    iconButtonTitlePrimary: {
+        fontWeight: '600',
+        fontSize: 17,
+        lineHeight: 20,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        marginLeft: 10,
+        color: 'white',
+    },
+    iconButtonTitleSecondary: {
+        fontWeight: '600',
+        fontSize: 17,
+        lineHeight: 20,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        marginLeft: 10,
+        color: theme.colors.primary,
+    },
+
+    // ===== SHARED - FORM FIELDS =====
+    formErrorText: {
+        color: theme.colors.error,
+        fontSize: 12,
+    },
+    formInputLabel: {
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    formInputContainer: {
+        borderBottomWidth: 0,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        paddingBlock: 5,
+        marginTop: 10,
+        backgroundColor: theme.colors.secondary,
+    },
+    formInput: {
+        paddingHorizontal: 15,
+        fontSize: 18,
+        paddingBlock: 10,
+    },
+    formCheckboxText: {
+        fontWeight: '600',
+        color: theme.colors.primary,
+        fontSize: 16,
+    },
+    formCheckboxContainer: {
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderColor: theme.colors.secondary,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+    },
+    formButtonGroupButton: {
+        borderWidth: 0,
+        backgroundColor: theme.colors.secondary,
+    },
+    formButtonGroupSelectedButton: {
+        backgroundColor: theme.colors.white,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        borderWidth: 0.5,
+        borderColor: theme.colors.secondary,
+    },
+    formButtonGroupSelectedText: {
+        fontWeight: 'bold',
+        color: theme.colors.black,
+        fontSize: 14,
+    },
+    formButtonGroupInnerBorder: {
+        color: theme.colors.secondary,
+    },
+
     // ===== GLOBAL =====
     container: {
         flex: 1,
@@ -14,6 +133,21 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== PRICING - CREATE PRICE =====
+    createPriceActions: {
+        marginTop: 30,
+        width: '100%',
+        paddingHorizontal: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+    },
+    headerTitleText: {
+        color: theme.colors.primary,
+        fontWeight: '700',
+        fontSize: 20,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
+    },
     createPriceContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -323,6 +457,18 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== PRICING - PURCHASE PRICE =====
+    priceListScreen: {
+        flexDirection: 'column',
+        padding: 15,
+        backgroundColor: theme.colors.background,
+        height: '100%',
+    },
+    emptyPriceListText: {
+        alignSelf: 'center',
+    },
+    searchBarContainer: {
+        marginBottom: 10,
+    },
     priceListContainer: {
         paddingHorizontal: 12,
         paddingBlock: 15
@@ -357,6 +503,91 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== PURCHASE =====
+    quantityRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        marginBottom: 20,
+        gap: 15,
+    },
+    quantityStepperButton: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: theme.colors.primary,
+        paddingHorizontal: 12,
+        paddingVertical: 2,
+        borderWidth: 1,
+        borderColor: theme.colors.secondary,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+        backgroundColor: theme.colors.secondary,
+    },
+    quantityValue: {
+        fontSize: 20,
+        fontWeight: '700',
+        minWidth: 40,
+        textAlign: 'center',
+        color: theme.colors.black,
+    },
+    purchaseSummaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+    },
+    purchaseSummaryLabel: {
+        fontWeight: '600',
+        color: theme.colors.tertiary,
+        fontSize: 14,
+    },
+    purchaseSummaryValue: {
+        fontWeight: '600',
+        fontSize: 16,
+        color: theme.colors.black,
+    },
+    purchaseTotalText: {
+        fontWeight: '700',
+        fontSize: 18,
+        color: theme.colors.primary,
+    },
+    purchaseSummaryCard: {
+        backgroundColor: theme.colors.white,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_MEDIUM,
+        paddingVertical: 10,
+        paddingHorizontal: 5,
+        marginBottom: 10,
+    },
+    recentPurchasesTitle: {
+        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        color: theme.colors.primary,
+        marginTop: 20,
+        marginBottom: 8,
+    },
+    purchaseItemRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 0.5,
+        borderColor: theme.colors.secondary,
+    },
+    purchaseItemTitle: {
+        fontWeight: '600',
+        fontSize: 15,
+        color: theme.colors.black,
+    },
+    purchaseItemSubtitle: {
+        fontSize: 13,
+        color: theme.colors.tertiary,
+        marginTop: 2,
+    },
+    purchaseItemTotal: {
+        fontWeight: '700',
+        fontSize: 15,
+        color: theme.colors.black,
+    },
     purchaseContainer: {
         flex: 1,
         justifyContent: 'center',

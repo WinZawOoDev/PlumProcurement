@@ -1,6 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
-import { Input, Text, useTheme, CheckBox, ButtonGroup } from '@rneui/themed'
+import { Input, Text, CheckBox, ButtonGroup, useTheme } from '@rneui/themed'
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form'
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
@@ -25,7 +25,6 @@ export function FormSelectField<T extends FieldValues>({
     required = false,
     rules,
 }: FormSelectFieldProps<T>) {
-    const { theme } = useTheme()
     const styles = useStyles()
 
     return (
@@ -55,7 +54,7 @@ export function FormSelectField<T extends FieldValues>({
                             ))}
                         </Picker>
                     </View>
-                    {error && <Text style={{ color: theme.colors.error, fontSize: 12 }}>{error.message}</Text>}
+                    {error && <Text style={styles.formErrorText}>{error.message}</Text>}
                 </View>
             )}
         />
@@ -81,7 +80,7 @@ export function FormInputField<T extends FieldValues>({
     required: _required = false,
     rules,
 }: FormInputFieldProps<T>) {
-    const { theme } = useTheme()
+    const styles = useStyles()
 
     return (
         <Controller
@@ -91,27 +90,14 @@ export function FormInputField<T extends FieldValues>({
             render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
                 <Input
                     label={label}
-                    labelStyle={{
-                        fontWeight: '600',
-                        color: theme.colors.primary,
-                    }}
+                    labelStyle={styles.formInputLabel}
                     placeholder={placeholder}
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
                     keyboardType={keyboardType}
-                    inputContainerStyle={{
-                        borderBottomWidth: 0,
-                        backgroundColor: theme.colors.secondary,
-                        borderRadius: 4,
-                        paddingBlock: 5,
-                        marginTop: 10,
-                    }}
-                    inputStyle={{
-                        paddingHorizontal: 15,
-                        fontSize: 18,
-                        paddingBlock: 10,
-                    }}
+                    inputContainerStyle={styles.formInputContainer}
+                    inputStyle={styles.formInput}
                     errorMessage={error?.message || ''}
                 />
             )}
@@ -130,6 +116,7 @@ export function FormCheckboxField<T extends FieldValues>({
     control,
     label,
 }: FormCheckboxFieldProps<T>) {
+    const styles = useStyles()
     const { theme } = useTheme()
 
     return (
@@ -143,17 +130,8 @@ export function FormCheckboxField<T extends FieldValues>({
                     checkedIcon={<Ionicons name="checkbox-outline" size={24} color={theme.colors.black} />}
                     uncheckedIcon={<Ionicons name="square-outline" size={24} color={theme.colors.black} />}
                     onPress={() => onChange(!value)}
-                    textStyle={{
-                        fontWeight: '600',
-                        color: theme.colors.primary,
-                        fontSize: 16,
-                    }}
-                    containerStyle={{
-                        alignSelf: 'flex-start',
-                        borderWidth: 1,
-                        borderColor: theme.colors.secondary,
-                        borderRadius: 4,
-                    }}
+                    textStyle={styles.formCheckboxText}
+                    containerStyle={styles.formCheckboxContainer}
                 />
             )}
         />
@@ -177,7 +155,6 @@ export function FormButtonGroupField<T extends FieldValues>({
     required = false,
     rules,
 }: FormButtonGroupFieldProps<T>) {
-    const { theme } = useTheme()
     const styles = useStyles()
 
     return (
@@ -196,26 +173,12 @@ export function FormButtonGroupField<T extends FieldValues>({
                         onPress={(index) => onChange(index)}
                         containerStyle={styles.buttonGroupContainer}
                         buttonContainerStyle={styles.buttonGroupButtonContainer}
-                        buttonStyle={{
-                            borderWidth: 0,
-                            backgroundColor: theme.colors.secondary,
-                        }}
-                        selectedButtonStyle={{
-                            backgroundColor: theme.colors.white,
-                            borderRadius: 4,
-                            borderWidth: 0.5,
-                            borderColor: theme.colors.secondary,
-                        }}
-                        selectedTextStyle={{
-                            fontWeight: 'bold',
-                            color: theme.colors.black,
-                            fontSize: 14,
-                        }}
-                        innerBorderStyle={{
-                            color: theme.colors.secondary,
-                        }}
+                        buttonStyle={styles.formButtonGroupButton}
+                        selectedButtonStyle={styles.formButtonGroupSelectedButton}
+                        selectedTextStyle={styles.formButtonGroupSelectedText}
+                        innerBorderStyle={styles.formButtonGroupInnerBorder}
                     />
-                    {error && <Text style={{ color: theme.colors.error, fontSize: 12 }}>{error.message}</Text>}
+                    {error && <Text style={styles.formErrorText}>{error.message}</Text>}
                 </View>
             )}
         />

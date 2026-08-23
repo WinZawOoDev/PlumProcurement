@@ -1,13 +1,27 @@
 import { View } from 'react-native'
 import React from 'react'
-import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
-import { useNavigation } from '@react-navigation/native'
 import { IconButton } from '../../components/buttons/Button'
 import { UI_TEXT, ROUTES, DIMENSIONS } from '../../constants'
+import { useNavigation } from '@react-navigation/native'
+import { useStyles } from '../../styles'
 
-export default function ActionButtons() {
+interface ActionButtonsProps {
+    searchActive?: boolean
+    onSearchPress?: () => void
+    sortActive?: boolean
+    sortDirection?: 'asc' | 'desc'
+    onSortPress?: () => void
+}
+
+export default function ActionButtons({
+    searchActive = false,
+    onSearchPress,
+    sortActive = false,
+    sortDirection,
+    onSortPress,
+}: ActionButtonsProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     const navigation = useNavigation()
@@ -22,8 +36,32 @@ export default function ActionButtons() {
                 onPress={() => navigation.navigate(ROUTES.CREATE_PRICE)}
             />
             <IconButton
-                icon={<Ionicons name="search-outline" size={DIMENSIONS.ICON_SIZE_LARGE} color={theme.colors.tertiary} />}
+                icon={
+                    <Ionicons
+                        name={searchActive ? 'search' : 'search-outline'}
+                        size={DIMENSIONS.ICON_SIZE_LARGE}
+                        color={searchActive ? theme.colors.primary : theme.colors.tertiary}
+                    />
+                }
                 variant="secondary"
+                onPress={onSearchPress}
+            />
+            <IconButton
+                icon={
+                    <Ionicons
+                        name={
+                            !sortActive
+                                ? 'funnel-outline'
+                                : sortDirection === 'asc'
+                                    ? 'arrow-up'
+                                    : 'arrow-down'
+                        }
+                        size={DIMENSIONS.ICON_SIZE_LARGE}
+                        color={sortActive ? theme.colors.primary : theme.colors.tertiary}
+                    />
+                }
+                variant="secondary"
+                onPress={onSortPress}
             />
         </View>
     )

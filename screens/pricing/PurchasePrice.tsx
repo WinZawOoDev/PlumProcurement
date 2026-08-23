@@ -1,5 +1,7 @@
 import { RefreshControl, View, Text, FlatList, ToastAndroid } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Input } from '@rneui/themed'
+import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,7 +9,7 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT, MESSAGES } from '../../constants'
+import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
 import { IPrice } from '../../database'
 
 export default function PurchasePrices() {
@@ -15,10 +17,43 @@ export default function PurchasePrices() {
     const { theme } = useTheme()
     const { prices, loading, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
+    const [searchVisible, setSearchVisible] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [sortMode, setSortMode] = useState<SortMode>('default')
 
     useEffect(() => {
         refresh()
     }, [refresh])
+
+    const visiblePrices = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase()
+        let list = prices
+        if (query) {
+            list = list.filter(
+                (p) =>
+                    p.category.toLowerCase().includes(query) ||
+                    p.unit.toLowerCase().includes(query)
+            )
+        }
+        if (sortMode === 'price_asc') {
+            list = [...list].sort((a, b) => a.price - b.price)
+        } else if (sortMode === 'price_desc') {
+            list = [...list].sort((a, b) => b.price - a.price)
+        }
+        return list
+    }, [prices, searchQuery, sortMode])
+
+    const handleSortPress = () => {
+        const nextIndex = (SORT_MODES.indexOf(sortMode) + 1) % SORT_MODES.length
+        setSortMode(SORT_MODES[nextIndex])
+    }
+
+    const handleToggleSearch = () => {
+        setSearchVisible((prev) => {
+            if (prev) setSearchQuery('')
+            return !prev
+        })
+    }
 
     const handleDelete = async (id: number) => {
         try {
@@ -32,13 +67,37 @@ export default function PurchasePrices() {
     return (
         <SafeAreaView
             edges={SAFE_AREA.EDGES}
-            style={{ ...styles.screenContainer, height: '100%' }}
+            style={styles.priceListScreen}
         >
             <View style={styles.priceListContainer}>
                 <TitleAndDescription />
-                <ActionButtons />
+                <ActionButtons
+                    searchActive={searchVisible}
+                    onSearchPress={handleToggleSearch}
+                    sortActive={sortMode !== 'default'}
+                    sortDirection={sortMode === 'price_asc' ? 'asc' : 'desc'}
+                    onSortPress={handleSortPress}
+                />
+                {searchVisible && (
+                    <Input
+                        placeholder={UI_TEXT.SEARCH_PRICES_PLACEHOLDER}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        inputContainerStyle={styles.formInputContainer}
+                        inputStyle={styles.formInput}
+                        containerStyle={styles.searchBarContainer}
+                        rightIcon={
+                            <Ionicons
+                                name="close-circle-outline"
+                                size={22}
+                                color={theme.colors.tertiary}
+                                onPress={() => setSearchQuery('')}
+                            />
+                        }
+                    />
+                )}
                 <FlatList
-                    data={prices}
+                    data={visiblePrices}
                     keyExtractor={(item) => item.id.toString()}
                     refreshing={loading}
                     initialScrollIndex={0}
@@ -79,7 +138,7 @@ function EmptyPriceList() {
 
     return (
         <View style={styles.emptyPriceListContainer}>
-            <Text style={{ alignSelf: 'center' }}>{UI_TEXT.PLUM_COUNT_TITLE}</Text>
+            <Text style={styles.emptyPriceListText}>{UI_TEXT.PLUM_COUNT_TITLE}</Text>
         </View>
     )
 }

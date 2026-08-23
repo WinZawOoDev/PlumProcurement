@@ -1,6 +1,6 @@
 import { View, KeyboardAvoidingView, Platform, ToastAndroid } from 'react-native'
 import React, { useState } from 'react'
-import { Text, useTheme } from '@rneui/themed'
+import { Text } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -98,7 +98,7 @@ export default function CreatePrice() {
                 label={UI_TEXT.AVAILABLE}
             />
 
-            <View style={{ marginTop: 30, width: '100%', paddingHorizontal: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <View style={styles.createPriceActions}>
                 <PrimaryButton
                     title={UI_TEXT.SAVE_PRICE}
                     disabled={saving}
@@ -116,10 +116,10 @@ export default function CreatePrice() {
 }
 
 export function CreatePriceHeaderTitle() {
-    const { theme } = useTheme()
+    const styles = useStyles()
     return (
         <View>
-            <Text style={{ color: theme.colors.primary, fontWeight: '700', fontSize: 20, fontFamily: 'Manrope', letterSpacing: 0.5 }}>
+            <Text style={styles.headerTitleText}>
                 Price Entry
             </Text>
         </View>

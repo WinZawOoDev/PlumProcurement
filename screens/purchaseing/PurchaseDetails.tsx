@@ -1,10 +1,70 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { FlatList, Text as RNText, View } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Text } from '@rneui/base'
+import { useStyles } from '../../styles'
+import { UI_TEXT, SAFE_AREA } from '../../constants'
+import { purchaseService } from '../../services/purchaseService'
+import { IPurchase } from '../../database'
 
 export default function PurchaseDetails() {
-  return (
-    <View>
-      <Text>PurchaseDetails</Text>
-    </View>
-  )
+    const styles = useStyles()
+    const [purchases, setPurchases] = useState<IPurchase[]>([])
+
+    const loadPurchases = useCallback(async () => {
+        try {
+            setPurchases(await purchaseService.getPurchases())
+        } catch (error) {
+            console.error('Failed to fetch purchases:', error)
+        }
+    }, [])
+
+    useEffect(() => {
+        loadPurchases()
+    }, [loadPurchases])
+
+    const grandTotal = purchases.reduce((sum, p) => sum + p.total, 0)
+
+    return (
+        <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
+            <View style={styles.priceListContainer}>
+                <View style={styles.titleDescription}>
+                    <Text style={styles.titleText}>{UI_TEXT.PURCHASE_HISTORY_TITLE}</Text>
+                    <Text style={styles.descriptionText}>{UI_TEXT.PURCHASE_HISTORY_DESCRIPTION}</Text>
+                </View>
+
+                <View style={styles.purchaseSummaryCard}>
+                    <View style={styles.purchaseSummaryRow}>
+                        <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.PURCHASES_COUNT}</RNText>
+                        <RNText style={styles.purchaseSummaryValue}>{purchases.length}</RNText>
+                    </View>
+                    <View style={styles.purchaseSummaryRow}>
+                        <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_VALUE}</RNText>
+                        <RNText style={styles.purchaseTotalText}>{grandTotal.toFixed(2)}$</RNText>
+                    </View>
+                </View>
+
+                <FlatList
+                    data={purchases}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <View style={styles.purchaseItemRow}>
+                            <View>
+                                <RNText style={styles.purchaseItemTitle}>
+                                    {item.category} ({item.unit})
+                                </RNText>
+                                <RNText style={styles.purchaseItemSubtitle}>
+                                    {item.quantity} × {item.unit_price.toFixed(2)}$
+                                </RNText>
+                            </View>
+                            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                        </View>
+                    )}
+                    ListEmptyComponent={
+                        <RNText style={styles.emptyPriceListText}>{UI_TEXT.EMPTY_PURCHASE_LIST}</RNText>
+                    }
+                />
+            </View>
+        </SafeAreaView>
+    )
 }

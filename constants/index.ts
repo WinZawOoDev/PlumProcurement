@@ -57,9 +57,11 @@ export const MESSAGES = {
   PRICE_SAVED_SUCCESS: 'Price saved successfully!',
   PRICE_UPDATE_SUCCESS: 'Price updated successfully!',
   PRICE_DELETE_SUCCESS: 'Price deleted successfully!',
+  PURCHASE_RECORDED_SUCCESS: 'Purchase recorded successfully!',
   ERROR_GENERIC: 'Something went wrong. Please try again.',
   ERROR_DATABASE: 'Database error occurred.',
   ERROR_INVALID_INPUT: 'Invalid input. Please check your data.',
+  ERROR_INVALID_QUANTITY: 'Quantity must be a whole number greater than zero.',
   ERROR_NETWORK: 'Network error. Please check your connection.',
   EMPTY_PRICE_LIST: 'No prices available',
   LOADING: 'Loading...',
@@ -100,7 +102,28 @@ export const UI_TEXT = {
   // Availability
   AVAILABLE_STATUS: 'Available',
   UNAVAILABLE_STATUS: 'Unavailable',
+
+  // Search & sort
+  SEARCH_PRICES_PLACEHOLDER: 'Search by category or unit',
+
+  // Purchasing
+  RECORD_PURCHASE: 'Record Purchase',
+  PURCHASE_DESCRIPTION: 'Select a price item and record purchased quantities.',
+  SELECT_PRICE_ITEM: 'Price Item',
+  QUANTITY: 'Quantity',
+  UNIT_PRICE: 'Unit Price',
+  TOTAL: 'Total',
+  RECENT_PURCHASES: 'Recent Purchases',
+  PURCHASE_HISTORY_TITLE: 'Purchase History',
+  PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
+  VIEW_HISTORY: 'View History',
+  EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
+  TOTAL_VALUE: 'Total Value',
+  PURCHASES_COUNT: 'Purchases',
 } as const;
+
+export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;
+export type SortMode = (typeof SORT_MODES)[number];
 
 // ===== DATABASE CONFIGURATION =====
 export const DATABASE_CONFIG = {
