@@ -204,10 +204,10 @@ import { useHeaderHeight } from '...'  // Never used
 - [ ] Extract spacing/sizing constants to [theme.ts](theme.ts)
 - [ ] Create `services/priceService.ts` (database abstraction)
 - [ ] Implement Context API for price state
-- [ ] Add input validation rules
-- [ ] Optimize FlatList in [PurchasePrice.tsx](screens/pricing/PurchasePrice.tsx)
+- [x] Add input validation rules
+- [x] Optimize FlatList in [PurchasePrice.tsx](screens/pricing/PurchasePrice.tsx)
 - [ ] Add loading indicators
-- [ ] Add error boundaries
+- [x] Add error boundaries (`components/ErrorBoundary.tsx`)
 - [ ] Testing & QA
 
 ---

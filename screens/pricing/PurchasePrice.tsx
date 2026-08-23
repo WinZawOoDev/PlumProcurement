@@ -56,6 +56,11 @@ export default function PurchasePrices() {
                     initialScrollIndex={0}
                     renderItem={({ item }) => <PriceCard {...item} />}
                     ListEmptyComponent={<EmptyPriceList />}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={10}
+                    updateCellsBatchingPeriod={50}
+                    initialNumToRender={10}
+                    windowSize={10}
                     refreshControl={
                         <RefreshControl
                             refreshing={price.isLoading}
@@ -92,57 +97,3 @@ function TitleAndDescription() {
         </View>
     )
 }
-//         <Button
-//           containerStyle={{
-//             shadowColor: 'transparent',
-//           }}
-//           buttonStyle={{
-//             width: 'auto',
-//             backgroundColor: "#E1E3E4",
-//             paddingHorizontal: 10,
-//             paddingBlock: 8,
-//             elevation: 0,
-//             shadowOpacity: 0,
-//             borderWidth: 0,
-//             borderRadius: 4
-//           }}
-//           title="Category"
-//           titleStyle={{
-//             color: '#4E444A',
-//             paddingLeft: 5,
-//             fontWeight: '600',
-//             fontSize: 14,
-//             lineHeight: 20,
-//             fontFamily: 'Inter'
-//           }}
-//           icon={<Ionicons name='filter' size={18} color={'#4E444A'} />}
-//         />
-//         <Button
-//           containerStyle={{
-//             shadowColor: 'transparent',
-//           }}
-//           buttonStyle={{
-//             width: 'auto',
-//             backgroundColor: "#E1E3E4",
-//             paddingHorizontal: 10,
-//             paddingBlock: 8,
-//             elevation: 0,
-//             shadowOpacity: 0,
-//             borderWidth: 0,
-//             borderRadius: 4
-//           }}
-//           title="Sort"
-//           titleStyle={{
-//             color: '#4E444A',
-//             paddingLeft: 5,
-//             fontWeight: '600',
-//             fontSize: 14,
-//             lineHeight: 20,
-//             fontFamily: 'Inter'
-//           }}
-//           icon={<Ionicons name='funnel-outline' size={18} color={'#4E444A'} />}
-//         />
-//       </View>
-//     </View>
-//   )
-// }

@@ -141,6 +141,16 @@ export const TYPOGRAPHY = {
   LETTER_SPACING: 0.5,
 } as const;
 
+// ===== FORM VALIDATION =====
+export const VALIDATION_MESSAGES = {
+  CATEGORY_REQUIRED: 'Category is required',
+  UNIT_REQUIRED: 'Unit selection is required',
+  PRICE_REQUIRED: 'Price is required',
+  PRICE_INVALID: 'Enter a valid price (e.g. 12.50)',
+} as const;
+
+export const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;
+
 // ===== PICKER CONFIGURATION =====
 export const PICKER_CONFIG = {
   MODE: 'dialog' as const,

@@ -8,7 +8,7 @@ import { useStyles } from '../../styles'
 import { createPrice, DatabaseError } from '../../database'
 import { FormSelectField, FormInputField, FormCheckboxField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS } from '../../constants'
+import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
 
 type FormData = {
     price: string
@@ -61,6 +61,8 @@ export default function CreatePrice() {
                 control={control}
                 label={UI_TEXT.CATEGORY}
                 options={CATEGORY_LIST}
+                required
+                rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
             />
 
             <FormButtonGroupField
@@ -68,6 +70,8 @@ export default function CreatePrice() {
                 control={control}
                 label={UI_TEXT.UNIT_SELECTION}
                 buttons={UNIT_LIST}
+                required
+                rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
             />
 
             <FormInputField
@@ -76,6 +80,14 @@ export default function CreatePrice() {
                 label={UI_TEXT.PRICE}
                 placeholder={FORM_CONFIG.PRICE_PLACEHOLDER}
                 keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
+                required
+                rules={{
+                    required: VALIDATION_MESSAGES.PRICE_REQUIRED,
+                    pattern: {
+                        value: PRICE_PATTERN,
+                        message: VALIDATION_MESSAGES.PRICE_INVALID,
+                    },
+                }}
             />
 
             <FormCheckboxField

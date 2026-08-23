@@ -1,7 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 import { Input, Text, useTheme, CheckBox, ButtonGroup } from '@rneui/themed'
-import { Control, Controller, FieldValues, Path } from 'react-hook-form'
+import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form'
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
@@ -13,6 +13,7 @@ interface FormSelectFieldProps<T extends FieldValues> {
     options: Array<{ label: string; value: string | number }>
     placeholder?: string
     required?: boolean
+    rules?: RegisterOptions<T>
 }
 
 export function FormSelectField<T extends FieldValues>({
@@ -22,6 +23,7 @@ export function FormSelectField<T extends FieldValues>({
     options,
     placeholder,
     required = false,
+    rules,
 }: FormSelectFieldProps<T>) {
     const { theme } = useTheme()
     const styles = useStyles()
@@ -30,6 +32,7 @@ export function FormSelectField<T extends FieldValues>({
         <Controller
             name={name}
             control={control}
+            rules={rules}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.categoryContainer}>
                     <Text style={styles.categoryLabel}>
@@ -66,6 +69,7 @@ interface FormInputFieldProps<T extends FieldValues> {
     placeholder?: string
     keyboardType?: 'default' | 'numeric' | 'decimal-pad' | 'email-address'
     required?: boolean
+    rules?: RegisterOptions<T>
 }
 
 export function FormInputField<T extends FieldValues>({
@@ -75,6 +79,7 @@ export function FormInputField<T extends FieldValues>({
     placeholder,
     keyboardType = 'default',
     required: _required = false,
+    rules,
 }: FormInputFieldProps<T>) {
     const { theme } = useTheme()
 
@@ -82,6 +87,7 @@ export function FormInputField<T extends FieldValues>({
         <Controller
             name={name}
             control={control}
+            rules={rules}
             render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
                 <Input
                     label={label}
@@ -160,6 +166,7 @@ interface FormButtonGroupFieldProps<T extends FieldValues> {
     label: string
     buttons: string[]
     required?: boolean
+    rules?: RegisterOptions<T>
 }
 
 export function FormButtonGroupField<T extends FieldValues>({
@@ -168,6 +175,7 @@ export function FormButtonGroupField<T extends FieldValues>({
     label,
     buttons,
     required = false,
+    rules,
 }: FormButtonGroupFieldProps<T>) {
     const { theme } = useTheme()
     const styles = useStyles()
@@ -176,6 +184,7 @@ export function FormButtonGroupField<T extends FieldValues>({
         <Controller
             name={name}
             control={control}
+            rules={rules}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.unitContainer}>
                     <Text style={styles.unitLabel}>
