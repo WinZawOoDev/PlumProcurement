@@ -5,7 +5,8 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
-import { fetchPrices, initializePrices, IPrice } from '../../database'
+import { IPrice } from '../../database'
+import { priceService } from '../../services/priceService'
 import { useRoute } from '@react-navigation/native'
 import EditPrice from './EditPrice'
 import { SAFE_AREA, UI_TEXT } from '../../constants'
@@ -20,8 +21,7 @@ export default function PurchasePrices() {
     async function getPrices() {
         setPrice(prev => ({ ...prev, isLoading: true }))
         try {
-            await initializePrices()
-            const data = await fetchPrices()
+            const data = await priceService.getPrices()
             setPrice({ list: data, isLoading: false })
         } catch (error) {
             console.error('Failed to fetch prices:', error)

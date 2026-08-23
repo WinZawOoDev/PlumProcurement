@@ -202,7 +202,7 @@ import { useHeaderHeight } from '...'  // Never used
 
 ### Week 3: Advanced Refactoring (10-12 hours)
 - [ ] Extract spacing/sizing constants to [theme.ts](theme.ts)
-- [ ] Create `services/priceService.ts` (database abstraction)
+- [x] Create `services/priceService.ts` (database abstraction)
 - [ ] Implement Context API for price state
 - [x] Add input validation rules
 - [x] Optimize FlatList in [PurchasePrice.tsx](screens/pricing/PurchasePrice.tsx)

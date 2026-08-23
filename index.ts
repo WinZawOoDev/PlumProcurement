@@ -22,5 +22,9 @@ export {
 // Export database
 export { DatabaseError } from './database'
 
+// Export services
+export { PriceService, priceService } from './services/priceService'
+export type { NewPrice } from './services/priceService'
+
 // Export constants
 export * from './constants'

@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
-import { createPrice, DatabaseError } from '../../database'
+import { DatabaseError } from '../../database'
+import { priceService } from '../../services/priceService'
 import { FormSelectField, FormInputField, FormCheckboxField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
@@ -35,7 +36,7 @@ export default function CreatePrice() {
     const handleSavePrice = async (data: FormData) => {
         setSaving(true)
         try {
-            await createPrice({
+            await priceService.addPrice({
                 category: data.category,
                 price: parseFloat(data.price),
                 unit: UNIT_LIST[data.unit],
