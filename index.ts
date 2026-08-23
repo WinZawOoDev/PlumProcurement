@@ -24,6 +24,8 @@ export { PriceService, priceService } from './services/priceService'
 export type { NewPrice } from './services/priceService'
 export { PurchaseService, purchaseService } from './services/purchaseService'
 export type { NewPurchase } from './services/purchaseService'
+export { SellerService, sellerService } from './services/sellerService'
+export type { NewSeller } from './services/sellerService'
 
 // Export context
 export { PriceProvider, usePrices } from './context/PriceContext'

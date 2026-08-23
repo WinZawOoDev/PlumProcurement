@@ -10,7 +10,7 @@ import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
 import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
-import { IPrice } from '../../database'
+import { DatabaseError, IPrice } from '../../database'
 
 export default function PurchasePrices() {
     const styles = useStyles()
@@ -59,8 +59,9 @@ export default function PurchasePrices() {
         try {
             await removePrice(id)
             ToastAndroid.show(MESSAGES.PRICE_DELETE_SUCCESS, ToastAndroid.SHORT)
-        } catch {
-            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+        } catch (error) {
+            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
+            ToastAndroid.show(message, ToastAndroid.LONG)
         }
     }
 

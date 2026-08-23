@@ -630,6 +630,32 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== SELLERS =====
+    addSellerButton: {
+        marginBottom: 15,
+    },
+    sellerInfo: {
+        flex: 1,
+        paddingRight: 10,
+    },
+    sellerNameText: {
+        fontWeight: '600',
+        fontSize: 15,
+        color: theme.colors.black,
+    },
+    sellerPhoneText: {
+        fontSize: 13,
+        color: theme.colors.tertiary,
+        marginTop: 2,
+    },
+    rowIconButton: {
+        backgroundColor: theme.colors.neutral,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
+    },
+    rowIconDeleteButton: {
+        backgroundColor: theme.colors.error,
+    },
     sellersContainer: {
         flex: 1,
         backgroundColor: theme.colors.background

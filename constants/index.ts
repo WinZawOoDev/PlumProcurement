@@ -58,6 +58,10 @@ export const MESSAGES = {
   PRICE_UPDATE_SUCCESS: 'Price updated successfully!',
   PRICE_DELETE_SUCCESS: 'Price deleted successfully!',
   PURCHASE_RECORDED_SUCCESS: 'Purchase recorded successfully!',
+  SELLER_SAVED_SUCCESS: 'Seller saved successfully!',
+  SELLER_UPDATE_SUCCESS: 'Seller updated successfully!',
+  SELLER_DELETE_SUCCESS: 'Seller deleted successfully!',
+  ERROR_PRICE_IN_USE: 'Cannot delete this price because purchases reference it.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',
   ERROR_DATABASE: 'Database error occurred.',
   ERROR_INVALID_INPUT: 'Invalid input. Please check your data.',
@@ -120,6 +124,14 @@ export const UI_TEXT = {
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
   TOTAL_VALUE: 'Total Value',
   PURCHASES_COUNT: 'Purchases',
+
+  // Sellers
+  SELLERS_DESCRIPTION: 'Manage the sellers you buy from.',
+  ADD_SELLER: 'Add Seller',
+  EDIT_SELLER: 'Edit Seller',
+  SELLER_NAME: 'Seller Name',
+  PHONE: 'Phone (optional)',
+  EMPTY_SELLER_LIST: 'No sellers added yet',
 } as const;
 
 export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;
@@ -170,6 +182,7 @@ export const VALIDATION_MESSAGES = {
   UNIT_REQUIRED: 'Unit selection is required',
   PRICE_REQUIRED: 'Price is required',
   PRICE_INVALID: 'Enter a valid price (e.g. 12.50)',
+  NAME_REQUIRED: 'Name is required',
 } as const;
 
 export const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;

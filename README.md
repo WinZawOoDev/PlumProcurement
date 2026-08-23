@@ -1,97 +1,96 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# PlumProcurement
 
-# Getting Started
+A React Native app for plum procurement: manage market prices, record purchases against those prices, and maintain your seller directory. Data is stored locally on-device with SQLite.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **Prices** — create, edit (bottom sheet), delete and browse price entries per category/unit; search by category or unit; sort by newest or price
+- **Purchasing** — record purchases against a selected price item with quantity stepper and live total preview; full purchase history with count and grand total
+- **Sellers** — add, edit and delete sellers with name and optional phone number
+- Referential safety: prices referenced by recorded purchases cannot be deleted
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- React Native 0.84 + React 19 + TypeScript
+- [@react-navigation](https://reactnavigation.org/) v7 (bottom tabs + native stacks)
+- [react-native-nitro-sqlite](https://github.com/NitroModules/nitro-sqlite) for local storage
+- [react-hook-form](https://react-hook-form.com/) for form state and validation
+- [RNEUI](https://rneui.dev/) themed components + Ionicons
+- Jest + react-test-renderer for unit tests
 
-```sh
-# Using npm
-npm start
+## Project Structure
 
-# OR using Yarn
-yarn start
+```
+├── App.tsx                     # Root: theme, providers, tab navigator
+├── database.ts                 # SQLite schema + queries (prices, purchases, sellers)
+├── constants/index.ts          # Single source of truth for all constants/config
+├── services/                   # Data-access layer wrapping database.ts
+│   ├── priceService.ts
+│   ├── purchaseService.ts
+│   └── sellerService.ts
+├── context/
+│   └── PriceContext.tsx        # Shared price list state (refresh/add/edit/remove)
+├── components/
+│   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton
+│   ├── forms/FormFields.tsx    # FormSelectField, FormInputField, FormCheckboxField,
+│   │                           #   FormButtonGroupField (react-hook-form integrated)
+│   └── ErrorBoundary.tsx       # Top-level crash fallback
+├── screens/
+│   ├── pricing/                # Price list, create, edit sheet, cards, actions
+│   ├── purchaseing/            # Record purchase, purchase history
+│   └── seller/                 # Seller list + form sheet
+├── hooks/                      # (reserved)
+├── utils/index.ts              # Formatting/validation helpers
+├── styles.ts                   # Centralized makeStyles styles
+└── theme.ts                    # RNEUI theme + navigation theme
 ```
 
-## Step 2: Build and run your app
+## Architecture Conventions
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- **Never import `database.ts` from components** — go through a service in `services/`. Services own table initialization, validation and error wrapping (`DatabaseError`).
+- **Shared cross-screen state** lives in Context (`PriceContext`) so mutations propagate automatically; screen-local state is fine for self-contained flows.
+- **All literals belong in `constants/index.ts`** — routes, messages, UI text, dimensions, typography, validation messages.
+- **Forms** use react-hook-form `Controller`s via the generic fields in `components/forms/`; pass validation through the `rules` prop.
+- **Styles** live in `styles.ts` (`useStyles()`); no inline style objects.
 
-### Android
+## Getting Started
 
 ```sh
-# Using npm
+npm install
+```
+
+Start Metro:
+
+```sh
+npm start
+```
+
+Build and run on a device/emulator:
+
+```sh
+# Android
 npm run android
 
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+# iOS (first build needs CocoaPods)
 bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
 bundle exec pod install
+npm run ios
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start Metro dev server |
+| `npm run android` | Run on Android |
+| `npm run ios` | Run on iOS |
+| `npm run lint` | ESLint |
+| `npm test` | Jest unit tests |
+
+## Testing
+
+Unit tests cover utilities, every service (delegation + error propagation), the price context flows, the error boundary fallback, and the referential guard on price deletion. SQLite is mocked via `__mocks__/`.
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+npm test
 ```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
