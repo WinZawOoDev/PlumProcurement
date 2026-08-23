@@ -37,7 +37,7 @@ A React Native app for plum procurement: manage market prices, record purchases 
 │   └── ErrorBoundary.tsx       # Top-level crash fallback
 ├── screens/
 │   ├── pricing/                # Price list, create, edit sheet, cards, actions
-│   ├── purchaseing/            # Record purchase, purchase history
+│   ├── purchasing/             # Record purchase, purchase history
 │   └── seller/                 # Seller list + form sheet
 ├── hooks/                      # (reserved)
 ├── utils/index.ts              # Formatting/validation helpers

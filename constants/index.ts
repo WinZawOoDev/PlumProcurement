@@ -132,6 +132,23 @@ export const UI_TEXT = {
   SELLER_NAME: 'Seller Name',
   PHONE: 'Phone (optional)',
   EMPTY_SELLER_LIST: 'No sellers added yet',
+
+  // Deletion confirmations
+  DELETE_CONFIRM_TITLE: 'Confirm deletion',
+  DELETE_PRICE_CONFIRM_MESSAGE:
+    'Delete this price? This cannot be undone.',
+  DELETE_SELLER_CONFIRM_MESSAGE: 'Delete this seller? This cannot be undone.',
+} as const;
+
+// ===== ACCESSIBILITY LABELS =====
+export const A11Y_LABELS = {
+  EDIT_PRICE: 'Edit price',
+  DELETE_PRICE: 'Delete price',
+  EDIT_SELLER: 'Edit seller',
+  DELETE_SELLER: 'Delete seller',
+  INCREASE_QUANTITY: 'Increase quantity',
+  DECREASE_QUANTITY: 'Decrease quantity',
+  CLEAR_SEARCH: 'Clear search',
 } as const;
 
 export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;

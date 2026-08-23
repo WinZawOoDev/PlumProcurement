@@ -1,4 +1,4 @@
-import { RefreshControl, View, Text, FlatList, ToastAndroid } from 'react-native'
+import { Alert, RefreshControl, View, Text, FlatList, ToastAndroid } from 'react-native'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Input } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
@@ -9,7 +9,7 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
+import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode, A11Y_LABELS } from '../../constants'
 import { DatabaseError, IPrice } from '../../database'
 
 export default function PurchasePrices() {
@@ -55,7 +55,22 @@ export default function PurchasePrices() {
         })
     }
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = (id: number) => {
+        Alert.alert(
+            UI_TEXT.DELETE_CONFIRM_TITLE,
+            UI_TEXT.DELETE_PRICE_CONFIRM_MESSAGE,
+            [
+                { text: UI_TEXT.CANCEL, style: 'cancel' },
+                {
+                    text: UI_TEXT.DELETE,
+                    style: 'destructive',
+                    onPress: () => performDelete(id),
+                },
+            ]
+        )
+    }
+
+    const performDelete = async (id: number) => {
         try {
             await removePrice(id)
             ToastAndroid.show(MESSAGES.PRICE_DELETE_SUCCESS, ToastAndroid.SHORT)
@@ -93,6 +108,7 @@ export default function PurchasePrices() {
                                 size={22}
                                 color={theme.colors.tertiary}
                                 onPress={() => setSearchQuery('')}
+                                accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
                             />
                         }
                     />

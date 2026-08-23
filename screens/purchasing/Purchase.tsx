@@ -8,7 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA } from '../../constants'
+import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchase } from '../../database'
@@ -110,6 +110,9 @@ export default function Purchase() {
                     <RNText
                         style={styles.quantityStepperButton}
                         onPress={() => setQuantity((q) => String(Math.max(1, parseInt(q, 10) || 1) + 1))}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={A11Y_LABELS.INCREASE_QUANTITY}
                     >
                         +
                     </RNText>
@@ -117,6 +120,9 @@ export default function Purchase() {
                     <RNText
                         style={styles.quantityStepperButton}
                         onPress={() => setQuantity((q) => String(Math.max(1, (parseInt(q, 10) || 1) - 1)))}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={A11Y_LABELS.DECREASE_QUANTITY}
                     >
                         −
                     </RNText>

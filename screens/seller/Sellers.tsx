@@ -1,4 +1,4 @@
-import { FlatList, Text as RNText, ToastAndroid, View } from 'react-native'
+import { Alert, FlatList, RefreshControl, Text as RNText, ToastAndroid, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Button } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -6,7 +6,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { PrimaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
+import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { DatabaseError, ISeller } from '../../database'
 import SellerFormSheet from './SellerFormSheet'
@@ -15,14 +15,18 @@ export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [sellers, setSellers] = useState<ISeller[]>([])
+    const [loading, setLoading] = useState(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
 
     const loadSellers = useCallback(async () => {
+        setLoading(true)
         try {
             setSellers(await sellerService.getSellers())
         } catch (error) {
             console.error('Failed to fetch sellers:', error)
+        } finally {
+            setLoading(false)
         }
     }, [])
 
@@ -30,7 +34,22 @@ export default function Sellers() {
         loadSellers()
     }, [loadSellers])
 
-    const handleDelete = async (id: number) => {
+    const confirmDelete = (id: number) => {
+        Alert.alert(
+            UI_TEXT.DELETE_CONFIRM_TITLE,
+            UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
+            [
+                { text: UI_TEXT.CANCEL, style: 'cancel' },
+                {
+                    text: UI_TEXT.DELETE,
+                    style: 'destructive',
+                    onPress: () => performDelete(id),
+                },
+            ]
+        )
+    }
+
+    const performDelete = async (id: number) => {
         try {
             await sellerService.removeSeller(id)
             ToastAndroid.show(MESSAGES.SELLER_DELETE_SUCCESS, ToastAndroid.SHORT)
@@ -83,6 +102,7 @@ export default function Sellers() {
                                         setEditing(item)
                                         setSheetVisible(true)
                                     }}
+                                    accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
                                 />
                                 <Button
                                     buttonStyle={[styles.rowIconButton, styles.rowIconDeleteButton]}
@@ -93,13 +113,21 @@ export default function Sellers() {
                                             color="white"
                                         />
                                     }
-                                    onPress={() => handleDelete(item.id)}
+                                    onPress={() => confirmDelete(item.id)}
+                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
                                 />
                             </View>
                         </View>
                     )}
                     ListEmptyComponent={
                         <RNText style={styles.emptyPriceListText}>{UI_TEXT.EMPTY_SELLER_LIST}</RNText>
+                    }
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={loading}
+                            onRefresh={loadSellers}
+                            colors={[theme.colors.primary]}
+                        />
                     }
                 />
             </View>

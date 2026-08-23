@@ -3,9 +3,22 @@ import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
-import { FormInputField } from '../../components/forms/FormFields'
+import {
+    FormInputField,
+    FormSelectField,
+    FormCheckboxField,
+    FormButtonGroupField,
+} from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PRICE_PATTERN, FORM_CONFIG } from '../../constants'
+import {
+    UI_TEXT,
+    MESSAGES,
+    VALIDATION_MESSAGES,
+    PRICE_PATTERN,
+    FORM_CONFIG,
+    CATEGORY_LIST,
+    UNIT_LIST,
+} from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { IPrice } from '../../database'
 
@@ -27,7 +40,7 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
     const styles = useStyles()
     const { editPrice } = usePrices()
 
-    const { control, handleSubmit, reset } = useForm<FormData>({
+    const { control, handleSubmit, reset, formState } = useForm<FormData>({
         defaultValues: {
             id: 0,
             price: FORM_CONFIG.PRICE_DEFAULT,
@@ -39,20 +52,28 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
     })
 
     useEffect(() => {
-        if (price) {
+        if (price && visible) {
+            const unitIndex = UNIT_LIST.findIndex((unit) => unit === price.unit)
             reset({
                 id: price.id,
                 price: String(price.price),
-                unit: 0,
-                category: price.category,
+                unit: unitIndex >= 0 ? unitIndex : FORM_CONFIG.UNIT_DEFAULT,
+                category: CATEGORY_LIST.some((c) => c.value === price.category)
+                    ? price.category
+                    : FORM_CONFIG.CATEGORY_DEFAULT,
                 isAvailable: !!price.is_available,
             })
         }
-    }, [price, reset])
+    }, [visible, price, reset])
 
     const handleUpdate = async (data: FormData) => {
         try {
-            await editPrice(data.id, { price: parseFloat(data.price) })
+            await editPrice(data.id, {
+                price: parseFloat(data.price),
+                category: data.category,
+                unit: UNIT_LIST[data.unit],
+                is_available: data.isAvailable,
+            })
             ToastAndroid.show(MESSAGES.PRICE_UPDATE_SUCCESS, ToastAndroid.SHORT)
             onClose()
         } catch {
@@ -68,14 +89,22 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
         >
             <View style={styles.bottomSheetContainer}>
                 <Text style={styles.bottomSheetTitle}>{UI_TEXT.EDIT_PRICE}</Text>
-                <View style={styles.bottomSheetHeaderRow}>
-                    <Text style={styles.bottomSheetCategoryText}>
-                        # {price?.category ?? UI_TEXT.CATEGORY}
-                    </Text>
-                    <Text style={styles.bottomSheetUnitText}>
-                        {price?.unit ?? UI_TEXT.UNIT}
-                    </Text>
-                </View>
+                <FormSelectField
+                    name="category"
+                    control={control}
+                    label={UI_TEXT.CATEGORY}
+                    options={CATEGORY_LIST}
+                    required
+                    rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
+                />
+                <FormButtonGroupField
+                    name="unit"
+                    control={control}
+                    label={UI_TEXT.UNIT_SELECTION}
+                    buttons={UNIT_LIST}
+                    required
+                    rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
+                />
                 <FormInputField
                     name="price"
                     control={control}
@@ -91,8 +120,15 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
                         },
                     }}
                 />
+                <FormCheckboxField
+                    name="isAvailable"
+                    control={control}
+                    label={UI_TEXT.AVAILABLE}
+                />
                 <PrimaryButton
                     title={UI_TEXT.UPDATE}
+                    disabled={formState.isSubmitting}
+                    loading={formState.isSubmitting}
                     onPress={handleSubmit(handleUpdate)}
                     containerStyle={styles.updateButtonContainerStyle}
                 />

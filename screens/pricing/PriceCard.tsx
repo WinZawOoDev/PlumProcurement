@@ -3,7 +3,7 @@ import React from 'react'
 import { Badge, Button, Card } from '@rneui/themed'
 import { IPrice } from '../../database'
 import { useStyles } from '../../styles'
-import { UI_TEXT } from '../../constants'
+import { UI_TEXT, A11Y_LABELS } from '../../constants'
 
 interface PriceCardProps extends Omit<IPrice, 'id'> {
     onEdit?: () => void
@@ -26,6 +26,7 @@ export default function PriceCard({ price, unit, category, is_available, onEdit,
                         title="Edit"
                         titleStyle={styles.priceCardEditButtonTitle}
                         onPress={onEdit}
+                        accessibilityLabel={A11Y_LABELS.EDIT_PRICE}
                     />
                     <Button
                         buttonStyle={styles.priceCardDeleteButton}
@@ -36,6 +37,7 @@ export default function PriceCard({ price, unit, category, is_available, onEdit,
                             size: 16,
                         }}
                         onPress={onDelete}
+                        accessibilityLabel={A11Y_LABELS.DELETE_PRICE}
                     />
                 </View>
             </View>

@@ -12,7 +12,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from "@react-native-vector-icons/ionicons/static";
 import SellerStack from './screens/seller/Stack';
 import PriceStack from './screens/pricing/Stack';
-import PurchaseStack from './screens/purchaseing/Stack';
+import PurchaseStack from './screens/purchasing/Stack';
 import { navTheme, theme } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';

@@ -1,7 +1,8 @@
-import { FlatList, Text as RNText, View } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@rneui/base'
+import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { UI_TEXT, SAFE_AREA } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
@@ -9,13 +10,18 @@ import { IPurchase } from '../../database'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
+    const { theme } = useTheme()
     const [purchases, setPurchases] = useState<IPurchase[]>([])
+    const [loading, setLoading] = useState(false)
 
     const loadPurchases = useCallback(async () => {
+        setLoading(true)
         try {
             setPurchases(await purchaseService.getPurchases())
         } catch (error) {
             console.error('Failed to fetch purchases:', error)
+        } finally {
+            setLoading(false)
         }
     }, [])
 
@@ -62,6 +68,13 @@ export default function PurchaseDetails() {
                     )}
                     ListEmptyComponent={
                         <RNText style={styles.emptyPriceListText}>{UI_TEXT.EMPTY_PURCHASE_LIST}</RNText>
+                    }
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={loading}
+                            onRefresh={loadPurchases}
+                            colors={[theme.colors.primary]}
+                        />
                     }
                 />
             </View>
