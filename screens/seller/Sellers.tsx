@@ -1,11 +1,11 @@
 import { Alert, FlatList, RefreshControl, Text as RNText, ToastAndroid, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import { Button } from '@rneui/themed'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Button, Input } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
-import { PrimaryButton } from '../../components/buttons/Button'
+import { IconButton, PrimaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { DatabaseError, ISeller } from '../../database'
@@ -18,6 +18,8 @@ export default function Sellers() {
     const [loading, setLoading] = useState(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
+    const [searchVisible, setSearchVisible] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
 
     const loadSellers = useCallback(async () => {
         setLoading(true)
@@ -33,6 +35,23 @@ export default function Sellers() {
     useEffect(() => {
         loadSellers()
     }, [loadSellers])
+
+    const visibleSellers = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase()
+        if (!query) return sellers
+        return sellers.filter(
+            (s) =>
+                s.name.toLowerCase().includes(query) ||
+                (s.phone ?? '').toLowerCase().includes(query)
+        )
+    }, [sellers, searchQuery])
+
+    const handleToggleSearch = () => {
+        setSearchVisible((prev) => {
+            if (prev) setSearchQuery('')
+            return !prev
+        })
+    }
 
     const confirmDelete = (id: number) => {
         Alert.alert(
@@ -68,17 +87,51 @@ export default function Sellers() {
                     <RNText style={styles.descriptionText}>{UI_TEXT.SELLERS_DESCRIPTION}</RNText>
                 </View>
 
-                <PrimaryButton
-                    title={UI_TEXT.ADD_SELLER}
-                    containerStyle={styles.addSellerButton}
-                    onPress={() => {
-                        setEditing(null)
-                        setSheetVisible(true)
-                    }}
-                />
+                <View style={styles.actionButtonsRow}>
+                    <PrimaryButton
+                        title={UI_TEXT.ADD_SELLER}
+                        containerStyle={styles.addSellerButton}
+                        onPress={() => {
+                            setEditing(null)
+                            setSheetVisible(true)
+                        }}
+                    />
+                    <IconButton
+                        icon={
+                            <Ionicons
+                                name={searchVisible ? 'search' : 'search-outline'}
+                                size={DIMENSIONS.ICON_SIZE_LARGE}
+                                color={searchVisible ? theme.colors.primary : theme.colors.tertiary}
+                            />
+                        }
+                        variant="secondary"
+                        onPress={handleToggleSearch}
+                        accessibilityLabel={A11Y_LABELS.TOGGLE_SEARCH}
+                    />
+                </View>
+
+                {searchVisible && (
+                    <Input
+                        placeholder={UI_TEXT.SEARCH_SELLERS_PLACEHOLDER}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        inputContainerStyle={styles.formInputContainer}
+                        inputStyle={styles.formInput}
+                        containerStyle={styles.searchBarContainer}
+                        rightIcon={
+                            <Ionicons
+                                name="close-circle-outline"
+                                size={22}
+                                color={theme.colors.tertiary}
+                                onPress={() => setSearchQuery('')}
+                                accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
+                            />
+                        }
+                    />
+                )}
 
                 <FlatList
-                    data={sellers}
+                    data={visibleSellers}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.purchaseItemRow}>
@@ -120,7 +173,9 @@ export default function Sellers() {
                         </View>
                     )}
                     ListEmptyComponent={
-                        <RNText style={styles.emptyPriceListText}>{UI_TEXT.EMPTY_SELLER_LIST}</RNText>
+                        <RNText style={styles.emptyPriceListText}>
+                            {sellers.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
+                        </RNText>
                     }
                     refreshControl={
                         <RefreshControl

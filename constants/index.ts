@@ -109,6 +109,9 @@ export const UI_TEXT = {
 
   // Search & sort
   SEARCH_PRICES_PLACEHOLDER: 'Search by category or unit',
+  SEARCH_PURCHASES_PLACEHOLDER: 'Search by category or seller',
+  SEARCH_SELLERS_PLACEHOLDER: 'Search by name or phone',
+  NO_MATCHING_RESULTS: 'No matching results',
 
   // Purchasing
   RECORD_PURCHASE: 'Record Purchase',
@@ -153,6 +156,7 @@ export const A11Y_LABELS = {
   INCREASE_QUANTITY: 'Increase quantity',
   DECREASE_QUANTITY: 'Decrease quantity',
   CLEAR_SEARCH: 'Clear search',
+  TOGGLE_SEARCH: 'Toggle search',
 } as const;
 
 export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;
