@@ -63,12 +63,14 @@ interface IconButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containerSt
     title?: string
     icon?: any
     onPress?: () => void
-    variant?: 'primary' | 'secondary'
+    variant?: 'primary' | 'secondary' | 'ghost'
 }
 
 export function IconButton({ title, icon, onPress, variant = 'primary', ...props }: IconButtonProps) {
     const styles = useStyles()
+    const hasTitle = !!title
     const isPrimary = variant === 'primary'
+    const isGhost = variant === 'ghost'
 
     return (
         <Button
@@ -80,10 +82,13 @@ export function IconButton({ title, icon, onPress, variant = 'primary', ...props
             accessibilityLabel={title ?? (props as any).accessibilityLabel}
             containerStyle={styles.raisedButtonContainer}
             buttonStyle={[
-                styles.iconButtonBase,
-                isPrimary ? styles.iconButtonPrimary : styles.iconButtonSecondary,
-            ]}
-            titleStyle={isPrimary ? styles.iconButtonTitlePrimary : styles.iconButtonTitleSecondary}
+                hasTitle ? styles.primaryButton : styles.iconButtonBase,
+                !hasTitle && styles.iconButtonCompact,
+                hasTitle && isPrimary ? styles.iconButtonPrimary : null,
+                !hasTitle && isGhost ? styles.iconButtonGhost : !hasTitle && !isPrimary ? styles.iconButtonSecondary : null,
+                !hasTitle && isPrimary ? styles.iconButtonPrimary : null,
+            ].filter(Boolean)}
+            titleStyle={hasTitle ? styles.iconButtonTitlePrimary : isPrimary ? styles.iconButtonTitlePrimary : styles.iconButtonTitleSecondary}
         />
     )
 }

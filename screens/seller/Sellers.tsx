@@ -117,11 +117,11 @@ export default function Sellers() {
                         icon={
                             <Ionicons
                                 name={searchVisible ? 'search' : 'search-outline'}
-                                size={DIMENSIONS.ICON_SIZE_LARGE}
-                                color={searchVisible ? theme.colors.primary : theme.colors.tertiary}
+                                size={DIMENSIONS.ICON_SIZE_SMALL}
+                                color={searchVisible ? theme.colors.primary : theme.colors.grey4}
                             />
                         }
-                        variant="secondary"
+                        variant="ghost"
                         onPress={handleToggleSearch}
                         accessibilityLabel={A11Y_LABELS.TOGGLE_SEARCH}
                     />

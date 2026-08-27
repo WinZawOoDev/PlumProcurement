@@ -30,7 +30,7 @@ export default function ActionButtons({
         <View style={styles.actionButtonsRow}>
             <IconButton
                 title={UI_TEXT.ADD_NEW_PRICE}
-                icon={<Ionicons name="add-sharp" size={DIMENSIONS.ICON_SIZE_MEDIUM} color="white" />}
+                icon={<Ionicons name="add-sharp" size={DIMENSIONS.ICON_SIZE_SMALL} color="white" />}
                 variant="primary"
                 //@ts-expect-error
                 onPress={() => navigation.navigate(ROUTES.CREATE_PRICE)}
@@ -39,11 +39,11 @@ export default function ActionButtons({
                 icon={
                     <Ionicons
                         name={searchActive ? 'search' : 'search-outline'}
-                        size={DIMENSIONS.ICON_SIZE_LARGE}
-                        color={searchActive ? theme.colors.primary : theme.colors.tertiary}
+                        size={DIMENSIONS.ICON_SIZE_SMALL}
+                        color={searchActive ? theme.colors.primary : theme.colors.grey4}
                     />
                 }
-                variant="secondary"
+                variant="ghost"
                 onPress={onSearchPress}
             />
             <IconButton
@@ -56,11 +56,11 @@ export default function ActionButtons({
                                     ? 'arrow-up'
                                     : 'arrow-down'
                         }
-                        size={DIMENSIONS.ICON_SIZE_LARGE}
-                        color={sortActive ? theme.colors.primary : theme.colors.tertiary}
+                        size={DIMENSIONS.ICON_SIZE_SMALL}
+                        color={sortActive ? theme.colors.primary : theme.colors.grey4}
                     />
                 }
-                variant="secondary"
+                variant="ghost"
                 onPress={onSortPress}
             />
         </View>
