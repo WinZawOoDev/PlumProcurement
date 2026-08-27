@@ -39,7 +39,7 @@ export default function ActionButtons({
                 icon={
                     <Ionicons
                         name={searchActive ? 'search' : 'search-outline'}
-                        size={DIMENSIONS.ICON_SIZE_SMALL}
+                        size={DIMENSIONS.ICON_SIZE_MEDIUM}
                         color={searchActive ? theme.colors.primary : theme.colors.grey4}
                     />
                 }
@@ -56,7 +56,7 @@ export default function ActionButtons({
                                     ? 'arrow-up'
                                     : 'arrow-down'
                         }
-                        size={DIMENSIONS.ICON_SIZE_SMALL}
+                        size={DIMENSIONS.ICON_SIZE_MEDIUM}
                         color={sortActive ? theme.colors.primary : theme.colors.grey4}
                     />
                 }

@@ -117,7 +117,7 @@ export default function Sellers() {
                         icon={
                             <Ionicons
                                 name={searchVisible ? 'search' : 'search-outline'}
-                                size={DIMENSIONS.ICON_SIZE_SMALL}
+                                size={DIMENSIONS.ICON_SIZE_MEDIUM}
                                 color={searchVisible ? theme.colors.primary : theme.colors.grey4}
                             />
                         }

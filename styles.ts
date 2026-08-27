@@ -39,8 +39,8 @@ export const useStyles = makeStyles((theme) => ({
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
     },
     iconButtonBase: {
-        minWidth: 34,
-        height: 34,
+        minWidth: 36,
+        height: 36,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 10,
@@ -51,9 +51,9 @@ export const useStyles = makeStyles((theme) => ({
         borderWidth: 0,
     },
     iconButtonCompact: {
-        minWidth: 34,
-        width: 34,
-        height: 34,
+        minWidth: 36,
+        width: 36,
+        height: 36,
         paddingHorizontal: 0,
     },
     iconButtonPrimary: {
