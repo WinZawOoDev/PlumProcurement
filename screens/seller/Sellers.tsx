@@ -123,6 +123,10 @@ export default function Sellers() {
                 <FlatList
                     data={visibleSellers}
                     keyExtractor={(item) => item.id.toString()}
+                    getItemLayout={(_, index) => ({ length: 72, offset: 72 * index, index })}
+                    initialNumToRender={10}
+                    windowSize={10}
+                    removeClippedSubviews={true}
                     renderItem={({ item }) => (
                         <SellerRow
                             seller={item}

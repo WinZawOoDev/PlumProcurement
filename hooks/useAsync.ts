@@ -16,7 +16,7 @@ export function useAsync(options?: UseAsyncOptions) {
             try {
                 await operation()
                 options?.onSuccess?.()
-            } catch (err) {
+            } catch (err: unknown) {
                 setError(err)
                 options?.onError?.(err)
                 throw err

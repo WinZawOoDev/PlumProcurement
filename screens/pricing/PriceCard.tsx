@@ -12,7 +12,7 @@ interface PriceCardProps extends Omit<IPrice, 'id'> {
     onDelete?: () => void
 }
 
-export default function PriceCard({ price, unit, category, is_available, created_at, onEdit, onDelete }: PriceCardProps) {
+function PriceCardInner({ price, unit, category, is_available, created_at, onEdit, onDelete }: PriceCardProps) {
 
     const styles = useStyles()
 
@@ -65,3 +65,4 @@ export default function PriceCard({ price, unit, category, is_available, created
         </Card>
     )
 }
+export default React.memo(PriceCardInner)

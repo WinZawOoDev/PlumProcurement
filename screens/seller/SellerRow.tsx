@@ -13,7 +13,7 @@ interface SellerRowProps {
     onDelete: () => void
 }
 
-export function SellerRow({ seller, onEdit, onDelete }: SellerRowProps) {
+function SellerRowInner({ seller, onEdit, onDelete }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     return (
@@ -39,3 +39,4 @@ export function SellerRow({ seller, onEdit, onDelete }: SellerRowProps) {
         </View>
     )
 }
+export const SellerRow = React.memo(SellerRowInner)

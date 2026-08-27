@@ -119,6 +119,7 @@ export default function PurchasePrices() {
                     updateCellsBatchingPeriod={50}
                     initialNumToRender={10}
                     windowSize={10}
+                    getItemLayout={(_, index) => ({ length: 180, offset: 180 * index, index })}
                     refreshControl={
                         <RefreshControl
                             refreshing={loading}
