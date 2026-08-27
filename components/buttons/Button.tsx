@@ -1,7 +1,9 @@
 import React from 'react'
 import { Button, ButtonProps } from '@rneui/themed'
-import { ViewStyle } from 'react-native'
+import { ViewStyle, Vibration } from 'react-native'
 import { useStyles } from '../../styles'
+
+const lightHaptic = () => Vibration.vibrate(10)
 
 interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containerStyle' | 'titleStyle'> {
     title: string
@@ -12,12 +14,15 @@ interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containe
 
 export function PrimaryButton({ title, onPress, disabled, containerStyle, ...props }: PrimaryButtonProps) {
     const styles = useStyles()
-
+    const handlePress = () => {
+        if (!disabled) lightHaptic()
+        onPress?.()
+    }
     return (
         <Button
             {...(props as any)}
             title={title}
-            onPress={onPress}
+            onPress={handlePress}
             disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={title}
@@ -40,12 +45,15 @@ interface SecondaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'contai
 
 export function SecondaryButton({ title, onPress, disabled, containerStyle, ...props }: SecondaryButtonProps) {
     const styles = useStyles()
-
+    const handlePress = () => {
+        if (!disabled) lightHaptic()
+        onPress?.()
+    }
     return (
         <Button
             {...(props as any)}
             title={title}
-            onPress={onPress}
+            onPress={handlePress}
             disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={title}
@@ -73,13 +81,17 @@ export function IconButton({ title, icon, onPress, variant = 'primary', small = 
     const isPrimary = variant === 'primary'
     const isGhost = variant === 'ghost'
     const isSmall = small
+    const handlePress = () => {
+        lightHaptic()
+        onPress?.()
+    }
 
     return (
         <Button
             {...(props as any)}
             icon={icon ?? undefined}
             title={title}
-            onPress={onPress}
+            onPress={handlePress}
             accessibilityRole="button"
             accessibilityLabel={title ?? (props as any).accessibilityLabel}
             containerStyle={styles.raisedButtonContainer}

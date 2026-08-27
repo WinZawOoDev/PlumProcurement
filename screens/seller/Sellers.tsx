@@ -16,12 +16,15 @@ import { useLoading } from '../../hooks/useAsync'
 import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
+import { SellerDetailSheet } from '../../components/SellerDetailSheet'
 
 export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
+    const [allPurchases, setAllPurchases] = useState<any[]>([])
+    const [detailSeller, setDetailSeller] = useState<ISeller | null>(null)
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
@@ -36,6 +39,7 @@ export default function Sellers() {
                     purchaseService.getPurchases().catch(() => []),
                 ])
                 setSellers(sellerList)
+                setAllPurchases(purchases)
                 const stats: Record<number, { count: number; total: number }> = {}
                 for (const p of purchases) {
                     if (p.seller_id) {
@@ -147,6 +151,7 @@ export default function Sellers() {
                             seller={item}
                             purchaseCount={sellerStats[item.id]?.count}
                             purchaseTotal={sellerStats[item.id]?.total}
+                            onPress={() => setDetailSeller(item)}
                             onEdit={() => {
                                 setEditing(item)
                                 setSheetVisible(true)
@@ -177,6 +182,7 @@ export default function Sellers() {
                 onClose={() => setSheetVisible(false)}
                 onSaved={loadSellers}
             />
+            <SellerDetailSheet visible={!!detailSeller} seller={detailSeller} purchases={allPurchases as any} onClose={() => setDetailSeller(null)} />
         </SafeAreaView>
     )
 }

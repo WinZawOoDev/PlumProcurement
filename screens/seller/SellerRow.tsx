@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text as RNText } from 'react-native'
+import { View, Text as RNText, Pressable } from 'react-native'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { Button } from '@rneui/themed'
 import { useStyles } from '../../styles'
@@ -11,16 +11,17 @@ interface SellerRowProps {
     seller: ISeller
     onEdit: () => void
     onDelete: () => void
+    onPress?: () => void
     purchaseCount?: number
     purchaseTotal?: number
 }
 
-function SellerRowInner({ seller, onEdit, onDelete, purchaseCount, purchaseTotal }: SellerRowProps) {
+function SellerRowInner({ seller, onEdit, onDelete, onPress, purchaseCount, purchaseTotal }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
-        <View style={styles.purchaseItemRow}>
+        <Pressable onPress={onPress} style={styles.purchaseItemRow}>
             <View style={styles.avatarCircle}>
                 <RNText style={styles.avatarText}>{initial}</RNText>
             </View>
@@ -47,7 +48,7 @@ function SellerRowInner({ seller, onEdit, onDelete, purchaseCount, purchaseTotal
                     accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
                 />
             </View>
-        </View>
+        </Pressable>
     )
 }
 export const SellerRow = React.memo(SellerRowInner)

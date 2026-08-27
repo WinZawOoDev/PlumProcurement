@@ -15,12 +15,14 @@ import { PriceTrend } from '../../components/PriceTrend'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/Skeleton'
+import { PriceDetailSheet } from '../../components/PriceDetailSheet'
 
 export default function PurchasePrices() {
     const styles = useStyles()
     const { theme } = useTheme()
     const { prices, loading, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
+    const [detailPrice, setDetailPrice] = useState<IPrice | null>(null)
     const [searchVisible, setSearchVisible] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [sortMode, setSortMode] = useState<SortMode>('default')
@@ -109,7 +111,7 @@ export default function PurchasePrices() {
                         onChangeText={setSearchQuery}
                     />
                 )}
-                {visiblePrices.length > 1 && <PriceTrend prices={visiblePrices} />}
+                {visiblePrices.length > 1 && <PriceTrend prices={visiblePrices} onSelect={setDetailPrice} />}
                 {loading && prices.length === 0 ? (
                     <>
                         <CardSkeleton />
@@ -157,6 +159,7 @@ export default function PurchasePrices() {
                     price={editing}
                     onClose={() => setEditing(null)}
                 />
+                <PriceDetailSheet visible={!!detailPrice} price={detailPrice} onClose={() => setDetailPrice(null)} />
             </View>
         </SafeAreaView>
     )

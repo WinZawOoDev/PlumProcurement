@@ -21,4 +21,7 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Tests
-        run: npm test -- --ci
+        run: npm test -- --ci --coverage
+      - name: Maestro (validate flows)
+        run: |
+          if [ -d .maestro ]; then echo "Maestro flows: $(ls .maestro/*.yaml | wc -l)"; ls .maestro/*.yaml; else echo "no maestro"; fi

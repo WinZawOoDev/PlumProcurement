@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { View, Text as RNText } from 'react-native'
+import { View, Text as RNText, Pressable } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../styles'
@@ -7,9 +7,10 @@ import { IPrice } from '../types/database'
 
 interface PriceTrendProps {
     prices: IPrice[]
+    onSelect?: (price: IPrice) => void
 }
 
-export function PriceTrend({ prices }: PriceTrendProps) {
+export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
     const styles = useStyles()
     const { theme } = useTheme()
 
@@ -36,15 +37,17 @@ export function PriceTrend({ prices }: PriceTrendProps) {
                 {stats.sorted.slice(-12).map((p) => {
                     const h = ((p.price - stats.min) / range) * 36 + 4
                     return (
-                        <View
+                        <Pressable
                             key={p.id}
-                            // eslint-disable-next-line react-native/no-inline-styles
+                            onPress={() => onSelect?.(p)}
                             style={[
                                 styles.priceTrendBar,
+                                // eslint-disable-next-line react-native/no-inline-styles
                                 { height: h, backgroundColor: theme.colors.primary, opacity: p.is_available ? 1 : 0.4 },
                             ]}
                             accessible
                             accessibilityLabel={`${p.category} ${p.price} dollars`}
+                            accessibilityRole="button"
                         />
                     )
                 })}

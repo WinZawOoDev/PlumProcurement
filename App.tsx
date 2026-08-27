@@ -9,7 +9,7 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import { DefaultTheme, DarkTheme, createStaticNavigation, NavigationContainer, NavigationIndependentTree, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Ionicons } from "@react-native-vector-icons/ionicons/static";
 import SellerStack from './screens/seller/Stack';
 import PriceStack from './screens/pricing/Stack';
@@ -18,6 +18,7 @@ import { makeAppTheme } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
+import { Onboarding } from './components/Onboarding';
 
 function PriceTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="pricetags-outline" color={color} size={size} />;
@@ -122,6 +123,17 @@ function Navigation() {
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
+  const [onboarded, setOnboarded] = React.useState(false);
+
+  if (!onboarded) {
+    return (
+      <ThemeProvider theme={appTheme}>
+        <SafeAreaProvider>
+          <Onboarding onDone={() => setOnboarded(true)} />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ErrorBoundary>

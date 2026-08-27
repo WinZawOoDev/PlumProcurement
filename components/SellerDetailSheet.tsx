@@ -1,0 +1,37 @@
+import React, { useMemo } from 'react'
+import { View, Text as RNText, FlatList } from 'react-native'
+import { BottomSheet, Text } from '@rneui/themed'
+import { useStyles } from '../styles'
+import { ISeller, IPurchaseWithSeller } from '../types/database'
+import { formatDate } from '../utils'
+
+export function SellerDetailSheet({ visible, seller, purchases, onClose }: { visible: boolean; seller: ISeller | null; purchases: IPurchaseWithSeller[]; onClose: () => void }) {
+    const styles = useStyles()
+    const filtered = useMemo(() => purchases.filter((p) => p.seller_id === seller?.id), [purchases, seller])
+    const total = filtered.reduce((s, p) => s + p.total, 0)
+    if (!seller) return null
+    return (
+        <BottomSheet isVisible={visible} onBackdropPress={onClose} modalProps={{ animationType: 'slide' }}>
+            <View style={[styles.bottomSheetContainer, { maxHeight: 400 }]}>
+                <Text style={styles.bottomSheetTitle}>{seller.name}</Text>
+                {!!seller.phone && <RNText style={styles.purchaseItemSubtitle}>{seller.phone}</RNText>}
+                <RNText style={styles.purchaseItemSubtitle}>{filtered.length} purchases · {total.toFixed(2)}$ total</RNText>
+                <FlatList
+                    data={filtered.slice(0, 20)}
+                    keyExtractor={(i) => i.id.toString()}
+                    renderItem={({ item }) => (
+                        <View style={styles.purchaseItemRow}>
+                            <View style={styles.sellerInfo}>
+                                <RNText style={styles.purchaseItemTitle}>{item.category} × {item.quantity}</RNText>
+                                <RNText style={styles.purchaseItemSubtitle}>{formatDate(item.created_at)}</RNText>
+                            </View>
+                            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                        </View>
+                    )}
+                    ListEmptyComponent={<RNText style={styles.emptyPriceListText}>No purchases for this seller</RNText>}
+                    style={{ marginTop: 12 }}
+                />
+            </View>
+        </BottomSheet>
+    )
+}
