@@ -64,13 +64,15 @@ interface IconButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containerSt
     icon?: any
     onPress?: () => void
     variant?: 'primary' | 'secondary' | 'ghost'
+    small?: boolean
 }
 
-export function IconButton({ title, icon, onPress, variant = 'primary', ...props }: IconButtonProps) {
+export function IconButton({ title, icon, onPress, variant = 'primary', small = false, ...props }: IconButtonProps) {
     const styles = useStyles()
     const hasTitle = !!title
     const isPrimary = variant === 'primary'
     const isGhost = variant === 'ghost'
+    const isSmall = small
 
     return (
         <Button
@@ -83,7 +85,7 @@ export function IconButton({ title, icon, onPress, variant = 'primary', ...props
             containerStyle={styles.raisedButtonContainer}
             buttonStyle={[
                 hasTitle ? styles.primaryButton : styles.iconButtonBase,
-                !hasTitle && styles.iconButtonCompact,
+                !hasTitle && (isSmall ? styles.iconButtonSmall : styles.iconButtonCompact),
                 hasTitle && isPrimary ? styles.iconButtonPrimary : null,
                 !hasTitle && isGhost ? styles.iconButtonGhost : !hasTitle && !isPrimary ? styles.iconButtonSecondary : null,
                 !hasTitle && isPrimary ? styles.iconButtonPrimary : null,

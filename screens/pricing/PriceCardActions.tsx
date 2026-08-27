@@ -1,7 +1,8 @@
 import React from 'react'
 import { View } from 'react-native'
-import { Button } from '@rneui/themed'
-import { useStyles } from '../../styles'
+import Ionicons from '@react-native-vector-icons/ionicons'
+import { useTheme } from '@rneui/themed'
+import { IconButton } from '../../components/buttons/Button'
 import { A11Y_LABELS } from '../../constants'
 
 interface Props {
@@ -10,19 +11,20 @@ interface Props {
 }
 
 export function PriceCardActions({ onEdit, onDelete }: Props) {
-    const styles = useStyles()
+    const { theme } = useTheme()
     return (
-        <View style={styles.priceCardActionsRow}>
-            <Button
-                buttonStyle={styles.rowIconButton}
-                title="Edit"
-                titleStyle={styles.priceCardEditButtonTitle}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <IconButton
+                icon={<Ionicons name="pencil-outline" size={16} color={theme.colors.grey5} />}
+                variant="ghost"
+                small
                 onPress={onEdit}
                 accessibilityLabel={A11Y_LABELS.EDIT_PRICE}
             />
-            <Button
-                buttonStyle={[styles.rowIconButton, styles.rowIconDeleteButton]}
-                icon={{ name: 'trash-outline', type: 'ionicon', color: 'white', size: 16 }}
+            <IconButton
+                icon={<Ionicons name="trash-outline" size={16} color={theme.colors.error} />}
+                variant="ghost"
+                small
                 onPress={onDelete}
                 accessibilityLabel={A11Y_LABELS.DELETE_PRICE}
             />
