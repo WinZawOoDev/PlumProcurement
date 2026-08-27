@@ -1,10 +1,9 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { Badge, Card, useTheme } from '@rneui/themed'
+import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { IPrice } from '../../database'
 import { useStyles } from '../../styles'
-import { UI_TEXT } from '../../constants'
 import { formatDate } from '../../utils'
 import { PriceCardActions } from './PriceCardActions'
 
@@ -35,37 +34,24 @@ function PriceCardInner({ price, unit, category, is_available, created_at, onEdi
     const accent = CATEGORY_ACCENT[category] ?? theme.colors.primary
 
     return (
-        <Card containerStyle={styles.priceCardContainer}>
+        <View style={styles.priceCardMinimal}>
             <View style={[styles.priceCardAccent, { backgroundColor: accent }]} />
-            <View style={styles.priceCardHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: accent + '22', alignItems: 'center', justifyContent: 'center' }}>
-                        <Ionicons name={(CATEGORY_ICON[category] ?? 'pricetag-outline') as any} size={16} color={accent} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Card.Title style={[styles.priceCardTitle, { marginBottom: 0 }]}>#{category}</Card.Title>
-                        {created_at ? <Text style={styles.priceCardDateText}>{formatDate(created_at)}</Text> : null}
-                    </View>
-                </View>
-                <PriceCardActions onEdit={onEdit} onDelete={onDelete} />
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: accent + '14', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={(CATEGORY_ICON[category] ?? 'pricetag-outline') as any} size={16} color={accent} />
             </View>
-            <View style={[styles.priceCardRow, { marginTop: 8 }]}>
-                <Text style={styles.priceCardLabel}>Price</Text>
-                <Text style={[styles.priceCardValue, { fontSize: 18, color: theme.colors.primary }]}>
-                    {price.toFixed(2)}
-                    <Text style={styles.priceCardCurrencySymbol}> $</Text>
-                    <Text style={{ fontSize: 11, color: theme.colors.grey4 }}> / {unit}</Text>
+            <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.priceCardTitle, { fontSize: 14 }]}>#{category}</Text>
+                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: is_available ? theme.colors.success : theme.colors.grey3 }} />
+                    <Text style={styles.priceCardDateText}>{created_at ? formatDate(created_at) : ''}</Text>
+                </View>
+                <Text style={[styles.priceCardValue, { marginBottom: 0, fontSize: 15, color: theme.colors.black }]}>
+                    {price.toFixed(2)}<Text style={styles.priceCardCurrencySymbol}> $</Text>
+                    <Text style={{ fontSize: 12, color: theme.colors.grey4, fontWeight: '400' }}>  ·  {unit}</Text>
                 </Text>
             </View>
-            <View style={styles.priceCardRow}>
-                <Text style={styles.priceCardLabel}>Status</Text>
-                <Badge
-                    value={is_available ? UI_TEXT.AVAILABLE_STATUS : UI_TEXT.UNAVAILABLE_STATUS}
-                    badgeStyle={[styles.priceCardBadgeStyle, { backgroundColor: is_available ? theme.colors.success + '18' : theme.colors.grey1, borderWidth: 1, borderColor: is_available ? theme.colors.success + '40' : theme.colors.grey2 }]}
-                    textStyle={[styles.priceCardBadgeText, { color: is_available ? theme.colors.success : theme.colors.grey4, fontWeight: '600' }]}
-                />
-            </View>
-        </Card>
+            <PriceCardActions onEdit={onEdit} onDelete={onDelete} />
+        </View>
     )
 }
 export default React.memo(PriceCardInner)
