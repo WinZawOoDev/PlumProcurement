@@ -1,34 +1,36 @@
-import { FlatList, RefreshControl, Share, Text as RNText, ToastAndroid, View } from 'react-native'
+import { FlatList, RefreshControl, Share, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Input, Text } from '@rneui/base'
+import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS, DIMENSIONS } from '../../constants'
+import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseWithSeller } from '../../database'
 import { buildPurchasesCsv, formatDate } from '../../utils'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
+import { SearchBar } from '../../components/SearchBar'
+import { showError } from '../../utils/notifications'
+import { useLoading } from '../../hooks/useAsync'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([])
-    const [loading, setLoading] = useState(false)
+    const { loading, withLoading } = useLoading(false)
     const [searchVisible, setSearchVisible] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
     const loadPurchases = useCallback(async () => {
-        setLoading(true)
-        try {
-            setPurchases(await purchaseService.getPurchases())
-        } catch (error) {
-            console.error('Failed to fetch purchases:', error)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+        await withLoading(async () => {
+            try {
+                setPurchases(await purchaseService.getPurchases())
+            } catch (error) {
+                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+            }
+        })
+    }, [withLoading])
 
     useEffect(() => {
         loadPurchases()
@@ -62,7 +64,7 @@ export default function PurchaseDetails() {
                 title: UI_TEXT.EXPORT_CSV,
             })
         } catch {
-            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+            showError(MESSAGES.ERROR_GENERIC)
         }
     }
 
@@ -106,22 +108,10 @@ export default function PurchaseDetails() {
                 </View>
 
                 {searchVisible && (
-                    <Input
+                    <SearchBar
                         placeholder={UI_TEXT.SEARCH_PURCHASES_PLACEHOLDER}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        inputContainerStyle={styles.formInputContainer}
-                        inputStyle={styles.formInput}
-                        containerStyle={styles.searchBarContainer}
-                        rightIcon={
-                            <Ionicons
-                                name="close-circle-outline"
-                                size={22}
-                                color={theme.colors.tertiary}
-                                onPress={() => setSearchQuery('')}
-                                accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
-                            />
-                        }
                     />
                 )}
 

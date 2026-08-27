@@ -1,19 +1,20 @@
-import { FlatList, Text as RNText, ToastAndroid, View } from 'react-native'
+import { FlatList, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { Picker } from '@react-native-picker/picker'
 import { Text } from '@rneui/base'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
+import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, QUANTITY_PATTERN } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { sellerService } from '../../services/sellerService'
 import { IPurchaseWithSeller } from '../../database'
-
-const QUANTITY_PATTERN = /^\d+$/
+import { SelectPicker } from '../../components/SelectPicker'
+import { QuantityStepper } from '../../components/QuantityStepper'
+import { showSuccess, showError } from '../../utils/notifications'
+import { useLoading } from '../../hooks/useAsync'
 
 export default function Purchase() {
     const styles = useStyles()
@@ -25,13 +26,13 @@ export default function Purchase() {
     const [sellers, setSellers] = useState<{ id: number; name: string }[]>([])
     const [quantity, setQuantity] = useState('1')
     const [recent, setRecent] = useState<IPurchaseWithSeller[]>([])
-    const [recording, setRecording] = useState(false)
+    const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const loadRecent = useCallback(async () => {
         try {
             setRecent(await purchaseService.getPurchases())
         } catch (error) {
-            console.error('Failed to fetch purchases:', error)
+            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
         }
     }, [])
 
@@ -39,7 +40,7 @@ export default function Purchase() {
         try {
             setSellers(await sellerService.getSellers())
         } catch (error) {
-            console.error('Failed to fetch sellers:', error)
+            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
         }
     }, [])
 
@@ -58,33 +59,32 @@ export default function Purchase() {
 
     const handleRecord = async () => {
         if (!selectedPrice) {
-            ToastAndroid.show(UI_TEXT.SELECT_PRICE_ITEM, ToastAndroid.SHORT)
+            showSuccess(UI_TEXT.SELECT_PRICE_ITEM)
             return
         }
         if (!QUANTITY_PATTERN.test(quantity) || quantityValue <= 0) {
-            ToastAndroid.show(MESSAGES.ERROR_INVALID_QUANTITY, ToastAndroid.LONG)
+            showError(MESSAGES.ERROR_INVALID_QUANTITY)
             return
         }
-        setRecording(true)
-        try {
-            await purchaseService.recordPurchase({
-                price_id: selectedPrice.id,
-                seller_id: selectedSellerId ? parseInt(selectedSellerId, 10) : null,
-                category: selectedPrice.category,
-                unit: selectedPrice.unit,
-                unit_price: selectedPrice.price,
-                quantity: quantityValue,
-                total,
-            })
-            ToastAndroid.show(MESSAGES.PURCHASE_RECORDED_SUCCESS, ToastAndroid.SHORT)
-            await loadRecent()
-            setQuantity('1')
-        } catch (error) {
-            const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
-            ToastAndroid.show(message, ToastAndroid.LONG)
-        } finally {
-            setRecording(false)
-        }
+        await withRecording(async () => {
+            try {
+                await purchaseService.recordPurchase({
+                    price_id: selectedPrice.id,
+                    seller_id: selectedSellerId ? parseInt(selectedSellerId, 10) : null,
+                    category: selectedPrice.category,
+                    unit: selectedPrice.unit,
+                    unit_price: selectedPrice.price,
+                    quantity: quantityValue,
+                    total,
+                })
+                showSuccess(MESSAGES.PURCHASE_RECORDED_SUCCESS)
+                await loadRecent()
+                setQuantity('1')
+            } catch (error) {
+                const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
+                showError(message)
+            }
+        })
     }
 
     return (
@@ -95,70 +95,30 @@ export default function Purchase() {
                     <Text style={styles.descriptionText}>{UI_TEXT.PURCHASE_DESCRIPTION}</Text>
                 </View>
 
-                <View style={styles.categoryContainer}>
-                    <Text style={styles.categoryLabel}>{UI_TEXT.SELECT_SELLER}</Text>
-                    <View style={styles.pickerWrapper}>
-                        <Picker
-                            selectedValue={selectedSellerId}
-                            onValueChange={(value) => setSelectedSellerId(value as string)}
-                            style={styles.picker}
-                            mode="dialog"
-                        >
-                            <Picker.Item label={UI_TEXT.NO_SELLER} value="" />
-                            {sellers.map((s) => (
-                                <Picker.Item
-                                    key={s.id}
-                                    label={s.name}
-                                    value={s.id.toString()}
-                                />
-                            ))}
-                        </Picker>
-                    </View>
-                </View>
+                <SelectPicker
+                    label={UI_TEXT.SELECT_SELLER}
+                    selectedValue={selectedSellerId}
+                    onValueChange={setSelectedSellerId}
+                    items={[
+                        { label: UI_TEXT.NO_SELLER, value: '' },
+                        ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
+                    ]}
+                />
 
-                <View style={styles.categoryContainer}>
-                    <Text style={styles.categoryLabel}>{UI_TEXT.SELECT_PRICE_ITEM}</Text>
-                    <View style={styles.pickerWrapper}>
-                        <Picker
-                            selectedValue={selectedPriceId}
-                            onValueChange={(value) => setSelectedPriceId(value as string)}
-                            style={styles.picker}
-                            mode="dialog"
-                        >
-                            <Picker.Item label={UI_TEXT.SELECT_PRICE_ITEM} value="" />
-                            {prices.map((p) => (
-                                <Picker.Item
-                                    key={p.id}
-                                    label={`${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`}
-                                    value={p.id.toString()}
-                                />
-                            ))}
-                        </Picker>
-                    </View>
-                </View>
+                <SelectPicker
+                    label={UI_TEXT.SELECT_PRICE_ITEM}
+                    selectedValue={selectedPriceId}
+                    onValueChange={setSelectedPriceId}
+                    items={[
+                        { label: UI_TEXT.SELECT_PRICE_ITEM, value: '' },
+                        ...prices.map((p) => ({
+                            label: `${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`,
+                            value: p.id.toString(),
+                        })),
+                    ]}
+                />
 
-                <View style={styles.quantityRow}>
-                    <Text style={styles.categoryLabel}>{UI_TEXT.QUANTITY}</Text>
-                    <RNText
-                        style={styles.quantityStepperButton}
-                        onPress={() => setQuantity((q) => String(Math.max(1, parseInt(q, 10) || 1) + 1))}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={A11Y_LABELS.INCREASE_QUANTITY}
-                    >
-                        +
-                    </RNText>
-                    <RNText style={styles.quantityValue}>{quantity}</RNText>
-                    <RNText
-                        style={styles.quantityStepperButton}
-                        onPress={() => setQuantity((q) => String(Math.max(1, (parseInt(q, 10) || 1) - 1)))}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={A11Y_LABELS.DECREASE_QUANTITY}
-                    >
-                        −
-                    </RNText>
-                </View>
+                <QuantityStepper value={quantity} onChange={setQuantity} />
 
                 <View style={styles.purchaseSummaryRow}>
                     <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>

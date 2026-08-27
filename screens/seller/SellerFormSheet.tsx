@@ -1,4 +1,4 @@
-import { View, Text, ToastAndroid } from 'react-native'
+import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
@@ -8,6 +8,7 @@ import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, VALIDATION_MESSAGES } from '../../constants'
 import { sellerService, NewSeller } from '../../services/sellerService'
 import { ISeller } from '../../database'
+import { showSuccess, showError } from '../../utils/notifications'
 
 type FormData = {
     name: string
@@ -47,15 +48,15 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
             }
             if (editing) {
                 await sellerService.editSeller(seller.id, payload)
-                ToastAndroid.show(MESSAGES.SELLER_UPDATE_SUCCESS, ToastAndroid.SHORT)
+                showSuccess(MESSAGES.SELLER_UPDATE_SUCCESS)
             } else {
                 await sellerService.addSeller(payload)
-                ToastAndroid.show(MESSAGES.SELLER_SAVED_SUCCESS, ToastAndroid.SHORT)
+                showSuccess(MESSAGES.SELLER_SAVED_SUCCESS)
             }
             onSaved()
             onClose()
         } catch {
-            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+            showError(MESSAGES.ERROR_GENERIC)
         }
     }
 

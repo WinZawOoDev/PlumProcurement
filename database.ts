@@ -1,17 +1,10 @@
 import { open } from 'react-native-nitro-sqlite'
 import { DATABASE_CONFIG, MESSAGES } from './constants'
+import type { IPrice, IPurchase, IPurchaseWithSeller, ISeller } from './types/database'
+
+export type { IPrice, IPurchase, IPurchaseWithSeller, ISeller } from './types/database'
 
 const initDb = () => open({ name: DATABASE_CONFIG.NAME });
-
-export interface IPrice {
-    id: number;
-    price: number;
-    unit: string;
-    category: string;
-    is_available: boolean;
-    created_at?: string;
-    updated_at?: string;
-}
 
 export class DatabaseError extends Error {
     constructor(message: string, public originalError?: unknown) {
@@ -178,21 +171,7 @@ export async function dropTblPrices(): Promise<void> {
     }
 }
 
-export interface IPurchase {
-    id: number;
-    price_id: number;
-    seller_id: number | null;
-    category: string;
-    unit: string;
-    unit_price: number;
-    quantity: number;
-    total: number;
-    created_at?: string;
-}
 
-export interface IPurchaseWithSeller extends IPurchase {
-    seller_name: string | null;
-}
 
 const PURCHASES_TABLE_SQL = `
             CREATE TABLE IF NOT EXISTS purchases (
@@ -278,12 +257,6 @@ export async function createPurchase(purchaseData: Omit<IPurchase, 'id'>): Promi
     } finally {
         db?.close()
     }
-}
-
-export interface ISeller {
-    id: number;
-    name: string;
-    phone: string | null;
 }
 
 export async function initializeSellers(): Promise<void> {

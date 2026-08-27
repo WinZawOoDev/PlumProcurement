@@ -211,6 +211,7 @@ export const VALIDATION_MESSAGES = {
 } as const;
 
 export const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;
+export const QUANTITY_PATTERN = /^\d+$/;
 
 // ===== PICKER CONFIGURATION =====
 export const PICKER_CONFIG = {

@@ -1,5 +1,5 @@
-import { View, KeyboardAvoidingView, Platform, ToastAndroid } from 'react-native'
-import React, { useState } from 'react'
+import { View, KeyboardAvoidingView, Platform } from 'react-native'
+import React from 'react'
 import { Text } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
@@ -10,6 +10,8 @@ import { usePrices } from '../../context/PriceContext'
 import { FormSelectField, FormInputField, FormCheckboxField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
+import { showSuccess, showError } from '../../utils/notifications'
+import { useAsync } from '../../hooks/useAsync'
 
 type FormData = {
     price: string
@@ -22,7 +24,7 @@ export default function CreatePrice() {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { addPrice } = usePrices()
-    const [saving, setSaving] = useState(false)
+    const { loading: saving, execute } = useAsync()
 
     const { control, handleSubmit } = useForm<FormData>({
         defaultValues: {
@@ -35,22 +37,22 @@ export default function CreatePrice() {
     })
 
     const handleSavePrice = async (data: FormData) => {
-        setSaving(true)
-        try {
-            await addPrice({
-                category: data.category,
-                price: parseFloat(data.price),
-                unit: UNIT_LIST[data.unit],
-                is_available: data.isAvailable,
-            })
-            ToastAndroid.show(MESSAGES.PRICE_SAVED_SUCCESS, ToastAndroid.SHORT)
-            navigation.popTo(ROUTES.PURCHASE_PRICE)
-        } catch (error) {
-            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            ToastAndroid.show(message, ToastAndroid.LONG)
-        } finally {
-            setSaving(false)
-        }
+        await execute(async () => {
+            try {
+                await addPrice({
+                    category: data.category,
+                    price: parseFloat(data.price),
+                    unit: UNIT_LIST[data.unit],
+                    is_available: data.isAvailable,
+                })
+                showSuccess(MESSAGES.PRICE_SAVED_SUCCESS)
+                navigation.popTo(ROUTES.PURCHASE_PRICE)
+            } catch (error) {
+                const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
+                showError(message)
+                throw error
+            }
+        })
     }
 
     return (

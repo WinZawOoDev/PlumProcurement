@@ -1,6 +1,5 @@
-import { Alert, FlatList, RefreshControl, Text as RNText, ToastAndroid, View } from 'react-native'
+import { Alert, FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Input } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
@@ -10,27 +9,30 @@ import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../con
 import { sellerService } from '../../services/sellerService'
 import { DatabaseError, ISeller } from '../../database'
 import SellerFormSheet from './SellerFormSheet'
+import { SearchBar } from '../../components/SearchBar'
+import { showSuccess, showError } from '../../utils/notifications'
+import { useLoading } from '../../hooks/useAsync'
+import { SellerRow } from './SellerRow'
 
 export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [sellers, setSellers] = useState<ISeller[]>([])
-    const [loading, setLoading] = useState(false)
+    const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
     const [searchVisible, setSearchVisible] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
     const loadSellers = useCallback(async () => {
-        setLoading(true)
-        try {
-            setSellers(await sellerService.getSellers())
-        } catch (error) {
-            console.error('Failed to fetch sellers:', error)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+        await withLoading(async () => {
+            try {
+                setSellers(await sellerService.getSellers())
+            } catch (error) {
+                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+            }
+        })
+    }, [withLoading])
 
     useEffect(() => {
         loadSellers()
@@ -71,11 +73,11 @@ export default function Sellers() {
     const performDelete = async (id: number) => {
         try {
             await sellerService.removeSeller(id)
-            ToastAndroid.show(MESSAGES.SELLER_DELETE_SUCCESS, ToastAndroid.SHORT)
+            showSuccess(MESSAGES.SELLER_DELETE_SUCCESS)
             await loadSellers()
         } catch (error) {
             const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            ToastAndroid.show(message, ToastAndroid.LONG)
+            showError(message)
         }
     }
 
@@ -111,22 +113,10 @@ export default function Sellers() {
                 </View>
 
                 {searchVisible && (
-                    <Input
+                    <SearchBar
                         placeholder={UI_TEXT.SEARCH_SELLERS_PLACEHOLDER}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        inputContainerStyle={styles.formInputContainer}
-                        inputStyle={styles.formInput}
-                        containerStyle={styles.searchBarContainer}
-                        rightIcon={
-                            <Ionicons
-                                name="close-circle-outline"
-                                size={22}
-                                color={theme.colors.tertiary}
-                                onPress={() => setSearchQuery('')}
-                                accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
-                            />
-                        }
                     />
                 )}
 
@@ -134,43 +124,14 @@ export default function Sellers() {
                     data={visibleSellers}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.purchaseItemRow}>
-                            <View style={styles.sellerInfo}>
-                                <RNText style={styles.sellerNameText}>{item.name}</RNText>
-                                {!!item.phone && (
-                                    <RNText style={styles.sellerPhoneText}>{item.phone}</RNText>
-                                )}
-                            </View>
-                            <View style={styles.priceCardActionsRow}>
-                                <Button
-                                    buttonStyle={styles.rowIconButton}
-                                    icon={
-                                        <Ionicons
-                                            name="pencil-outline"
-                                            size={DIMENSIONS.ICON_SIZE_SMALL}
-                                            color={theme.colors.primary}
-                                        />
-                                    }
-                                    onPress={() => {
-                                        setEditing(item)
-                                        setSheetVisible(true)
-                                    }}
-                                    accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
-                                />
-                                <Button
-                                    buttonStyle={[styles.rowIconButton, styles.rowIconDeleteButton]}
-                                    icon={
-                                        <Ionicons
-                                            name="trash-outline"
-                                            size={DIMENSIONS.ICON_SIZE_SMALL}
-                                            color="white"
-                                        />
-                                    }
-                                    onPress={() => confirmDelete(item.id)}
-                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                                />
-                            </View>
-                        </View>
+                        <SellerRow
+                            seller={item}
+                            onEdit={() => {
+                                setEditing(item)
+                                setSheetVisible(true)
+                            }}
+                            onDelete={() => confirmDelete(item.id)}
+                        />
                     )}
                     ListEmptyComponent={
                         <RNText style={styles.emptyPriceListText}>

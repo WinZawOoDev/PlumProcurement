@@ -1,4 +1,4 @@
-import { View, Text, ToastAndroid } from 'react-native'
+import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
 import { useForm } from 'react-hook-form'
@@ -21,6 +21,7 @@ import {
 } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { IPrice } from '../../database'
+import { showSuccess, showError } from '../../utils/notifications'
 
 type FormData = {
     id: number
@@ -74,10 +75,10 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
                 unit: UNIT_LIST[data.unit],
                 is_available: data.isAvailable,
             })
-            ToastAndroid.show(MESSAGES.PRICE_UPDATE_SUCCESS, ToastAndroid.SHORT)
+            showSuccess(MESSAGES.PRICE_UPDATE_SUCCESS)
             onClose()
         } catch {
-            ToastAndroid.show(MESSAGES.ERROR_GENERIC, ToastAndroid.LONG)
+            showError(MESSAGES.ERROR_GENERIC)
         }
     }
 

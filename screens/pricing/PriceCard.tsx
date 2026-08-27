@@ -1,10 +1,11 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { Badge, Button, Card } from '@rneui/themed'
+import { Badge, Card } from '@rneui/themed'
 import { IPrice } from '../../database'
 import { useStyles } from '../../styles'
-import { UI_TEXT, A11Y_LABELS } from '../../constants'
+import { UI_TEXT } from '../../constants'
 import { formatDate } from '../../utils'
+import { PriceCardActions } from './PriceCardActions'
 
 interface PriceCardProps extends Omit<IPrice, 'id'> {
     onEdit?: () => void
@@ -24,26 +25,7 @@ export default function PriceCard({ price, unit, category, is_available, created
                 {created_at && (
                     <Text style={styles.priceCardDateText}>{formatDate(created_at)}</Text>
                 )}
-                <View style={styles.priceCardActionsRow}>
-                    <Button
-                        buttonStyle={styles.priceCardEditButton}
-                        title="Edit"
-                        titleStyle={styles.priceCardEditButtonTitle}
-                        onPress={onEdit}
-                        accessibilityLabel={A11Y_LABELS.EDIT_PRICE}
-                    />
-                    <Button
-                        buttonStyle={styles.priceCardDeleteButton}
-                        icon={{
-                            name: 'trash-outline',
-                            type: 'ionicon',
-                            color: 'white',
-                            size: 16,
-                        }}
-                        onPress={onDelete}
-                        accessibilityLabel={A11Y_LABELS.DELETE_PRICE}
-                    />
-                </View>
+                <PriceCardActions onEdit={onEdit} onDelete={onDelete} />
             </View>
             <View style={styles.priceCardRow}>
                 <Text style={styles.priceCardLabel}>

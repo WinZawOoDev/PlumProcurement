@@ -1,7 +1,5 @@
-import { Alert, RefreshControl, View, Text, FlatList, ToastAndroid } from 'react-native'
+import { Alert, RefreshControl, View, Text, FlatList } from 'react-native'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Input } from '@rneui/themed'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -9,8 +7,10 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode, A11Y_LABELS } from '../../constants'
+import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
 import { DatabaseError, IPrice } from '../../database'
+import { showSuccess, showError } from '../../utils/notifications'
+import { SearchBar } from '../../components/SearchBar'
 
 export default function PurchasePrices() {
     const styles = useStyles()
@@ -73,10 +73,10 @@ export default function PurchasePrices() {
     const performDelete = async (id: number) => {
         try {
             await removePrice(id)
-            ToastAndroid.show(MESSAGES.PRICE_DELETE_SUCCESS, ToastAndroid.SHORT)
+            showSuccess(MESSAGES.PRICE_DELETE_SUCCESS)
         } catch (error) {
             const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            ToastAndroid.show(message, ToastAndroid.LONG)
+            showError(message)
         }
     }
 
@@ -86,7 +86,7 @@ export default function PurchasePrices() {
             style={styles.priceListScreen}
         >
             <View style={styles.priceListContainer}>
-                <TitleAndDescription />
+                <PriceListHeader />
                 <ActionButtons
                     searchActive={searchVisible}
                     onSearchPress={handleToggleSearch}
@@ -95,22 +95,10 @@ export default function PurchasePrices() {
                     onSortPress={handleSortPress}
                 />
                 {searchVisible && (
-                    <Input
+                    <SearchBar
                         placeholder={UI_TEXT.SEARCH_PRICES_PLACEHOLDER}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        inputContainerStyle={styles.formInputContainer}
-                        inputStyle={styles.formInput}
-                        containerStyle={styles.searchBarContainer}
-                        rightIcon={
-                            <Ionicons
-                                name="close-circle-outline"
-                                size={22}
-                                color={theme.colors.tertiary}
-                                onPress={() => setSearchQuery('')}
-                                accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
-                            />
-                        }
                     />
                 )}
                 <FlatList
@@ -125,7 +113,7 @@ export default function PurchasePrices() {
                             onDelete={() => handleDelete(item.id)}
                         />
                     )}
-                    ListEmptyComponent={<EmptyPriceList />}
+                    ListEmptyComponent={<PriceListEmptyState />}
                     removeClippedSubviews={true}
                     maxToRenderPerBatch={10}
                     updateCellsBatchingPeriod={50}
@@ -150,7 +138,7 @@ export default function PurchasePrices() {
     )
 }
 
-function EmptyPriceList() {
+function PriceListEmptyState() {
     const styles = useStyles()
 
     return (
@@ -160,7 +148,7 @@ function EmptyPriceList() {
     )
 }
 
-function TitleAndDescription() {
+function PriceListHeader() {
     const styles = useStyles()
     return (
         <View style={styles.titleDescription}>
