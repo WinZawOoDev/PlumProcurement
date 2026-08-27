@@ -42,14 +42,29 @@ function Navigation() {
     screenOptions: {
       headerShown: false,
       tabBarActiveTintColor: currentTheme.colors.primary,
+      tabBarInactiveTintColor: currentTheme.colors.grey4,
       tabBarStyle: {
-        minHeight: 70,
-        paddingTop: 5,
+        minHeight: 72,
+        paddingTop: 6,
+        paddingBottom: 8,
         alignItems: 'center',
+        backgroundColor: currentTheme.colors.surface ?? currentTheme.colors.white,
+        borderTopWidth: 1,
+        borderTopColor: currentTheme.colors.grey1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 8,
       },
       tabBarLabelStyle: {
-        fontWeight: 'bold',
-        fontSize: 12
+        fontWeight: '700',
+        fontSize: 11,
+        letterSpacing: 0.3,
+        marginTop: 2,
+      },
+      tabBarIconStyle: {
+        marginTop: 2,
       },
     },
     screens: {

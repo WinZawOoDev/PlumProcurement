@@ -15,6 +15,8 @@ import { SelectPicker } from '../../components/SelectPicker'
 import { QuantityStepper } from '../../components/QuantityStepper'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
+import { SectionHeader } from '../../components/SectionHeader'
+import { EmptyState } from '../../components/EmptyState'
 
 export default function Purchase() {
     const styles = useStyles()
@@ -90,82 +92,64 @@ export default function Purchase() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={styles.priceListContainer}>
-                <View style={styles.titleDescription}>
-                    <Text style={styles.titleText}>{UI_TEXT.RECORD_PURCHASE}</Text>
-                    <Text style={styles.descriptionText}>{UI_TEXT.PURCHASE_DESCRIPTION}</Text>
+                <SectionHeader icon="cart-outline" title={UI_TEXT.RECORD_PURCHASE} description={UI_TEXT.PURCHASE_DESCRIPTION} />
+
+                <View style={styles.formCard}>
+                    <SelectPicker
+                        label={UI_TEXT.SELECT_SELLER}
+                        selectedValue={selectedSellerId}
+                        onValueChange={setSelectedSellerId}
+                        items={[
+                            { label: UI_TEXT.NO_SELLER, value: '' },
+                            ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
+                        ]}
+                    />
+                    <SelectPicker
+                        label={UI_TEXT.SELECT_PRICE_ITEM}
+                        selectedValue={selectedPriceId}
+                        onValueChange={setSelectedPriceId}
+                        items={[
+                            { label: UI_TEXT.SELECT_PRICE_ITEM, value: '' },
+                            ...prices.map((p) => ({
+                                label: `${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`,
+                                value: p.id.toString(),
+                            })),
+                        ]}
+                    />
+                    <QuantityStepper value={quantity} onChange={setQuantity} />
+                    <View style={[styles.purchaseSummaryCard, { marginTop: 8, marginBottom: 0 }]}>
+                        <View style={styles.purchaseSummaryRow}>
+                            <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
+                            <Text style={styles.purchaseSummaryValue}>{selectedPrice ? `${selectedPrice.price.toFixed(2)}$` : '—'}</Text>
+                        </View>
+                        <View style={[styles.purchaseSummaryRow, { borderTopWidth: 1, borderColor: '#eee', marginTop: 6, paddingTop: 6 }]}>
+                            <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
+                            <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
+                        </View>
+                    </View>
+                    <View style={{ gap: 10, marginTop: 12 }}>
+                        <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !selectedPrice} loading={recording} onPress={handleRecord} />
+                        <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)} />
+                    </View>
                 </View>
 
-                <SelectPicker
-                    label={UI_TEXT.SELECT_SELLER}
-                    selectedValue={selectedSellerId}
-                    onValueChange={setSelectedSellerId}
-                    items={[
-                        { label: UI_TEXT.NO_SELLER, value: '' },
-                        ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
-                    ]}
-                />
-
-                <SelectPicker
-                    label={UI_TEXT.SELECT_PRICE_ITEM}
-                    selectedValue={selectedPriceId}
-                    onValueChange={setSelectedPriceId}
-                    items={[
-                        { label: UI_TEXT.SELECT_PRICE_ITEM, value: '' },
-                        ...prices.map((p) => ({
-                            label: `${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`,
-                            value: p.id.toString(),
-                        })),
-                    ]}
-                />
-
-                <QuantityStepper value={quantity} onChange={setQuantity} />
-
-                <View style={styles.purchaseSummaryRow}>
-                    <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
-                    <Text style={styles.purchaseSummaryValue}>
-                        {selectedPrice ? `${selectedPrice.price.toFixed(2)}$` : '—'}
-                    </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginBottom: 8 }}>
+                    <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
+                    <RNText style={{ fontSize: 12, color: '#999' }}>{recent.length > 0 ? `${recent.length} total` : ''}</RNText>
                 </View>
-                <View style={styles.purchaseSummaryRow}>
-                    <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
-                    <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
-                </View>
-
-                <PrimaryButton
-                    title={UI_TEXT.RECORD_PURCHASE}
-                    disabled={recording || !selectedPrice}
-                    loading={recording}
-                    onPress={handleRecord}
-                />
-                <SecondaryButton
-                    title={UI_TEXT.VIEW_HISTORY}
-                    onPress={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)}
-                />
-
-                <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
                 <FlatList
                     data={recent.slice(0, 5)}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.purchaseItemRow}>
+                        <View style={[styles.purchaseItemRow, { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f0f0f0' }]}>
                             <View style={styles.sellerInfo}>
-                                <RNText style={styles.purchaseItemTitle}>
-                                    {item.category} × {item.quantity} ({item.unit})
-                                </RNText>
-                                {!!item.seller_name && (
-                                    <RNText style={styles.sellerPhoneText}>
-                                        {UI_TEXT.SOLD_BY}: {item.seller_name}
-                                    </RNText>
-                                )}
+                                <RNText style={styles.purchaseItemTitle}>{item.category} × {item.quantity} ({item.unit})</RNText>
+                                {!!item.seller_name && <RNText style={styles.sellerPhoneText}>{UI_TEXT.SOLD_BY}: {item.seller_name}</RNText>}
                             </View>
                             <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
                         </View>
                     )}
-                    ListEmptyComponent={
-                        <RNText style={styles.emptyPriceListText}>
-                            {UI_TEXT.EMPTY_PURCHASE_LIST}
-                        </RNText>
-                    }
+                    ListEmptyComponent={<EmptyState icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description="Record your first purchase to see it here" />}
                 />
             </View>
         </SafeAreaView>

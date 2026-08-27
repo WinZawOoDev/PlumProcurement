@@ -1,7 +1,6 @@
 import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
@@ -15,6 +14,8 @@ import { SearchBar } from '../../components/SearchBar'
 import { showError, showSuccess } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { PAGINATION_CONFIG } from '../../constants'
+import { SectionHeader } from '../../components/SectionHeader'
+import { EmptyState } from '../../components/EmptyState'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
@@ -112,17 +113,14 @@ export default function PurchaseDetails() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={styles.priceListContainer}>
-                <View style={styles.titleDescription}>
-                    <Text style={styles.titleText}>{UI_TEXT.PURCHASE_HISTORY_TITLE}</Text>
-                    <Text style={styles.descriptionText}>{UI_TEXT.PURCHASE_HISTORY_DESCRIPTION}</Text>
-                </View>
+                <SectionHeader icon="time-outline" title={UI_TEXT.PURCHASE_HISTORY_TITLE} description={UI_TEXT.PURCHASE_HISTORY_DESCRIPTION} />
 
                 <View style={styles.purchaseSummaryCard}>
                     <View style={styles.purchaseSummaryRow}>
                         <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.PURCHASES_COUNT}</RNText>
                         <RNText style={styles.purchaseSummaryValue}>{visiblePurchases.length}</RNText>
                     </View>
-                    <View style={styles.purchaseSummaryRow}>
+                    <View style={[styles.purchaseSummaryRow, { borderTopWidth: 1, borderColor: theme.colors.grey1, marginTop: 6, paddingTop: 8 }]}>
                         <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_VALUE}</RNText>
                         <RNText style={styles.purchaseTotalText}>{grandTotal.toFixed(2)}$</RNText>
                     </View>
@@ -160,26 +158,21 @@ export default function PurchaseDetails() {
                     data={visiblePurchases}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.purchaseItemRow}>
+                        <View style={[styles.purchaseItemRow, { backgroundColor: theme.colors.surface ?? theme.colors.white, borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: theme.colors.grey1 }]}>
                             <View style={styles.sellerInfo}>
-                                <RNText style={styles.purchaseItemTitle}>
-                                    {item.category} ({item.unit})
-                                </RNText>
-                                <RNText style={styles.purchaseItemSubtitle}>
-                                    {formatDate(item.created_at)}
-                                    {item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}
-                                </RNText>
-                                <RNText style={styles.purchaseItemSubtitle}>
-                                    {item.quantity} × {item.unit_price.toFixed(2)}$
-                                </RNText>
+                                <RNText style={styles.purchaseItemTitle}>{item.category} ({item.unit})</RNText>
+                                <RNText style={styles.purchaseItemSubtitle}>{formatDate(item.created_at)}{item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}</RNText>
+                                <RNText style={styles.purchaseItemSubtitle}>{item.quantity} × {item.unit_price.toFixed(2)}$</RNText>
                             </View>
                             <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
                         </View>
                     )}
                     ListEmptyComponent={
-                        <RNText style={styles.emptyPriceListText}>
-                            {purchases.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_PURCHASE_LIST}
-                        </RNText>
+                        <EmptyState
+                            icon="receipt-outline"
+                            title={purchases.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_PURCHASE_LIST}
+                            description={purchases.length > 0 ? `No purchases matching "${searchQuery}"` : 'Your purchase history will appear here'}
+                        />
                     }
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}

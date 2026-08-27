@@ -18,13 +18,17 @@ interface SellerRowProps {
 function SellerRowInner({ seller, onEdit, onDelete, purchaseCount, purchaseTotal }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
-        <View style={styles.purchaseItemRow}>
+        <View style={[styles.purchaseItemRow, { backgroundColor: theme.colors.surface ?? theme.colors.white, borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: theme.colors.grey1 }]}>
+            <View style={styles.avatarCircle}>
+                <RNText style={styles.avatarText}>{initial}</RNText>
+            </View>
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerNameText}>{seller.name}</RNText>
                 {!!seller.phone && <RNText style={styles.sellerPhoneText}>{seller.phone}</RNText>}
                 {(purchaseCount ?? 0) > 0 && (
-                    <RNText style={styles.sellerPhoneText}>
+                    <RNText style={[styles.sellerPhoneText, { color: theme.colors.success, fontWeight: '600' }]}>
                         {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$
                     </RNText>
                 )}

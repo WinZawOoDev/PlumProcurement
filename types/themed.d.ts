@@ -6,5 +6,8 @@ declare module '@rneui/themed' {
         tertiary: string;
         neutral: string;
         primaryLinearGradient: string
+        surface: string;
+        primaryLight: string;
+        searchBg: string;
     }
 }

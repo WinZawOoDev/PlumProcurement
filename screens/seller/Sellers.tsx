@@ -1,4 +1,4 @@
-import { Alert, FlatList, RefreshControl, Text as RNText, View } from 'react-native'
+import { Alert, FlatList, RefreshControl, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from '@react-native-vector-icons/ionicons'
@@ -14,6 +14,8 @@ import { SearchBar } from '../../components/SearchBar'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { SellerRow } from './SellerRow'
+import { SectionHeader } from '../../components/SectionHeader'
+import { EmptyState } from '../../components/EmptyState'
 
 export default function Sellers() {
     const styles = useStyles()
@@ -100,10 +102,7 @@ export default function Sellers() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={styles.priceListContainer}>
-                <View style={styles.titleDescription}>
-                    <RNText style={styles.titleText}>{UI_TEXT.SELLERS}</RNText>
-                    <RNText style={styles.descriptionText}>{UI_TEXT.SELLERS_DESCRIPTION}</RNText>
-                </View>
+                <SectionHeader icon="people-outline" title={UI_TEXT.SELLERS} description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${sellers.length} ${sellers.length === 1 ? 'seller' : 'sellers'}`} />
 
                 <View style={styles.actionButtonsRow}>
                     <PrimaryButton
@@ -156,9 +155,11 @@ export default function Sellers() {
                         />
                     )}
                     ListEmptyComponent={
-                        <RNText style={styles.emptyPriceListText}>
-                            {sellers.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
-                        </RNText>
+                        <EmptyState
+                            icon={sellers.length > 0 ? 'search-outline' : 'people-outline'}
+                            title={sellers.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
+                            description={sellers.length > 0 ? `No sellers matching "${searchQuery}"` : 'Add your first seller to get started'}
+                        />
                     }
                     refreshControl={
                         <RefreshControl
