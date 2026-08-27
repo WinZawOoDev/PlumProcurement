@@ -158,7 +158,7 @@ export default function PurchaseDetails() {
                     data={visiblePurchases}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={[styles.purchaseItemRow, { backgroundColor: theme.colors.surface ?? theme.colors.white, borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: theme.colors.grey1 }]}>
+                        <View style={styles.purchaseItemRow}>
                             <View style={styles.sellerInfo}>
                                 <RNText style={styles.purchaseItemTitle}>{item.category} ({item.unit})</RNText>
                                 <RNText style={styles.purchaseItemSubtitle}>{formatDate(item.created_at)}{item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}</RNText>

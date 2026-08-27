@@ -20,7 +20,7 @@ function SellerRowInner({ seller, onEdit, onDelete, purchaseCount, purchaseTotal
     const { theme } = useTheme()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
-        <View style={[styles.purchaseItemRow, { backgroundColor: theme.colors.surface ?? theme.colors.white, borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: theme.colors.grey1 }]}>
+        <View style={styles.purchaseItemRow}>
             <View style={styles.avatarCircle}>
                 <RNText style={styles.avatarText}>{initial}</RNText>
             </View>

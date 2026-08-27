@@ -141,7 +141,7 @@ export default function Purchase() {
                     data={recent.slice(0, 5)}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={[styles.purchaseItemRow, { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f0f0f0' }]}>
+                        <View style={styles.purchaseItemRow}>
                             <View style={styles.sellerInfo}>
                                 <RNText style={styles.purchaseItemTitle}>{item.category} × {item.quantity} ({item.unit})</RNText>
                                 {!!item.seller_name && <RNText style={styles.sellerPhoneText}>{UI_TEXT.SOLD_BY}: {item.seller_name}</RNText>}

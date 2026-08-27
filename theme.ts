@@ -51,12 +51,13 @@ export const makeAppTheme = (isDark: boolean) =>
             },
             Card: {
                 containerStyle: {
-                    borderRadius: 16,
+                    borderRadius: 12,
                     shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.06,
-                    shadowRadius: 12,
-                    elevation: 3,
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 6,
+                    elevation: 1,
+                    borderWidth: 0,
                 },
             },
             Input: {
