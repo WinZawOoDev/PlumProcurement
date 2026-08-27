@@ -118,6 +118,7 @@ function csvEscape(value: unknown): string {
 
 /**
  * Build CSV text from purchase records
+ * Includes BOM for Excel compatibility and handles empty lists gracefully.
  */
 export function buildPurchasesCsv(
     purchases: Array<{
@@ -132,6 +133,9 @@ export function buildPurchasesCsv(
     }>
 ): string {
     const header = ['id', 'date', 'seller', 'category', 'unit', 'unit_price', 'quantity', 'total']
+    if (purchases.length === 0) {
+        return header.join(',')
+    }
     const rows = purchases.map((p) =>
         [
             p.id,
@@ -147,4 +151,13 @@ export function buildPurchasesCsv(
             .join(',')
     )
     return [header.join(','), ...rows].join('\n')
+}
+
+export function buildPurchasesCsvWithBom(purchases: Parameters<typeof buildPurchasesCsv>[0]): string {
+    return '\uFEFF' + buildPurchasesCsv(purchases)
+}
+
+export function getCsvFilename(prefix = 'purchases'): string {
+    const date = new Date().toISOString().slice(0, 10)
+    return `${prefix}_${date}.csv`
 }

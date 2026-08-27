@@ -168,6 +168,11 @@ export const DATABASE_CONFIG = {
   TIMEOUT: 5000,
 } as const;
 
+export const PAGINATION_CONFIG = {
+  PURCHASE_PAGE_SIZE: 20,
+  INITIAL_PAGE_SIZE: 20,
+} as const;
+
 // ===== FORM CONFIGURATION =====
 export const FORM_CONFIG = {
   PRICE_DEFAULT: '',

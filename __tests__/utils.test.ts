@@ -10,6 +10,8 @@ import {
     isEmpty,
     formatDate,
     buildPurchasesCsv,
+    buildPurchasesCsvWithBom,
+    getCsvFilename,
 } from '../utils'
 
 describe('formatPrice', () => {
@@ -193,5 +195,18 @@ describe('buildPurchasesCsv', () => {
             },
         ])
         expect(csv.split('\n')[1]).toBe('3,2026-08-24,,grains,PER BUNCH,100,5,500')
+    })
+
+    test('returns only header for empty list', () => {
+        expect(buildPurchasesCsv([])).toBe('id,date,seller,category,unit,unit_price,quantity,total')
+    })
+
+    test('buildPurchasesCsvWithBom prepends BOM', () => {
+        const csv = buildPurchasesCsvWithBom([])
+        expect(csv.charCodeAt(0)).toBe(0xfeff)
+    })
+
+    test('getCsvFilename includes prefix and date', () => {
+        expect(getCsvFilename('purchases')).toMatch(/^purchases_\d{4}-\d{2}-\d{2}\.csv$/)
     })
 })

@@ -8,32 +8,69 @@ import { useStyles } from '../../styles'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseWithSeller } from '../../database'
-import { buildPurchasesCsv, formatDate } from '../../utils'
+import { buildPurchasesCsvWithBom, formatDate, getCsvFilename } from '../../utils'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
 import { SearchBar } from '../../components/SearchBar'
-import { showError } from '../../utils/notifications'
+import { showError, showSuccess } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
+import { PAGINATION_CONFIG } from '../../constants'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([])
+    const [page, setPage] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
     const { loading, withLoading } = useLoading(false)
     const [searchVisible, setSearchVisible] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
-    const loadPurchases = useCallback(async () => {
-        await withLoading(async () => {
-            try {
-                setPurchases(await purchaseService.getPurchases())
-            } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+    const loadPurchases = useCallback(
+        async (reset = true) => {
+            const targetPage = reset ? 0 : page
+            const loader = reset ? withLoading : async (fn: () => Promise<void>) => {
+                setLoadingMore(true)
+                try {
+                    await fn()
+                } finally {
+                    setLoadingMore(false)
+                }
             }
-        })
-    }, [withLoading])
+            await loader(async () => {
+                try {
+                    const { items, hasMore: more } = await purchaseService.getPurchasesPaginated(
+                        targetPage,
+                        PAGINATION_CONFIG.PURCHASE_PAGE_SIZE
+                    )
+                    if (reset) {
+                        setPurchases(items)
+                        setPage(1)
+                    } else {
+                        setPurchases((prev) => [...prev, ...items])
+                        setPage((p) => p + 1)
+                    }
+                    setHasMore(more)
+                } catch (error) {
+                    showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                }
+            })
+        },
+        [withLoading, page]
+    )
 
     useEffect(() => {
-        loadPurchases()
+        loadPurchases(true)
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleLoadMore = useCallback(() => {
+        if (!loading && !loadingMore && hasMore && !searchQuery.trim()) {
+            loadPurchases(false)
+        }
+    }, [loading, loadingMore, hasMore, searchQuery, loadPurchases])
+
+    const handleRefresh = useCallback(() => {
+        loadPurchases(true)
     }, [loadPurchases])
 
     const visiblePurchases = useMemo(() => {
@@ -48,7 +85,7 @@ export default function PurchaseDetails() {
 
     const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0)
 
-    const csv = useMemo(() => buildPurchasesCsv(purchases), [purchases])
+    const csv = useMemo(() => buildPurchasesCsvWithBom(visiblePurchases), [visiblePurchases])
 
     const handleToggleSearch = () => {
         setSearchVisible((prev) => {
@@ -58,11 +95,17 @@ export default function PurchaseDetails() {
     }
 
     const handleExport = async () => {
+        if (visiblePurchases.length === 0) {
+            showError(UI_TEXT.EMPTY_PURCHASE_LIST)
+            return
+        }
         try {
+            const filename = getCsvFilename()
             await Share.share({
                 message: csv,
-                title: UI_TEXT.EXPORT_CSV,
+                title: `${UI_TEXT.EXPORT_CSV}: ${filename}`,
             })
+            showSuccess(`${UI_TEXT.EXPORT_CSV} — ${visiblePurchases.length} rows`)
         } catch {
             showError(MESSAGES.ERROR_GENERIC)
         }
@@ -140,10 +183,15 @@ export default function PurchaseDetails() {
                             {purchases.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_PURCHASE_LIST}
                         </RNText>
                     }
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                        loadingMore ? <RNText style={styles.emptyPriceListText}>{MESSAGES.LOADING}</RNText> : null
+                    }
                     refreshControl={
                         <RefreshControl
                             refreshing={loading}
-                            onRefresh={loadPurchases}
+                            onRefresh={handleRefresh}
                             colors={[theme.colors.primary]}
                         />
                     }

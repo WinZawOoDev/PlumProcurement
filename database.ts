@@ -209,18 +209,39 @@ export async function initializePurchases(): Promise<void> {
 }
 
 export async function fetchPurchases(): Promise<IPurchaseWithSeller[]> {
+    return fetchPurchasesPaginated({ limit: 100, offset: 0 })
+}
+
+export async function fetchPurchasesPaginated(options: { limit: number; offset: number }): Promise<IPurchaseWithSeller[]> {
     let db;
     try {
         db = initDb()
-        const { results } = await db.executeAsync(`
+        const { limit, offset } = options
+        const { results } = await db.executeAsync(
+            `
             SELECT p.*, s.name AS seller_name
             FROM purchases p
             LEFT JOIN sellers s ON s.id = p.seller_id
-            ORDER BY p.id DESC LIMIT 100
-        `);
+            ORDER BY p.id DESC LIMIT ? OFFSET ?
+        `,
+            [limit, offset]
+        );
         return results as unknown as IPurchaseWithSeller[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch purchases', error)
+    } finally {
+        db?.close()
+    }
+}
+
+export async function countPurchases(): Promise<number> {
+    let db;
+    try {
+        db = initDb()
+        const { results } = await db.executeAsync(`SELECT COUNT(*) as count FROM purchases`);
+        return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
+    } catch (error) {
+        throw new DatabaseError('Failed to count purchases', error)
     } finally {
         db?.close()
     }

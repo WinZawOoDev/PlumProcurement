@@ -1,7 +1,9 @@
 import { purchaseService } from '../services/purchaseService'
 import {
+    countPurchases,
     createPurchase,
     fetchPurchases,
+    fetchPurchasesPaginated,
     initializePurchases,
     initializeSellers,
     IPurchaseWithSeller,
@@ -11,6 +13,8 @@ jest.mock('../database', () => ({
     initializePurchases: jest.fn(),
     initializeSellers: jest.fn(),
     fetchPurchases: jest.fn(),
+    fetchPurchasesPaginated: jest.fn(),
+    countPurchases: jest.fn(),
     createPurchase: jest.fn(),
 }))
 
@@ -44,6 +48,28 @@ describe('PurchaseService.getPurchases', () => {
         expect(initializeSellers).toHaveBeenCalledTimes(1)
         expect(fetchPurchases).toHaveBeenCalledTimes(1)
         expect(result).toEqual(mockPurchases)
+    })
+})
+
+describe('PurchaseService.getPurchasesPaginated', () => {
+    test('fetches paginated purchases and computes hasMore', async () => {
+        ;(fetchPurchasesPaginated as jest.Mock).mockResolvedValue(mockPurchases)
+        ;(countPurchases as jest.Mock).mockResolvedValue(50)
+        ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
+
+        const result = await purchaseService.getPurchasesPaginated(0, 20)
+
+        expect(fetchPurchasesPaginated).toHaveBeenCalledWith({ limit: 20, offset: 0 })
+        expect(countPurchases).toHaveBeenCalledTimes(1)
+        expect(result).toEqual({ items: mockPurchases, total: 50, hasMore: true })
+    })
+
+    test('hasMore false when last page', async () => {
+        ;(fetchPurchasesPaginated as jest.Mock).mockResolvedValue(mockPurchases)
+        ;(countPurchases as jest.Mock).mockResolvedValue(1)
+        const result = await purchaseService.getPurchasesPaginated(0, 20)
+        expect(result.hasMore).toBe(false)
     })
 })
 

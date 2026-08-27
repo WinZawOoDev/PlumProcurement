@@ -1,6 +1,8 @@
 import {
+    countPurchases,
     createPurchase,
     fetchPurchases,
+    fetchPurchasesPaginated,
     initializePurchases,
     initializeSellers,
     IPurchaseWithSeller,
@@ -17,6 +19,17 @@ export class PurchaseService {
         await initializeSellers()
         await initializePurchases()
         return fetchPurchases()
+    }
+
+    async getPurchasesPaginated(page: number, pageSize: number): Promise<{ items: IPurchaseWithSeller[]; total: number; hasMore: boolean }> {
+        await initializeSellers()
+        await initializePurchases()
+        const offset = page * pageSize
+        const [items, total] = await Promise.all([
+            fetchPurchasesPaginated({ limit: pageSize, offset }),
+            countPurchases(),
+        ])
+        return { items, total, hasMore: offset + items.length < total }
     }
 
     async recordPurchase(data: NewPurchase): Promise<number> {
