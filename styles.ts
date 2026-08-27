@@ -438,6 +438,38 @@ export const useStyles = makeStyles((theme) => ({
     },
 
 
+    // ===== PRICE TREND =====
+    priceTrendContainer: {
+        marginBottom: 12,
+        padding: 10,
+        backgroundColor: theme.colors.secondary,
+        borderRadius: 8,
+    },
+    priceTrendTitle: {
+        fontWeight: '600',
+        marginBottom: 6,
+        color: theme.colors.primary,
+    },
+    priceTrendBarsRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 4,
+        height: 40,
+    },
+    priceTrendBar: {
+        flex: 1,
+        borderRadius: 2,
+    },
+    priceTrendScaleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 4,
+    },
+    priceTrendScaleText: {
+        fontSize: 11,
+        color: theme.colors.tertiary,
+    },
+
     // ===== SELLERS =====
     addSellerButton: {
         marginBottom: 15,

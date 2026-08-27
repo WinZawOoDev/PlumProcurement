@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, Share, Text as RNText, View } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@rneui/base'
@@ -9,6 +9,7 @@ import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseWithSeller } from '../../database'
 import { buildPurchasesCsvWithBom, formatDate, getCsvFilename } from '../../utils'
+import { shareOrSaveCsv } from '../../utils/csvExport'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
 import { SearchBar } from '../../components/SearchBar'
 import { showError, showSuccess } from '../../utils/notifications'
@@ -102,16 +103,10 @@ export default function PurchaseDetails() {
             showError(UI_TEXT.EMPTY_PURCHASE_LIST)
             return
         }
-        try {
-            const filename = getCsvFilename()
-            await Share.share({
-                message: csv,
-                title: `${UI_TEXT.EXPORT_CSV}: ${filename}`,
-            })
-            showSuccess(`${UI_TEXT.EXPORT_CSV} — ${visiblePurchases.length} rows`)
-        } catch {
-            showError(MESSAGES.ERROR_GENERIC)
-        }
+        const filename = getCsvFilename()
+        const result = await shareOrSaveCsv(csv, filename, `${UI_TEXT.EXPORT_CSV}: ${filename}`)
+        if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
+        else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${visiblePurchases.length} rows`)
     }
 
     return (

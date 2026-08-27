@@ -1,0 +1,24 @@
+appId: com.plumprocurement
+---
+- launchApp
+# Pricing
+- assertVisible: "Price Management"
+- tapOn: "Add New Price"
+- tapOn: "PER KG"
+- inputText: "9.99"
+- tapOn: "Save Price"
+# Sellers
+- tapOn: "Sellers"
+- tapOn: "Add Seller"
+- inputText: "Flow Seller"
+- tapOn: "Save"
+# Purchasing
+- tapOn: "Purchasing"
+- assertVisible: "Record Purchase"
+- tapOn: "PER KG"
+- inputText: "2"
+- tapOn: "Record Purchase"
+- assertVisible: "Purchase recorded successfully!"
+- tapOn: "View History"
+- assertVisible: "Purchase History"
+- tapOn: "Export CSV"

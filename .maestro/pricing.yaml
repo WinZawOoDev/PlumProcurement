@@ -1,0 +1,16 @@
+appId: com.plumprocurement
+---
+- launchApp
+- assertVisible: "Price Management"
+- tapOn: "Add New Price"
+- assertVisible: "Category"
+- tapOn: "PER KG"
+- inputText: "12.50"
+- tapOn: "Save Price"
+- assertVisible: "Price saved successfully!"
+- assertVisible: "Price Management"
+- tapOn:
+    text: ".*search.*"
+    optional: true
+- runScript:
+    file: ../__tests__/priceService.test.ts

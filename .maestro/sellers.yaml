@@ -1,0 +1,14 @@
+appId: com.plumprocurement
+---
+- launchApp
+- tapOn: "Sellers"
+- assertVisible: "Sellers"
+- tapOn: "Add Seller"
+- assertVisible: "Add Seller"
+- tapOn: "Seller Name"
+- inputText: "E2E Seller"
+- tapOn: "Save"
+- assertVisible: "Seller saved successfully!"
+- assertVisible: "E2E Seller"
+- tapOn:
+    point: "90%,50%"
