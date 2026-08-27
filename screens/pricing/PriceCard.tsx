@@ -39,15 +39,15 @@ function PriceCardInner({ price, unit, category, is_available, created_at, onEdi
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: accent + '12', alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={(CATEGORY_ICON[category] ?? 'pricetag-outline') as any} size={15} color={accent} />
             </View>
-            <View style={{ flex: 1, gap: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flex: 1, gap: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={[styles.priceCardTitle, { fontSize: 13, letterSpacing: 0 }]}>#{category}</Text>
                     <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: is_available ? theme.colors.success : theme.colors.grey3, opacity: 0.9 }} />
                     <Text style={[styles.priceCardDateText, { fontSize: 11 }]}>{created_at ? formatDate(created_at) : ''}</Text>
                 </View>
-                <Text style={[styles.priceCardValue, { marginBottom: 0, fontSize: 15, color: theme.colors.black, fontWeight: '700' }]}>
+                <Text style={[styles.priceCardValue, { marginBottom: 0, fontSize: 15, color: theme.colors.black, fontWeight: '700', letterSpacing: 0.2 }]}>
                     {price.toFixed(2)}<Text style={[styles.priceCardCurrencySymbol, { fontSize: 13 }]}> $</Text>
-                    <Text style={{ fontSize: 11, color: theme.colors.grey4, fontWeight: '400' }}>  ·  {unit}</Text>
+                    <Text style={{ fontSize: 11, color: theme.colors.grey4, fontWeight: '400' }}>   ·   {unit}</Text>
                 </Text>
             </View>
             <PriceCardActions onEdit={onEdit} onDelete={onDelete} />

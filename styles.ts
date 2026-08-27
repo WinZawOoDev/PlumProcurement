@@ -328,11 +328,11 @@ export const useStyles = makeStyles((theme) => ({
     priceCardMinimal: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 4,
+        paddingVertical: 16,
+        paddingHorizontal: 6,
         borderBottomWidth: 0.5,
         borderColor: theme.colors.grey1,
-        gap: 12,
+        gap: 16,
     },
     priceCardAccent: {
         width: 3,
@@ -541,10 +541,11 @@ export const useStyles = makeStyles((theme) => ({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 2,
+        paddingVertical: 14,
+        paddingHorizontal: 4,
         borderBottomWidth: 0.5,
         borderColor: theme.colors.grey1,
+        gap: 12,
     },
     stickySectionHeader: {
         backgroundColor: theme.colors.background,
