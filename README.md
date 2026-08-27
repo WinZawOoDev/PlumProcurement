@@ -13,36 +13,47 @@ A React Native app for plum procurement: manage market prices, record purchases 
 
 - React Native 0.84 + React 19 + TypeScript
 - [@react-navigation](https://reactnavigation.org/) v7 (bottom tabs + native stacks)
-- [react-native-nitro-sqlite](https://github.com/NitroModules/nitro-sqlite) for local storage
+- [react-native-nitro-sqlite](https://github.com/NitroModules/nitro-sqlite) for local storage (singleton cached handle)
 - [react-hook-form](https://react-hook-form.com/) for form state and validation
 - [RNEUI](https://rneui.dev/) themed components + Ionicons
-- Jest + react-test-renderer for unit tests
+- Jest + react-test-renderer + Detox/Maestro for unit & E2E tests
 
 ## Project Structure
 
 ```
 ├── App.tsx                     # Root: theme, providers, tab navigator
-├── database.ts                 # SQLite schema + queries (prices, purchases, sellers)
-├── constants/index.ts          # Single source of truth for all constants/config
+├── database.ts                 # SQLite schema + queries (singleton cached handle, paginated fetch)
+├── types/database.ts           # IPrice/IPurchase/ISeller shared interfaces
+├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN)
 ├── services/                   # Data-access layer wrapping database.ts
 │   ├── priceService.ts
-│   ├── purchaseService.ts
+│   ├── purchaseService.ts      # getPurchasesPaginated(page,size,query) + count
 │   └── sellerService.ts
 ├── context/
 │   └── PriceContext.tsx        # Shared price list state (refresh/add/edit/remove)
+├── hooks/
+│   └── useAsync.ts             # useAsync/useLoading (centralized loading/error)
 ├── components/
-│   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton
+│   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton (a11y)
 │   ├── forms/FormFields.tsx    # FormSelectField, FormInputField, FormCheckboxField,
 │   │                           #   FormButtonGroupField (react-hook-form integrated)
+│   ├── SearchBar.tsx           # Debounced search (300ms)
+│   ├── SelectPicker.tsx        # Reusable Picker wrapper
+│   ├── QuantityStepper.tsx     # + / − stepper with a11y
+│   ├── PriceTrend.tsx          # Sparkline for last 12 prices
 │   └── ErrorBoundary.tsx       # Top-level crash fallback
 ├── screens/
-│   ├── pricing/                # Price list, create, edit sheet, cards, actions
-│   ├── purchasing/             # Record purchase, purchase history
-│   └── seller/                 # Seller list + form sheet
-├── hooks/                      # (reserved)
-├── utils/index.ts              # Formatting/validation helpers
-├── styles.ts                   # Centralized makeStyles styles
-└── theme.ts                    # RNEUI theme + navigation theme
+│   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards
+│   ├── purchasing/             # Record purchase, paginated history (server LIKE search)
+│   └── seller/                 # Seller list + stats (purchase count/total), form sheet
+├── utils/
+│   ├── index.ts                # Formatting/validation + CSV (BOM, filename)
+│   ├── notifications.ts        # showSuccess/showError centralized
+│   └── csvExport.ts            # shareOrSaveCsv (RNFS file-system with Share fallback)
+├── styles.ts                   # Centralized makeStyles (incl. priceTrend*)
+├── theme.ts                    # RNEUI theme + navigation theme
+├── e2e/                        # Detox (ios.sim.debug, android.emu.debug)
+└── .maestro/                   # Maestro flows (pricing, sellers, purchasing, full-flow)
 ```
 
 ## Architecture Conventions
@@ -84,13 +95,52 @@ npm run ios
 | `npm start` | Start Metro dev server |
 | `npm run android` | Run on Android |
 | `npm run ios` | Run on iOS |
-| `npm run lint` | ESLint |
-| `npm test` | Jest unit tests |
+| `npm run lint` | ESLint (e2e ignored) |
+| `npm test` | Jest unit tests (52 tests, 10 suites) |
+| `npm run e2e:ios` | Detox iOS (ios.sim.debug) |
+| `npm run e2e:android` | Detox Android (android.emu.debug) |
+| `npm run maestro:test` | Maestro flows (`.maestro/`) |
 
 ## Testing
 
-Unit tests cover utilities, every service (delegation + error propagation), the price context flows, the error boundary fallback, and the referential guard on price deletion. SQLite is mocked via `__mocks__/`.
+Unit tests cover utilities (incl. CSV BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`), `useAsync`/`useLoading`, notification helpers, price context flows, error boundary, and referential guard. SQLite is mocked via `__mocks__/`. E2E via Detox + Maestro.
 
 ```sh
-npm test
+npm test              # 52 tests, 10 suites
+npm run e2e:ios        # Detox
+maestro test .maestro/ # Maestro
 ```
+
+## Changelog
+
+### v0.2.0 — 2026-08-27
+
+**Refactor**
+- Remove `zustand` dual state (`store/prices.ts`); `PriceContext` is single source
+- Extract `SearchBar` (debounced 300 ms), `SelectPicker`, `QuantityStepper`, `SellerRow`, `PriceCardActions`
+- Centralize `ToastAndroid` → `utils/notifications` (`showSuccess`/`showError`)
+- Centralize `QUANTITY_PATTERN`, `PAGINATION_CONFIG` in `constants`
+- Extract `types/database.ts` shared interfaces; `services/*` own DB init + `DatabaseError`
+- `styles.ts` — remove ~200 lines dead styles, move `PriceTrend` styles to theme
+
+**Perf**
+- DB singleton cached handle (`database.ts:7` `__resetDbForTests` for tests)
+- `SearchBar` debounced to reduce filter churn
+- `PriceCard`/`SellerRow` wrapped `React.memo`
+- `FlatList` `getItemLayout` + `removeClippedSubviews`/`windowSize`/`maxToRenderPerBatch`
+
+**Pagination & CSV**
+- `fetchPurchasesPaginated({limit,offset,query})` + `countPurchases(query)` with `LIKE` server search (`category`/`seller_name`)
+- `PurchaseDetails` infinite scroll (page/hasMore/loadingMore), pull-to-refresh, filtered export
+- CSV: BOM (`\uFEFF`) for Excel, empty-list header-only, `getCsvFilename()` dated, `shareOrSaveCsv` tries `react-native-fs` cache file then `Share.share` fallback, success toast with row count
+
+**Quality / Product / Ops**
+- Accessibility: `accessibilityRole/label` on all buttons and `SearchBar`
+- `PriceTrend` sparkline (last 12 prices, avg/min/max, opacity for availability) on `PurchasePrice`
+- `SellerRow` shows `purchaseCount · total` aggregation via `Promise.all(sellers+purchases)`
+- CI `.github/workflows/ci.yml` (Node 22, `lint` → `tsc --noEmit` → `npm test --ci`) — green
+- E2E: Maestro `.maestro/{pricing,sellers,purchasing,full-flow}.yaml` + Detox `.detoxrc.js` + `e2e/app.test.js`
+- Version bump `0.1.0 → 0.2.0` (`package.json`, `app.json`), tag `v0.2.0`
+
+### v0.1.0 — Initial
+- Prices, purchasing, sellers with SQLite, referential guard, search/sort, CSV export
