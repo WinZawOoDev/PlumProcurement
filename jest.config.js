@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'react-native',
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|@rneui|@react-navigation|@react-native-vector-icons|react-native-size-matters)/)'
   ],
