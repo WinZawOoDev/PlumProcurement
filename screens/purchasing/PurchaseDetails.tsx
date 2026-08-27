@@ -27,7 +27,8 @@ export default function PurchaseDetails() {
     const [searchQuery, setSearchQuery] = useState('')
 
     const loadPurchases = useCallback(
-        async (reset = true) => {
+        async (reset = true, queryOverride?: string) => {
+            const query = queryOverride !== undefined ? queryOverride : searchQuery
             const targetPage = reset ? 0 : page
             const loader = reset ? withLoading : async (fn: () => Promise<void>) => {
                 setLoadingMore(true)
@@ -41,7 +42,8 @@ export default function PurchaseDetails() {
                 try {
                     const { items, hasMore: more } = await purchaseService.getPurchasesPaginated(
                         targetPage,
-                        PAGINATION_CONFIG.PURCHASE_PAGE_SIZE
+                        PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+                        query.trim() || undefined
                     )
                     if (reset) {
                         setPurchases(items)
@@ -56,32 +58,33 @@ export default function PurchaseDetails() {
                 }
             })
         },
-        [withLoading, page]
+        [withLoading, page, searchQuery]
     )
 
     useEffect(() => {
-        loadPurchases(true)
+        loadPurchases(true, '')
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+    useEffect(() => {
+        if (searchVisible) {
+            loadPurchases(true, searchQuery)
+        } else if (searchQuery === '') {
+            // when search closed, reload without filter
+            loadPurchases(true, '')
+        }
+    }, [searchQuery, searchVisible]) // eslint-disable-line react-hooks/exhaustive-deps
+
     const handleLoadMore = useCallback(() => {
-        if (!loading && !loadingMore && hasMore && !searchQuery.trim()) {
-            loadPurchases(false)
+        if (!loading && !loadingMore && hasMore) {
+            loadPurchases(false, searchQuery)
         }
     }, [loading, loadingMore, hasMore, searchQuery, loadPurchases])
 
     const handleRefresh = useCallback(() => {
-        loadPurchases(true)
-    }, [loadPurchases])
+        loadPurchases(true, searchQuery)
+    }, [loadPurchases, searchQuery])
 
-    const visiblePurchases = useMemo(() => {
-        const query = searchQuery.trim().toLowerCase()
-        if (!query) return purchases
-        return purchases.filter(
-            (p) =>
-                p.category.toLowerCase().includes(query) ||
-                (p.seller_name ?? '').toLowerCase().includes(query)
-        )
-    }, [purchases, searchQuery])
+    const visiblePurchases = purchases
 
     const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0)
 

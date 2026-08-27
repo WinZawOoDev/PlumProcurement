@@ -11,9 +11,11 @@ interface SellerRowProps {
     seller: ISeller
     onEdit: () => void
     onDelete: () => void
+    purchaseCount?: number
+    purchaseTotal?: number
 }
 
-function SellerRowInner({ seller, onEdit, onDelete }: SellerRowProps) {
+function SellerRowInner({ seller, onEdit, onDelete, purchaseCount, purchaseTotal }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     return (
@@ -21,6 +23,11 @@ function SellerRowInner({ seller, onEdit, onDelete }: SellerRowProps) {
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerNameText}>{seller.name}</RNText>
                 {!!seller.phone && <RNText style={styles.sellerPhoneText}>{seller.phone}</RNText>}
+                {(purchaseCount ?? 0) > 0 && (
+                    <RNText style={styles.sellerPhoneText}>
+                        {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$
+                    </RNText>
+                )}
             </View>
             <View style={styles.priceCardActionsRow}>
                 <Button

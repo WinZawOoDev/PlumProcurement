@@ -19,6 +19,8 @@ export function PrimaryButton({ title, onPress, disabled, containerStyle, ...pro
             title={title}
             onPress={onPress}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={title}
             containerStyle={{
                 ...styles.raisedButtonContainer,
                 ...containerStyle,
@@ -45,6 +47,8 @@ export function SecondaryButton({ title, onPress, disabled, containerStyle, ...p
             title={title}
             onPress={onPress}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={title}
             containerStyle={{
                 ...styles.raisedButtonContainer,
                 ...containerStyle,
@@ -72,6 +76,8 @@ export function IconButton({ title, icon, onPress, variant = 'primary', ...props
             icon={icon ?? undefined}
             title={title}
             onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={title ?? (props as any).accessibilityLabel}
             containerStyle={styles.raisedButtonContainer}
             buttonStyle={[
                 styles.iconButtonBase,

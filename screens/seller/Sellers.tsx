@@ -7,6 +7,7 @@ import { useTheme } from '@rneui/themed'
 import { IconButton, PrimaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
+import { purchaseService } from '../../services/purchaseService'
 import { DatabaseError, ISeller } from '../../database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
@@ -18,6 +19,7 @@ export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [sellers, setSellers] = useState<ISeller[]>([])
+    const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
@@ -27,7 +29,21 @@ export default function Sellers() {
     const loadSellers = useCallback(async () => {
         await withLoading(async () => {
             try {
-                setSellers(await sellerService.getSellers())
+                const [sellerList, purchases] = await Promise.all([
+                    sellerService.getSellers(),
+                    purchaseService.getPurchases().catch(() => []),
+                ])
+                setSellers(sellerList)
+                const stats: Record<number, { count: number; total: number }> = {}
+                for (const p of purchases) {
+                    if (p.seller_id) {
+                        const s = stats[p.seller_id] ?? { count: 0, total: 0 }
+                        s.count += 1
+                        s.total += p.total
+                        stats[p.seller_id] = s
+                    }
+                }
+                setSellerStats(stats)
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
@@ -130,6 +146,8 @@ export default function Sellers() {
                     renderItem={({ item }) => (
                         <SellerRow
                             seller={item}
+                            purchaseCount={sellerStats[item.id]?.count}
+                            purchaseTotal={sellerStats[item.id]?.total}
                             onEdit={() => {
                                 setEditing(item)
                                 setSheetVisible(true)

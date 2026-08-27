@@ -21,13 +21,13 @@ export class PurchaseService {
         return fetchPurchases()
     }
 
-    async getPurchasesPaginated(page: number, pageSize: number): Promise<{ items: IPurchaseWithSeller[]; total: number; hasMore: boolean }> {
+    async getPurchasesPaginated(page: number, pageSize: number, query?: string): Promise<{ items: IPurchaseWithSeller[]; total: number; hasMore: boolean }> {
         await initializeSellers()
         await initializePurchases()
         const offset = page * pageSize
         const [items, total] = await Promise.all([
-            fetchPurchasesPaginated({ limit: pageSize, offset }),
-            countPurchases(),
+            fetchPurchasesPaginated({ limit: pageSize, offset, query }),
+            countPurchases(query),
         ])
         return { items, total, hasMore: offset + items.length < total }
     }

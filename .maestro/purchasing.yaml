@@ -1,0 +1,16 @@
+appId: com.plumprocurement
+---
+- launchApp
+- assertVisible: "Price Management"
+- tapOn: "Add New Price"
+- assertVisible: "Price Entry"
+- tapOn: "Save Price"
+- assertVisible: "Category is required"
+- tapOn:
+    point: "50%,90%"
+- assertVisible: "Price Management"
+- tapOn: "Purchasing"
+- assertVisible: "Record Purchase"
+- tapOn: "View History"
+- assertVisible: "Purchase History"
+- tapOn: "Export CSV"

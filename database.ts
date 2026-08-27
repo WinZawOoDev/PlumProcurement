@@ -4,7 +4,15 @@ import type { IPrice, IPurchase, IPurchaseWithSeller, ISeller } from './types/da
 
 export type { IPrice, IPurchase, IPurchaseWithSeller, ISeller } from './types/database'
 
-const initDb = () => open({ name: DATABASE_CONFIG.NAME });
+let _cachedDb: ReturnType<typeof open> | null = null
+const initDb = () => {
+    if (_cachedDb) return _cachedDb
+    _cachedDb = open({ name: DATABASE_CONFIG.NAME })
+    return _cachedDb
+}
+export function __resetDbForTests() {
+    _cachedDb = null
+}
 
 export class DatabaseError extends Error {
     constructor(message: string, public originalError?: unknown) {
@@ -30,8 +38,6 @@ export async function initializePrices(): Promise<void> {
         `)
     } catch (error) {
         throw new DatabaseError('Failed to initialize prices table', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -45,8 +51,6 @@ export async function fetchPrices(): Promise<IPrice[]> {
         return results as unknown as IPrice[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch prices', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -73,8 +77,6 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to create price', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -120,8 +122,6 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to update price', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -142,8 +142,6 @@ export async function deletePrice(id: number): Promise<void> {
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete price', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -154,8 +152,6 @@ export async function truncatePrices(): Promise<void> {
         await db.executeAsync(`DELETE FROM prices`)
     } catch (error) {
         throw new DatabaseError('Failed to truncate prices table', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -166,8 +162,6 @@ export async function dropTblPrices(): Promise<void> {
         await db.executeAsync(`DROP TABLE IF EXISTS prices`)
     } catch (error) {
         throw new DatabaseError('Failed to drop prices table', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -203,8 +197,6 @@ export async function initializePurchases(): Promise<void> {
         await migratePurchasesTable(db)
     } catch (error) {
         throw new DatabaseError('Failed to initialize purchases table', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -212,11 +204,26 @@ export async function fetchPurchases(): Promise<IPurchaseWithSeller[]> {
     return fetchPurchasesPaginated({ limit: 100, offset: 0 })
 }
 
-export async function fetchPurchasesPaginated(options: { limit: number; offset: number }): Promise<IPurchaseWithSeller[]> {
+export async function fetchPurchasesPaginated(options: { limit: number; offset: number; query?: string }): Promise<IPurchaseWithSeller[]> {
     let db;
     try {
         db = initDb()
-        const { limit, offset } = options
+        const { limit, offset, query } = options
+        const q = query?.trim()
+        if (q) {
+            const like = `%${q}%`
+            const { results } = await db.executeAsync(
+                `
+                SELECT p.*, s.name AS seller_name
+                FROM purchases p
+                LEFT JOIN sellers s ON s.id = p.seller_id
+                WHERE p.category LIKE ? OR s.name LIKE ?
+                ORDER BY p.id DESC LIMIT ? OFFSET ?
+            `,
+                [like, like, limit, offset]
+            );
+            return results as unknown as IPurchaseWithSeller[]
+        }
         const { results } = await db.executeAsync(
             `
             SELECT p.*, s.name AS seller_name
@@ -229,21 +236,26 @@ export async function fetchPurchasesPaginated(options: { limit: number; offset: 
         return results as unknown as IPurchaseWithSeller[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch purchases', error)
-    } finally {
-        db?.close()
     }
 }
 
-export async function countPurchases(): Promise<number> {
+export async function countPurchases(query?: string): Promise<number> {
     let db;
     try {
         db = initDb()
+        const q = query?.trim()
+        if (q) {
+            const like = `%${q}%`
+            const { results } = await db.executeAsync(
+                `SELECT COUNT(*) as count FROM purchases p LEFT JOIN sellers s ON s.id = p.seller_id WHERE p.category LIKE ? OR s.name LIKE ?`,
+                [like, like]
+            );
+            return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
+        }
         const { results } = await db.executeAsync(`SELECT COUNT(*) as count FROM purchases`);
         return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
     } catch (error) {
         throw new DatabaseError('Failed to count purchases', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -275,8 +287,6 @@ export async function createPurchase(purchaseData: Omit<IPurchase, 'id'>): Promi
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to create purchase', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -295,8 +305,6 @@ export async function initializeSellers(): Promise<void> {
         `)
     } catch (error) {
         throw new DatabaseError('Failed to initialize sellers table', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -310,8 +318,6 @@ export async function fetchSellers(): Promise<ISeller[]> {
         return results as unknown as ISeller[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch sellers', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -334,8 +340,6 @@ export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<num
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to create seller', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -373,8 +377,6 @@ export async function updateSeller(id: number, sellerData: Partial<Omit<ISeller,
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to update seller', error)
-    } finally {
-        db?.close()
     }
 }
 
@@ -385,7 +387,5 @@ export async function deleteSeller(id: number): Promise<void> {
         await db.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
     } catch (error) {
         throw new DatabaseError('Failed to delete seller', error)
-    } finally {
-        db?.close()
     }
 }

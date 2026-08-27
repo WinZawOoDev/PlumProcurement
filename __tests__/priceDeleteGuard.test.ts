@@ -1,5 +1,5 @@
 import { open } from 'react-native-nitro-sqlite'
-import { deletePrice } from '../database'
+import { deletePrice, __resetDbForTests } from '../database'
 
 jest.mock('react-native-nitro-sqlite', () => ({
     open: jest.fn(),
@@ -10,6 +10,7 @@ const close = jest.fn()
 
 beforeEach(() => {
     jest.clearAllMocks()
+    __resetDbForTests()
     ;(open as jest.Mock).mockReturnValue({ executeAsync, close })
 })
 
@@ -21,7 +22,7 @@ describe('deletePrice referential guard', () => {
             'Cannot delete this price because purchases reference it.'
         )
         expect(executeAsync).toHaveBeenCalledTimes(1)
-        expect(close).toHaveBeenCalledTimes(1)
+        expect(open).toHaveBeenCalledTimes(1)
     })
 
     test('deletes the price when it has no purchases', async () => {
@@ -31,7 +32,7 @@ describe('deletePrice referential guard', () => {
 
         await expect(deletePrice(5)).resolves.toBeUndefined()
         expect(executeAsync).toHaveBeenCalledTimes(2)
-        expect(close).toHaveBeenCalledTimes(1)
+        expect(open).toHaveBeenCalledTimes(1)
     })
 
     test('treats a missing count result as unreferenced', async () => {

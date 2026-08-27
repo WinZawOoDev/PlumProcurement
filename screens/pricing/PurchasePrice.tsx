@@ -11,6 +11,7 @@ import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../consta
 import { DatabaseError, IPrice } from '../../database'
 import { showSuccess, showError } from '../../utils/notifications'
 import { SearchBar } from '../../components/SearchBar'
+import { PriceTrend } from '../../components/PriceTrend'
 
 export default function PurchasePrices() {
     const styles = useStyles()
@@ -101,6 +102,7 @@ export default function PurchasePrices() {
                         onChangeText={setSearchQuery}
                     />
                 )}
+                {visiblePrices.length > 1 && <PriceTrend prices={visiblePrices} />}
                 <FlatList
                     data={visiblePrices}
                     keyExtractor={(item) => item.id.toString()}
