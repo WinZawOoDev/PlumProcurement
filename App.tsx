@@ -38,10 +38,16 @@ function SellerTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 
-function Navigation() {
+function Navigation({ onReady }: { onReady?: () => void }) {
 
   const isDarkMode = useColorScheme() === 'dark';
   const { theme: currentTheme } = useTheme();
+
+  // Signal that the main tab UI has mounted (NavigationContainer's onReady
+  // does not fire reliably when the tree is wrapped in NavigationIndependentTree)
+  React.useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   const RootStack = useMemo(() => createBottomTabNavigator({
     initialRouteName: ROUTES.PRICE_TAB,
@@ -130,6 +136,7 @@ function App() {
   const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
   const [onboarded, setOnboarded] = React.useState(false);
   const [checkingData, setCheckingData] = React.useState(true);
+  const [mainReady, setMainReady] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -165,6 +172,8 @@ function App() {
     settingsService.setOnboarded().catch(() => undefined);
   };
 
+  const handleMainReady = React.useCallback(() => setMainReady(true), []);
+
   if (checkingData) {
     return (
       <ThemeProvider theme={appTheme}>
@@ -190,7 +199,8 @@ function App() {
       <ThemeProvider theme={appTheme}>
         <PriceProvider>
           <SafeAreaProvider>
-            <Navigation />
+            <Navigation onReady={handleMainReady} />
+            {!mainReady && <StartupLoader overlay />}
           </SafeAreaProvider>
         </PriceProvider>
       </ThemeProvider>

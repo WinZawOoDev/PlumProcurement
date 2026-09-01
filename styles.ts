@@ -262,6 +262,14 @@ export const useStyles = makeStyles((theme) => ({
         justifyContent: 'center',
         gap: 16,
     },
+    startupLoaderOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10,
+    },
     startupLoaderTitle: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         fontSize: 22,
