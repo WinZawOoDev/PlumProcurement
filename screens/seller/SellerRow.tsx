@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text as RNText, Pressable } from 'react-native'
 import Ionicons from '@react-native-vector-icons/ionicons'
+import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { Button } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
@@ -37,7 +38,7 @@ function SellerRowInner({ seller, onEdit, onDelete, onPress, purchaseCount, purc
             <View style={styles.priceCardActionsRow}>
                 <Button
                     buttonStyle={styles.rowIconButton}
-                    icon={<Ionicons name="pencil-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.primary} />}
+                    icon={<FontAwesomeIcon name="edit" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.primary} />}
                     onPress={onEdit}
                     accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
                 />
