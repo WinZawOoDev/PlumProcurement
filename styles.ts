@@ -540,7 +540,7 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 16,
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         color: theme.colors.primary,
-        marginTop: 20,
+        marginTop: 4,
         marginBottom: 8,
     },
     purchaseItemRow: {
