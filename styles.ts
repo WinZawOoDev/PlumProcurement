@@ -113,14 +113,14 @@ export const useStyles = makeStyles((theme) => ({
     formInputContainer: {
         borderBottomWidth: 0,
         borderRadius: DIMENSIONS.BORDER_RADIUS_SMALL,
-        paddingBlock: 5,
+        paddingBlock: 2,
         marginTop: 10,
         backgroundColor: theme.colors.secondary,
     },
     formInput: {
         paddingHorizontal: 15,
         fontSize: 18,
-        paddingBlock: 10,
+        paddingBlock: 6,
     },
     formCheckboxText: {
         fontWeight: '600',
