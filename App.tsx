@@ -20,6 +20,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
 import { Onboarding } from './components/Onboarding';
 import { ROUTES } from './constants';
+import { priceService } from './services/priceService';
+import { sellerService } from './services/sellerService';
 
 function PriceTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="pricetags-outline" color={color} size={size} />;
@@ -125,6 +127,38 @@ function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
   const [onboarded, setOnboarded] = React.useState(false);
+  const [checkingData, setCheckingData] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Skip onboarding for returning users who already have data
+      try {
+        const [prices, sellers] = await Promise.all([
+          priceService.getPrices(),
+          sellerService.getSellers(),
+        ]);
+        if (!cancelled && (prices.length > 0 || sellers.length > 0)) {
+          setOnboarded(true);
+        }
+      } catch {
+        // DB unavailable — fall back to showing onboarding
+      } finally {
+        if (!cancelled) setCheckingData(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (checkingData) {
+    return (
+      <ThemeProvider theme={appTheme}>
+        <SafeAreaProvider />
+      </ThemeProvider>
+    );
+  }
 
   if (!onboarded) {
     return (
