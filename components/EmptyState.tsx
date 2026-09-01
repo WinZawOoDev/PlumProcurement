@@ -8,15 +8,16 @@ interface EmptyStateProps {
     icon: string
     title: string
     description?: string
+    compact?: boolean
 }
 
-export function EmptyState({ icon, title, description }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, compact }: EmptyStateProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     return (
-        <View style={styles.emptyStateContainer}>
-            <View style={styles.emptyStateIconCircle}>
-                <Ionicons name={icon as any} size={42} color={theme.colors.grey3} />
+        <View style={compact ? styles.emptyStateContainerCompact : styles.emptyStateContainer}>
+            <View style={compact ? styles.emptyStateIconCircleCompact : styles.emptyStateIconCircle}>
+                <Ionicons name={icon as any} size={compact ? 28 : 42} color={theme.colors.grey3} />
             </View>
             <RNText style={styles.emptyStateTitle}>{title}</RNText>
             {!!description && <RNText style={styles.emptyStateDescription}>{description}</RNText>}

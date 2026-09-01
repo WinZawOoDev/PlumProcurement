@@ -126,6 +126,8 @@ function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
             </View>
             <FlatList
                 style={styles.recentPurchasesList}
+                contentContainerStyle={recent.length === 0 ? styles.recentPurchasesEmpty : undefined}
+                scrollEnabled={recent.length > 0}
                 data={recent.slice(0, 4)}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
@@ -137,7 +139,7 @@ function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
                         <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
                     </View>
                 )}
-                ListEmptyComponent={<EmptyState icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description="Record your first purchase to see it here" />}
+                ListEmptyComponent={<EmptyState compact icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description="Record your first purchase to see it here" />}
             />
         </>
     )

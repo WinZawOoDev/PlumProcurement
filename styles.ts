@@ -199,6 +199,21 @@ export const useStyles = makeStyles((theme) => ({
         justifyContent: 'center',
         marginBottom: 4,
     },
+    emptyStateContainerCompact: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 24,
+        gap: 4,
+    },
+    emptyStateIconCircleCompact: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: theme.colors.grey0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     emptyStateTitle: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         fontSize: 16,
@@ -687,6 +702,10 @@ export const useStyles = makeStyles((theme) => ({
     },
     recentPurchasesList: {
         flex: 1,
+    },
+    recentPurchasesEmpty: {
+        flexGrow: 1,
+        justifyContent: 'center',
     },
     purchaseItemRow: {
         flexDirection: 'row',
