@@ -1,5 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
+import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useTheme } from '@rneui/themed'
 import { IconButton } from '../../components/buttons/Button'
@@ -15,7 +16,7 @@ export function PriceCardActions({ onEdit, onDelete }: Props) {
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
             <IconButton
-                icon={<Ionicons name="pencil-outline" size={16} color={theme.colors.grey5} />}
+                icon={<FontAwesomeIcon name="edit" size={16} color={theme.colors.grey5} />}
                 variant="ghost"
                 small
                 onPress={onEdit}
