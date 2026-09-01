@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text as RNText, Vibration } from 'react-native'
+import { View, Text as RNText, Vibration, TouchableOpacity } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useStyles } from '../styles'
 import { UI_TEXT, A11Y_LABELS } from '../constants'
@@ -30,25 +30,27 @@ export function QuantityStepper({ value, onChange }: QuantityStepperProps) {
     return (
         <View style={styles.quantityRow}>
             <Text style={styles.categoryLabel}>{UI_TEXT.QUANTITY}</Text>
-            <RNText
+            <TouchableOpacity
                 style={styles.quantityStepperButton}
                 onPress={handleIncrease}
+                activeOpacity={0.6}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.INCREASE_QUANTITY}
             >
-                +
-            </RNText>
+                <RNText style={styles.quantityStepperButtonText}>+</RNText>
+            </TouchableOpacity>
             <RNText style={styles.quantityValue}>{value}</RNText>
-            <RNText
+            <TouchableOpacity
                 style={styles.quantityStepperButton}
                 onPress={handleDecrease}
+                activeOpacity={0.6}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.DECREASE_QUANTITY}
             >
-                −
-            </RNText>
+                <RNText style={styles.quantityStepperButtonText}>−</RNText>
+            </TouchableOpacity>
         </View>
     )
 }
