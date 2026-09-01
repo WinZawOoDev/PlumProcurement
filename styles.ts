@@ -463,7 +463,7 @@ export const useStyles = makeStyles((theme) => ({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 10,
-        marginBottom: 20,
+        marginVertical: 16,
         gap: 15,
     },
     quantityStepperButton: {
