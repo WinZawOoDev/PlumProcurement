@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
 import { PriceProvider, usePrices } from '../context/PriceContext'
 import { priceService } from '../services/priceService'
-import { IPrice } from '../database'
+import { IPrice } from '../types/database'
 
 jest.mock('../services/priceService', () => ({
     priceService: {

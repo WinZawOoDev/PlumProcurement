@@ -5,10 +5,10 @@ import {
     createPrice,
     updatePrice,
     deletePrice,
-    IPrice,
-} from '../database'
+} from '../database/prices'
+import { IPrice } from '../types/database'
 
-jest.mock('../database', () => ({
+jest.mock('../database/prices', () => ({
     initializePrices: jest.fn(),
     fetchPrices: jest.fn(),
     createPrice: jest.fn(),

@@ -17,7 +17,7 @@ export function SectionHeader({ icon, title, description, action }: SectionHeade
     return (
         <View style={styles.sectionHeaderContainer}>
             <View style={styles.sectionHeaderTextBlock}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={styles.sectionHeaderTitleRow}>
                     {!!icon && <Ionicons name={icon as any} size={22} color={theme.colors.primary} />}
                     <RNText style={styles.sectionHeaderTitle}>{title}</RNText>
                 </View>

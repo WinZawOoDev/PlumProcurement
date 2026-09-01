@@ -12,7 +12,7 @@ export function SellerDetailSheet({ visible, seller, purchases, onClose }: { vis
     if (!seller) return null
     return (
         <BottomSheet isVisible={visible} onBackdropPress={onClose} modalProps={{ animationType: 'slide' }}>
-            <View style={[styles.bottomSheetContainer, { maxHeight: 400 }]}>
+            <View style={[styles.bottomSheetContainer, styles.sellerDetailSheetContainer]}>
                 <Text style={styles.bottomSheetTitle}>{seller.name}</Text>
                 {!!seller.phone && <RNText style={styles.purchaseItemSubtitle}>{seller.phone}</RNText>}
                 <RNText style={styles.purchaseItemSubtitle}>{filtered.length} purchases · {total.toFixed(2)}$ total</RNText>
@@ -29,7 +29,7 @@ export function SellerDetailSheet({ visible, seller, purchases, onClose }: { vis
                         </View>
                     )}
                     ListEmptyComponent={<RNText style={styles.emptyPriceListText}>No purchases for this seller</RNText>}
-                    style={{ marginTop: 12 }}
+                    style={styles.sellerDetailList}
                 />
             </View>
         </BottomSheet>

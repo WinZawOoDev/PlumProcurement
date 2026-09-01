@@ -5,17 +5,20 @@ import {
     fetchPurchases,
     fetchPurchasesPaginated,
     initializePurchases,
-    initializeSellers,
-    IPurchaseWithSeller,
-} from '../database'
+} from '../database/purchases'
+import { initializeSellers } from '../database/sellers'
+import { IPurchaseWithSeller } from '../types/database'
 
-jest.mock('../database', () => ({
+jest.mock('../database/purchases', () => ({
     initializePurchases: jest.fn(),
-    initializeSellers: jest.fn(),
     fetchPurchases: jest.fn(),
     fetchPurchasesPaginated: jest.fn(),
     countPurchases: jest.fn(),
     createPurchase: jest.fn(),
+}))
+
+jest.mock('../database/sellers', () => ({
+    initializeSellers: jest.fn(),
 }))
 
 const mockPurchases: IPurchaseWithSeller[] = [

@@ -5,10 +5,10 @@ import {
     fetchSellers,
     initializeSellers,
     updateSeller,
-    ISeller,
-} from '../database'
+} from '../database/sellers'
+import { ISeller } from '../types/database'
 
-jest.mock('../database', () => ({
+jest.mock('../database/sellers', () => ({
     initializeSellers: jest.fn(),
     fetchSellers: jest.fn(),
     createSeller: jest.fn(),

@@ -4,8 +4,8 @@ import {
     fetchPrices,
     initializePrices,
     updatePrice,
-    IPrice,
-} from '../database'
+} from '../database/prices'
+import { IPrice } from '../types/database'
 
 export type NewPrice = Omit<IPrice, 'id'>
 

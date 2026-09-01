@@ -1,5 +1,6 @@
 import { open } from 'react-native-nitro-sqlite'
-import { deletePrice, __resetDbForTests } from '../database'
+import { deletePrice } from '../database/prices'
+import { __resetDbForTests } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
     open: jest.fn(),

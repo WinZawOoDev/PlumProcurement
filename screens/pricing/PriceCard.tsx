@@ -2,7 +2,7 @@ import { View, Text } from 'react-native'
 import React from 'react'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
-import { IPrice } from '../../database'
+import { IPrice } from '../../types/database'
 import { useStyles } from '../../styles'
 import { formatDate } from '../../utils'
 import { PriceCardActions } from './PriceCardActions'
@@ -33,21 +33,25 @@ function PriceCardInner({ price, unit, category, is_available, created_at, onEdi
     const { theme } = useTheme()
     const accent = CATEGORY_ACCENT[category] ?? theme.colors.primary
 
+    const accentBarStyle = { backgroundColor: accent, opacity: 0.9 } as const
+    const iconCircleStyle = { backgroundColor: accent + '12' } as const
+    const statusDotStyle = { backgroundColor: is_available ? theme.colors.success : theme.colors.grey3 } as const
+
     return (
         <View style={styles.priceCardMinimal}>
-            <View style={[styles.priceCardAccent, { backgroundColor: accent, opacity: 0.9 }]} />
-            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: accent + '12', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={[styles.priceCardAccent, accentBarStyle]} />
+            <View style={[styles.priceCardIconCircle, iconCircleStyle]}>
                 <Ionicons name={(CATEGORY_ICON[category] ?? 'pricetag-outline') as any} size={15} color={accent} />
             </View>
-            <View style={{ flex: 1, gap: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={[styles.priceCardTitle, { fontSize: 13, letterSpacing: 0 }]}>#{category}</Text>
-                    <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: is_available ? theme.colors.success : theme.colors.grey3, opacity: 0.9 }} />
-                    <Text style={[styles.priceCardDateText, { fontSize: 11 }]}>{created_at ? formatDate(created_at) : ''}</Text>
+            <View style={styles.priceCardInfo}>
+                <View style={styles.priceCardHeaderRow}>
+                    <Text style={[styles.priceCardTitle, styles.priceCardTitleSmall]}>#{category}</Text>
+                    <View style={[styles.priceCardStatusDot, statusDotStyle]} />
+                    <Text style={[styles.priceCardDateText, styles.priceCardDateTextSmall]}>{created_at ? formatDate(created_at) : ''}</Text>
                 </View>
-                <Text style={[styles.priceCardValue, { marginBottom: 0, fontSize: 15, color: theme.colors.black, fontWeight: '700', letterSpacing: 0.2 }]}>
-                    {price.toFixed(2)}<Text style={[styles.priceCardCurrencySymbol, { fontSize: 13 }]}> $</Text>
-                    <Text style={{ fontSize: 11, color: theme.colors.grey4, fontWeight: '400' }}>   ·   {unit}</Text>
+                <Text style={[styles.priceCardValue, styles.priceCardValueLarge]}>
+                    {price.toFixed(2)}<Text style={[styles.priceCardCurrencySymbol, styles.priceCardCurrencySymbolLarge]}> $</Text>
+                    <Text style={styles.priceCardUnitText}>   ·   {unit}</Text>
                 </Text>
             </View>
             <PriceCardActions onEdit={onEdit} onDelete={onDelete} />

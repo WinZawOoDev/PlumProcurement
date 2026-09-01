@@ -17,7 +17,7 @@ export {
 } from './utils/index'
 
 // Export database
-export { DatabaseError } from './database'
+export { DatabaseError } from './database/connection'
 
 // Export services
 export { PriceService, priceService } from './services/priceService'

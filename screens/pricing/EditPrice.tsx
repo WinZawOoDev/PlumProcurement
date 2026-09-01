@@ -20,7 +20,7 @@ import {
     UNIT_LIST,
 } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
-import { IPrice } from '../../database'
+import { IPrice } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
 
 type FormData = {

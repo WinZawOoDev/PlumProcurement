@@ -6,7 +6,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
-import { IPurchaseWithSeller } from '../../database'
+import { IPurchaseWithSeller } from '../../types/database'
 import { buildPurchasesCsvWithBom, formatDate, getCsvFilename } from '../../utils'
 import { shareOrSaveCsv } from '../../utils/csvExport'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
@@ -120,7 +120,7 @@ export default function PurchaseDetails() {
                         <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.PURCHASES_COUNT}</RNText>
                         <RNText style={styles.purchaseSummaryValue}>{visiblePurchases.length}</RNText>
                     </View>
-                    <View style={[styles.purchaseSummaryRow, { borderTopWidth: 1, borderColor: theme.colors.grey1, marginTop: 6, paddingTop: 8 }]}>
+                    <View style={[styles.purchaseSummaryRow, styles.purchaseDetailsSummaryDivider]}>
                         <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_VALUE}</RNText>
                         <RNText style={styles.purchaseTotalText}>{grandTotal.toFixed(2)}$</RNText>
                     </View>

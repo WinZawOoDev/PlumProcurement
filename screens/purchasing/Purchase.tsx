@@ -10,7 +10,7 @@ import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, QUANTITY_PATTERN } from '../../co
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { sellerService } from '../../services/sellerService'
-import { IPurchaseWithSeller } from '../../database'
+import { IPurchaseWithSeller } from '../../types/database'
 import { SelectPicker } from '../../components/SelectPicker'
 import { QuantityStepper } from '../../components/QuantityStepper'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -94,17 +94,17 @@ function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                 ]}
             />
             <QuantityStepper value={quantity} onChange={setQuantity} />
-            <View style={[styles.purchaseSummaryCard, { marginTop: 8, marginBottom: 0 }]}>
+            <View style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}>
                 <View style={styles.purchaseSummaryRow}>
                     <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
                     <Text style={styles.purchaseSummaryValue}>{selectedPrice ? `${selectedPrice.price.toFixed(2)}$` : '—'}</Text>
                 </View>
-                <View style={[styles.purchaseSummaryRow, { borderTopWidth: 1, borderColor: '#eee', marginTop: 6, paddingTop: 6 }]}>
+                <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
                     <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
                     <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
                 </View>
             </View>
-            <View style={{ gap: 10, marginTop: 12 }}>
+            <View style={styles.formActions}>
                 <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !selectedPrice} loading={recording} onPress={handleRecord} />
                 <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)} />
             </View>
@@ -120,12 +120,12 @@ function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
     const styles = useStyles()
     return (
         <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, marginBottom: 1 }}>
+            <View style={styles.recentPurchasesHeader}>
                 <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
-                <RNText style={{ fontSize: 12, color: '#999' }}>{recent.length > 0 ? `${recent.length} total` : ''}</RNText>
+                <RNText style={styles.recentPurchasesCount}>{recent.length > 0 ? `${recent.length} total` : ''}</RNText>
             </View>
             <FlatList
-                style={{ flex: 1 }}
+                style={styles.recentPurchasesList}
                 data={recent.slice(0, 4)}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
@@ -174,7 +174,7 @@ export default function Purchase() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={[styles.priceListContainer, { flex: 1 }]}>
+            <View style={[styles.priceListContainer, styles.fillContainer]}>
                 <SectionHeader icon="cart-outline" title={UI_TEXT.RECORD_PURCHASE} description={UI_TEXT.PURCHASE_DESCRIPTION} />
 
                 <PurchaseForm sellers={sellers} onRecorded={loadRecent} />

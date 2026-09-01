@@ -6,7 +6,7 @@ import { Button } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { DIMENSIONS, A11Y_LABELS } from '../../constants'
-import { ISeller } from '../../database'
+import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
     seller: ISeller
@@ -30,7 +30,7 @@ function SellerRowInner({ seller, onEdit, onDelete, onPress, purchaseCount, purc
                 <RNText style={styles.sellerNameText}>{seller.name}</RNText>
                 {!!seller.phone && <RNText style={styles.sellerPhoneText}>{seller.phone}</RNText>}
                 {(purchaseCount ?? 0) > 0 && (
-                    <RNText style={[styles.sellerPhoneText, { color: theme.colors.success, fontWeight: '600' }]}>
+                    <RNText style={[styles.sellerPhoneText, styles.sellerPurchaseStats]}>
                         {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$
                     </RNText>
                 )}

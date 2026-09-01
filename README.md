@@ -22,10 +22,10 @@ A React Native app for plum procurement: manage market prices, record purchases 
 
 ```
 ├── App.tsx                     # Root: theme, providers, tab navigator
-├── database.ts                 # SQLite schema + queries (singleton cached handle, paginated fetch)
+├── database/                   # SQLite layer: connection.ts (singleton cached handle, DatabaseError), prices.ts, purchases.ts (paginated fetch), sellers.ts
 ├── types/database.ts           # IPrice/IPurchase/ISeller shared interfaces
 ├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN)
-├── services/                   # Data-access layer wrapping database.ts
+├── services/                   # Data-access layer wrapping database/
 │   ├── priceService.ts
 │   ├── purchaseService.ts      # getPurchasesPaginated(page,size,query) + count
 │   └── sellerService.ts
@@ -58,7 +58,7 @@ A React Native app for plum procurement: manage market prices, record purchases 
 
 ## Architecture Conventions
 
-- **Never import `database.ts` from components** — go through a service in `services/`. Services own table initialization, validation and error wrapping (`DatabaseError`).
+- **Never import `database/*` from components** — go through a service in `services/`. Services own table initialization, validation and error wrapping (`DatabaseError`).
 - **Shared cross-screen state** lives in Context (`PriceContext`) so mutations propagate automatically; screen-local state is fine for self-contained flows.
 - **All literals belong in `constants/index.ts`** — routes, messages, UI text, dimensions, typography, validation messages.
 - **Forms** use react-hook-form `Controller`s via the generic fields in `components/forms/`; pass validation through the `rules` prop.
@@ -124,7 +124,7 @@ maestro test .maestro/ # Maestro
 - `styles.ts` — remove ~200 lines dead styles, move `PriceTrend` styles to theme
 
 **Perf**
-- DB singleton cached handle (`database.ts:7` `__resetDbForTests` for tests)
+- DB singleton cached handle (`database/connection.ts` `__resetDbForTests` for tests)
 - `SearchBar` debounced to reduce filter churn
 - `PriceCard`/`SellerRow` wrapped `React.memo`
 - `FlatList` `getItemLayout` + `removeClippedSubviews`/`windowSize`/`maxToRenderPerBatch`

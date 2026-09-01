@@ -5,6 +5,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import { useTheme } from '@rneui/themed'
 import { IconButton } from '../../components/buttons/Button'
 import { A11Y_LABELS } from '../../constants'
+import { useStyles } from '../../styles'
 
 interface Props {
     onEdit?: () => void
@@ -13,8 +14,9 @@ interface Props {
 
 export function PriceCardActions({ onEdit, onDelete }: Props) {
     const { theme } = useTheme()
+    const styles = useStyles()
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+        <View style={styles.priceCardActionsContainer}>
             <IconButton
                 icon={<FontAwesomeIcon name="edit" size={16} color={theme.colors.grey5} />}
                 variant="ghost"

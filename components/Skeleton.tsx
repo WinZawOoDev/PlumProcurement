@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Animated } from 'react-native'
 import { useTheme } from '@rneui/themed'
+import { useStyles } from '../styles'
 
 export function Skeleton({ width = '100%', height = 16, radius = 8, style }: { width?: any; height?: number; radius?: number; style?: any }) {
     const { theme } = useTheme()
@@ -34,12 +35,12 @@ export function Skeleton({ width = '100%', height = 16, radius = 8, style }: { w
 }
 
 export function CardSkeleton() {
-    const { theme } = useTheme()
+    const styles = useStyles()
     return (
-        <View style={{ padding: 16, backgroundColor: theme.colors.surface ?? theme.colors.white, borderRadius: 16, marginBottom: 12, gap: 10 }}>
+        <View style={styles.cardSkeletonContainer}>
             <Skeleton width="40%" height={14} />
             <Skeleton width="70%" height={12} />
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+            <View style={styles.cardSkeletonRow}>
                 <Skeleton width={60} height={24} radius={12} />
                 <Skeleton width={60} height={24} radius={12} />
             </View>

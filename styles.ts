@@ -213,6 +213,68 @@ export const useStyles = makeStyles((theme) => ({
         textAlign: 'center',
         lineHeight: 18,
     },
+    fillContainer: {
+        flex: 1,
+    },
+    sectionHeaderTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    detailSheetBody: {
+        gap: 8,
+        marginTop: 12,
+    },
+    sellerDetailSheetContainer: {
+        maxHeight: 400,
+    },
+    sellerDetailList: {
+        marginTop: 12,
+    },
+
+    // ===== ONBOARDING =====
+    onboardingContainer: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        justifyContent: 'center',
+        padding: 24,
+        gap: 24,
+    },
+    onboardingCenter: {
+        alignItems: 'center',
+        gap: 12,
+    },
+    onboardingIconCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: theme.colors.primary + '12',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    onboardingTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: theme.colors.primary,
+    },
+    onboardingDescription: {
+        fontSize: 14,
+        color: theme.colors.grey4,
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    onboardingDotsRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    onboardingDot: {
+        height: 6,
+        borderRadius: 3,
+    },
+    onboardingButtons: {
+        gap: 10,
+    },
 
     // ===== PRICING - CREATE PRICE =====
     createPriceActions: {
@@ -411,6 +473,55 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.black,
         fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
     },
+    priceCardIconCircle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    priceCardInfo: {
+        flex: 1,
+        gap: 4,
+    },
+    priceCardHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    priceCardTitleSmall: {
+        fontSize: 13,
+        letterSpacing: 0,
+    },
+    priceCardStatusDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        opacity: 0.9,
+    },
+    priceCardDateTextSmall: {
+        fontSize: 11,
+    },
+    priceCardValueLarge: {
+        marginBottom: 0,
+        fontSize: 15,
+        color: theme.colors.black,
+        fontWeight: '700',
+        letterSpacing: 0.2,
+    },
+    priceCardCurrencySymbolLarge: {
+        fontSize: 13,
+    },
+    priceCardUnitText: {
+        fontSize: 11,
+        color: theme.colors.grey4,
+        fontWeight: '400',
+    },
+    priceCardActionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+    },
 
     // ===== PRICING - PURCHASE PRICE =====
     priceListScreen: {
@@ -519,6 +630,26 @@ export const useStyles = makeStyles((theme) => ({
         marginBottom: 12,
         borderWidth: 0,
     },
+    purchaseSummaryCardInline: {
+        marginTop: 8,
+        marginBottom: 0,
+    },
+    purchaseSummaryDivider: {
+        borderTopWidth: 1,
+        borderColor: '#eee',
+        marginTop: 6,
+        paddingTop: 6,
+    },
+    purchaseDetailsSummaryDivider: {
+        borderTopWidth: 1,
+        borderColor: theme.colors.grey1,
+        marginTop: 6,
+        paddingTop: 8,
+    },
+    formActions: {
+        gap: 10,
+        marginTop: 12,
+    },
     formCard: {
         backgroundColor: theme.colors.surface ?? theme.colors.white,
         borderRadius: 12,
@@ -542,6 +673,20 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.primary,
         marginTop: 4,
         marginBottom: 8,
+    },
+    recentPurchasesHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 2,
+        marginBottom: 1,
+    },
+    recentPurchasesCount: {
+        fontSize: 12,
+        color: '#999',
+    },
+    recentPurchasesList: {
+        flex: 1,
     },
     purchaseItemRow: {
         flexDirection: 'row',
@@ -635,6 +780,10 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.tertiary,
         marginTop: 2,
     },
+    sellerPurchaseStats: {
+        color: theme.colors.success,
+        fontWeight: '600',
+    },
     rowIconButton: {
         backgroundColor: theme.colors.neutral,
         paddingHorizontal: 10,
@@ -658,6 +807,20 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 16,
         color: theme.colors.primary,
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+    },
+
+    // ===== SKELETON =====
+    cardSkeletonContainer: {
+        padding: 16,
+        backgroundColor: theme.colors.surface ?? theme.colors.white,
+        borderRadius: 16,
+        marginBottom: 12,
+        gap: 10,
+    },
+    cardSkeletonRow: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 4,
     },
 
 }));

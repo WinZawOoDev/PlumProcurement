@@ -7,7 +7,7 @@ import { FormInputField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, VALIDATION_MESSAGES } from '../../constants'
 import { sellerService, NewSeller } from '../../services/sellerService'
-import { ISeller } from '../../database'
+import { ISeller } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
 
 type FormData = {

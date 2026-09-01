@@ -4,8 +4,8 @@ import {
     fetchSellers,
     initializeSellers,
     updateSeller,
-    ISeller,
-} from '../database'
+} from '../database/sellers'
+import { ISeller } from '../types/database'
 
 export type NewSeller = Omit<ISeller, 'id'>
 

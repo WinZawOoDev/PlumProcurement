@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { IPrice } from '../database'
+import { IPrice } from '../types/database'
 import { NewPrice, priceService } from '../services/priceService'
 
 interface PriceContextValue {

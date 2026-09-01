@@ -4,9 +4,9 @@ import {
     fetchPurchases,
     fetchPurchasesPaginated,
     initializePurchases,
-    initializeSellers,
-    IPurchaseWithSeller,
-} from '../database'
+} from '../database/purchases'
+import { initializeSellers } from '../database/sellers'
+import { IPurchaseWithSeller } from '../types/database'
 
 export type NewPurchase = Omit<IPurchaseWithSeller, 'id' | 'seller_name'>
 
