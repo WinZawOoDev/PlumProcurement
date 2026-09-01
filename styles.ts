@@ -763,7 +763,10 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== SELLERS =====
-    addSellerButton: {
+    sellerActionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: 15,
     },
     sellerInfo: {

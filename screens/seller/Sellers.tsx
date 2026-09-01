@@ -109,10 +109,9 @@ export default function Sellers() {
             <View style={styles.priceListContainer}>
                 <SectionHeader icon="people-outline" title={UI_TEXT.SELLERS} description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${sellers.length} ${sellers.length === 1 ? 'seller' : 'sellers'}`} />
 
-                <View style={styles.actionButtonsRow}>
+                <View style={styles.sellerActionsRow}>
                     <PrimaryButton
                         title={UI_TEXT.ADD_SELLER}
-                        containerStyle={styles.addSellerButton}
                         onPress={() => {
                             setEditing(null)
                             setSheetVisible(true)
