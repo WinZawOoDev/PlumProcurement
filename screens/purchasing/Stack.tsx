@@ -9,7 +9,7 @@ const PurchaseStack = createNativeStackNavigator({
     headerShown: false,
   },
   screens: {
-    Purchase: {
+    [ROUTES.PURCHASE]: {
       screen: Purchase,
       options: { title: 'Purchase' }
     },

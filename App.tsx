@@ -19,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
 import { Onboarding } from './components/Onboarding';
+import { ROUTES } from './constants';
 
 function PriceTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="pricetags-outline" color={color} size={size} />;
@@ -39,7 +40,7 @@ function Navigation() {
   const { theme: currentTheme } = useTheme();
 
   const RootStack = useMemo(() => createBottomTabNavigator({
-    initialRouteName: 'Price',
+    initialRouteName: ROUTES.PRICE_TAB,
     screenOptions: {
       headerShown: false,
       tabBarActiveTintColor: currentTheme.colors.primary,
@@ -69,21 +70,21 @@ function Navigation() {
       },
     },
     screens: {
-      Price: {
+      [ROUTES.PRICE_TAB]: {
         screen: PriceStack,
         options: {
           tabBarIcon: PriceTabIcon,
           tabBarLabel: "Prices"
         }
       },
-      Purchase: {
+      [ROUTES.PURCHASE_TAB]: {
         screen: PurchaseStack,
         options: {
           tabBarIcon: PurchaseTabIcon,
           tabBarLabel: "Purchasing"
         }
       },
-      Seller: {
+      [ROUTES.SELLER_TAB]: {
         screen: SellerStack,
         options: {
           tabBarIcon: SellerTabIcon,

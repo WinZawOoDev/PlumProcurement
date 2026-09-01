@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Sellers from "./Sellers";
+import { ROUTES } from "../../constants";
 
 
 const SellerStack = createNativeStackNavigator({
@@ -7,7 +8,7 @@ const SellerStack = createNativeStackNavigator({
     headerShown: false
   },
   screens: {
-    Seller: {
+    [ROUTES.SELLER]: {
       screen: Sellers,
       options: { title: 'Sellers' }
     }

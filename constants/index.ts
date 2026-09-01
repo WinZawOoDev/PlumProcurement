@@ -43,9 +43,11 @@ export const UNIT_LIST = [
 
 // ===== ROUTE NAMES =====
 export const ROUTES = {
-  PRICE_STACK: 'Price',
-  PURCHASE_STACK: 'Purchase',
-  SELLER_STACK: 'Seller',
+  PRICE_TAB: 'Price',
+  PURCHASE_TAB: 'PurchaseTab',
+  SELLER_TAB: 'SellerTab',
+  PURCHASE: 'Purchase',
+  SELLER: 'Seller',
   PURCHASE_PRICE: 'PurchasePrice',
   CREATE_PRICE: 'CreatePrice',
   PURCHASE_DETAILS: 'PurchaseDetails',
