@@ -11,9 +11,9 @@ export const useStyles = makeStyles((theme) => ({
     primaryButton: {
         backgroundColor: theme.colors.primary,
         borderRadius: 10,
-        paddingVertical: 10,
+        paddingVertical: 14,
         paddingHorizontal: 16,
-        minHeight: 40,
+        minHeight: 50,
         shadowColor: theme.colors.primary,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.12,
@@ -30,9 +30,9 @@ export const useStyles = makeStyles((theme) => ({
     secondaryButton: {
         backgroundColor: theme.colors.white,
         borderRadius: 10,
-        paddingVertical: 10,
+        paddingVertical: 14,
         paddingHorizontal: 16,
-        minHeight: 40,
+        minHeight: 50,
         borderWidth: 1,
         borderColor: theme.colors.grey2,
         shadowColor: '#000',
@@ -303,6 +303,7 @@ export const useStyles = makeStyles((theme) => ({
         elevation: 0,
         shadowOpacity: 0,
         borderWidth: 0,
+        marginVertical: 10,
     },
 
 
