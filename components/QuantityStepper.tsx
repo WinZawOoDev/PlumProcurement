@@ -1,8 +1,16 @@
 import React from 'react'
-import { View, Text as RNText } from 'react-native'
+import { View, Text as RNText, Vibration } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useStyles } from '../styles'
 import { UI_TEXT, A11Y_LABELS } from '../constants'
+
+const lightHaptic = () => {
+    try {
+        Vibration.vibrate(10)
+    } catch {
+        // Vibration not available/permitted on this device — ignore
+    }
+}
 
 interface QuantityStepperProps {
     value: string
@@ -11,12 +19,20 @@ interface QuantityStepperProps {
 
 export function QuantityStepper({ value, onChange }: QuantityStepperProps) {
     const styles = useStyles()
+    const handleIncrease = () => {
+        lightHaptic()
+        onChange(String(Math.max(1, (parseInt(value, 10) || 1) + 1)))
+    }
+    const handleDecrease = () => {
+        lightHaptic()
+        onChange(String(Math.max(1, (parseInt(value, 10) || 1) - 1)))
+    }
     return (
         <View style={styles.quantityRow}>
             <Text style={styles.categoryLabel}>{UI_TEXT.QUANTITY}</Text>
             <RNText
                 style={styles.quantityStepperButton}
-                onPress={() => onChange(String(Math.max(1, (parseInt(value, 10) || 1) + 1)))}
+                onPress={handleIncrease}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.INCREASE_QUANTITY}
@@ -26,7 +42,7 @@ export function QuantityStepper({ value, onChange }: QuantityStepperProps) {
             <RNText style={styles.quantityValue}>{value}</RNText>
             <RNText
                 style={styles.quantityStepperButton}
-                onPress={() => onChange(String(Math.max(1, (parseInt(value, 10) || 1) - 1)))}
+                onPress={handleDecrease}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.DECREASE_QUANTITY}
