@@ -19,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
 import { Onboarding } from './components/Onboarding';
+import { StartupLoader } from './components/StartupLoader';
 import { ROUTES } from './constants';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
@@ -167,7 +168,9 @@ function App() {
   if (checkingData) {
     return (
       <ThemeProvider theme={appTheme}>
-        <SafeAreaProvider />
+        <SafeAreaProvider>
+          <StartupLoader />
+        </SafeAreaProvider>
       </ThemeProvider>
     );
   }

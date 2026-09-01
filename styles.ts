@@ -255,6 +255,20 @@ export const useStyles = makeStyles((theme) => ({
         padding: 24,
         gap: 24,
     },
+    startupLoaderContainer: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+    },
+    startupLoaderTitle: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        fontSize: 22,
+        fontWeight: '700',
+        color: theme.colors.primary,
+        letterSpacing: 0.3,
+    },
     onboardingCenter: {
         alignItems: 'center',
         gap: 12,
