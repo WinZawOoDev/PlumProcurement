@@ -3,7 +3,13 @@ import { Button, ButtonProps } from '@rneui/themed'
 import { ViewStyle, Vibration } from 'react-native'
 import { useStyles } from '../../styles'
 
-const lightHaptic = () => Vibration.vibrate(10)
+const lightHaptic = () => {
+    try {
+        Vibration.vibrate(10)
+    } catch {
+        // Vibration not available/permitted on this device — ignore
+    }
+}
 
 interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containerStyle' | 'titleStyle'> {
     title: string
