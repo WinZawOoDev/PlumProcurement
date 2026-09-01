@@ -235,3 +235,8 @@ export const ANIMATIONS = {
 export const SAFE_AREA = {
   EDGES: { bottom: 'maximum' } as const,
 } as const;
+
+// ===== APP SETTINGS (persisted in app_settings table) =====
+export const SETTINGS_KEYS = {
+  ONBOARDED: 'onboarded',
+} as const;

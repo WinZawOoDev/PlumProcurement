@@ -26,6 +26,7 @@ export { PurchaseService, purchaseService } from './services/purchaseService'
 export type { NewPurchase } from './services/purchaseService'
 export { SellerService, sellerService } from './services/sellerService'
 export type { NewSeller } from './services/sellerService'
+export { SettingsService, settingsService } from './services/settingsService'
 
 // Export context
 export { PriceProvider, usePrices } from './context/PriceContext'

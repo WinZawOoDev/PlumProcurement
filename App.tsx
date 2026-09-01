@@ -22,6 +22,7 @@ import { Onboarding } from './components/Onboarding';
 import { ROUTES } from './constants';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
+import { settingsService } from './services/settingsService';
 
 function PriceTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="pricetags-outline" color={color} size={size} />;
@@ -132,14 +133,20 @@ function App() {
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Skip onboarding for returning users who already have data
+      // Skip onboarding for returning users: persisted flag first,
+      // then data heuristic for installs that predate the flag.
       try {
+        if (await settingsService.isOnboarded()) {
+          if (!cancelled) setOnboarded(true);
+          return;
+        }
         const [prices, sellers] = await Promise.all([
           priceService.getPrices(),
           sellerService.getSellers(),
         ]);
         if (!cancelled && (prices.length > 0 || sellers.length > 0)) {
           setOnboarded(true);
+          settingsService.setOnboarded().catch(() => undefined);
         }
       } catch {
         // DB unavailable — fall back to showing onboarding
@@ -151,6 +158,11 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  const handleOnboardingDone = () => {
+    setOnboarded(true);
+    settingsService.setOnboarded().catch(() => undefined);
+  };
 
   if (checkingData) {
     return (
@@ -164,7 +176,7 @@ function App() {
     return (
       <ThemeProvider theme={appTheme}>
         <SafeAreaProvider>
-          <Onboarding onDone={() => setOnboarded(true)} />
+          <Onboarding onDone={handleOnboardingDone} />
         </SafeAreaProvider>
       </ThemeProvider>
     );

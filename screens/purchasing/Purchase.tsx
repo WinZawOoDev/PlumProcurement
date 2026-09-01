@@ -23,7 +23,7 @@ interface PurchaseFormProps {
     onRecorded: () => void
 }
 
-function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
+export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()

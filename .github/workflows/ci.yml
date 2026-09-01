@@ -1,9 +1,7 @@
 name: CI
 
+# Disabled: no automatic triggers. Run manually via "Run workflow" if needed.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -22,6 +20,39 @@ jobs:
         run: npx tsc --noEmit
       - name: Tests
         run: npm test -- --ci --coverage
-      - name: Maestro (validate flows)
+
+  maestro-e2e:
+    # Emulator E2E is slow — run on demand or on main pushes only
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v3
+      - name: Install maestro
         run: |
-          if [ -d .maestro ]; then echo "Maestro flows: $(ls .maestro/*.yaml | wc -l)"; ls .maestro/*.yaml; else echo "no maestro"; fi
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Check maestro
+        run: maestro --version
+      - name: Build debug APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Run Maestro flows on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            for flow in .maestro/*.yaml; do
+              maestro test "$flow"
+            done
+
