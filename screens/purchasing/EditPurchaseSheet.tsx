@@ -5,8 +5,6 @@ import { useStyles } from '../../styles'
 import { MESSAGES, UI_TEXT } from '../../constants'
 import { IPurchaseWithSeller } from '../../types/database'
 import { purchaseService } from '../../services/purchaseService'
-import { sellerService } from '../../services/sellerService'
-import { SelectPicker } from '../../components/SelectPicker'
 import { QuantityStepper } from '../../components/QuantityStepper'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -22,15 +20,11 @@ interface EditPurchaseSheetProps {
 export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditPurchaseSheetProps) {
     const styles = useStyles()
     const [quantity, setQuantity] = useState('1')
-    const [sellerId, setSellerId] = useState('')
-    const [sellers, setSellers] = useState<{ id: number; name: string }[]>([])
     const { loading: saving, withLoading: withSaving } = useLoading(false)
 
     useEffect(() => {
         if (visible && purchase) {
             setQuantity(String(purchase.quantity))
-            setSellerId(purchase.seller_id ? String(purchase.seller_id) : '')
-            sellerService.getSellers().then(setSellers).catch(() => setSellers([]))
         }
     }, [visible, purchase])
 
@@ -50,7 +44,6 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
             try {
                 await purchaseService.editPurchase(purchase.id, {
                     quantity: quantityValue,
-                    seller_id: sellerId ? parseInt(sellerId, 10) : null,
                 })
                 showSuccess(MESSAGES.PURCHASE_UPDATE_SUCCESS)
                 onSaved()
@@ -70,15 +63,11 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
                         {purchase.category} ({purchase.unit}) · {purchase.unit_price.toFixed(2)}$ / {UI_TEXT.UNIT}
                     </RNText>
                 )}
-                <SelectPicker
-                    label={UI_TEXT.SELECT_SELLER}
-                    selectedValue={sellerId}
-                    onValueChange={setSellerId}
-                    items={[
-                        { label: UI_TEXT.NO_SELLER, value: '' },
-                        ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
-                    ]}
-                />
+                {!!purchase?.seller_name && (
+                    <RNText style={styles.purchaseItemSubtitle}>
+                        {UI_TEXT.SOLD_BY}: {purchase.seller_name}
+                    </RNText>
+                )}
                 <QuantityStepper value={quantity} onChange={setQuantity} />
                 <View style={styles.purchaseSummaryCard}>
                     <View style={styles.purchaseSummaryRow}>
