@@ -53,6 +53,7 @@ export const ROUTES = {
   CREATE_PRICE: 'CreatePrice',
   PURCHASE_DETAILS: 'PurchaseDetails',
   SELLERS: 'Sellers',
+  SETTINGS: 'Settings',
 } as const;
 
 // ===== MESSAGES =====

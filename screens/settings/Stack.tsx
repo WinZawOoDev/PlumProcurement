@@ -7,7 +7,7 @@ const SettingsStack = createNativeStackNavigator({
         headerShown: false,
     },
     screens: {
-        [ROUTES.SETTINGS_TAB]: {
+        [ROUTES.SETTINGS]: {
             screen: Settings,
             options: { title: 'Settings' },
         },
