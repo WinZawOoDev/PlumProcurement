@@ -1,25 +1,24 @@
-import { Alert, FlatList, RefreshControl, View } from 'react-native'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { FlatList, RefreshControl, View } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
-import { IconButton, PrimaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
+import { PrimaryButton } from '../../components/buttons/Button'
+import { UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
-import { DatabaseError } from '../../database/connection'
 import { ISeller, IPurchaseWithSeller } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
-import { showSuccess, showError } from '../../utils/notifications'
+import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
+import { useConfirmDelete } from '../../hooks/useConfirmDelete'
+import { useSearchFilter } from '../../hooks/useSearchFilter'
+import { SearchIconButton } from '../../components/SearchIconButton'
 import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { SellerDetailSheet } from '../../components/SellerDetailSheet'
-// import { buildSellersCsvWithBom, getCsvFilename } from '../../utils'
-// import { shareOrSaveCsv } from '../../utils/csvExport'
 
 export default function Sellers() {
     const styles = useStyles()
@@ -31,8 +30,22 @@ export default function Sellers() {
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
-    const [searchVisible, setSearchVisible] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
+    const {
+        visible: searchVisible,
+        query: searchQuery,
+        setQuery: setSearchQuery,
+        toggle: handleToggleSearch,
+        filtered: visibleSellers,
+        hasQuery,
+    } = useSearchFilter(
+        sellers,
+        useCallback(
+            (s: ISeller, q: string) =>
+                s.name.toLowerCase().includes(q) ||
+                (s.phone ?? '').toLowerCase().includes(q),
+            []
+        )
+    )
 
     const loadSellers = useCallback(async () => {
         await withLoading(async () => {
@@ -67,63 +80,12 @@ export default function Sellers() {
         }
     }, [])
 
-    const visibleSellers = useMemo(() => {
-        const query = searchQuery.trim().toLowerCase()
-        if (!query) return sellers
-        return sellers.filter(
-            (s) =>
-                s.name.toLowerCase().includes(query) ||
-                (s.phone ?? '').toLowerCase().includes(query)
-        )
-    }, [sellers, searchQuery])
-
-    const handleToggleSearch = () => {
-        setSearchVisible((prev) => {
-            if (prev) setSearchQuery('')
-            return !prev
-        })
-    }
-
-    const confirmDelete = (id: number) => {
-        Alert.alert(
-            UI_TEXT.DELETE_CONFIRM_TITLE,
-            UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
-            [
-                { text: UI_TEXT.CANCEL, style: 'cancel' },
-                {
-                    text: UI_TEXT.DELETE,
-                    style: 'destructive',
-                    onPress: () => performDelete(id),
-                },
-            ]
-        )
-    }
-
-    const performDelete = async (id: number) => {
-        try {
-            await sellerService.removeSeller(id)
-            showSuccess(MESSAGES.SELLER_DELETE_SUCCESS)
-            await loadSellers()
-        } catch (error) {
-            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            showError(message)
-        }
-    }
-
-    // const _handleExport = async () => {
-    //     if (sellers.length === 0) {
-    //         showError(UI_TEXT.EMPTY_SELLER_LIST)
-    //         return
-    //     }
-    //     const filename = getCsvFilename('sellers')
-    //     const result = await shareOrSaveCsv(
-    //         buildSellersCsvWithBom(sellers),
-    //         filename,
-    //         UI_TEXT.EXPORT_CSV
-    //     )
-    //     if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
-    //     else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${sellers.length} rows`)
-    // }
+    const confirmDelete = useConfirmDelete<[number]>({
+        remove: (id) => sellerService.removeSeller(id),
+        confirmMessage: UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
+        successMessage: MESSAGES.SELLER_DELETE_SUCCESS,
+        onDeleted: loadSellers,
+    })
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
@@ -138,27 +100,8 @@ export default function Sellers() {
                             setSheetVisible(true)
                         }}
                     />
-                    {/* <IconButton
-                        icon={
-                            <Ionicons
-                                name="download-outline"
-                                size={DIMENSIONS.ICON_SIZE_MEDIUM}
-                                color={theme.colors.grey4}
-                            />
-                        }
-                        variant="ghost"
-                        onPress={_handleExport}
-                        accessibilityLabel={UI_TEXT.EXPORT_CSV}
-                    /> */}
-                    <IconButton
-                        icon={
-                            <Ionicons
-                                name={searchVisible ? 'search' : 'search-outline'}
-                                size={DIMENSIONS.ICON_SIZE_MEDIUM}
-                                color={searchVisible ? theme.colors.primary : theme.colors.grey4}
-                            />
-                        }
-                        variant="ghost"
+                    <SearchIconButton
+                        active={searchVisible}
                         onPress={handleToggleSearch}
                         accessibilityLabel={A11Y_LABELS.TOGGLE_SEARCH}
                     />
@@ -175,7 +118,6 @@ export default function Sellers() {
                 <FlatList
                     data={visibleSellers}
                     keyExtractor={(item) => item.id.toString()}
-                    getItemLayout={(_, index) => ({ length: 72, offset: 72 * index, index })}
                     initialNumToRender={10}
                     windowSize={10}
                     removeClippedSubviews={true}
@@ -194,9 +136,9 @@ export default function Sellers() {
                     )}
                     ListEmptyComponent={
                         <EmptyState
-                            icon={sellers.length > 0 ? 'search-outline' : 'people-outline'}
-                            title={sellers.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
-                            description={sellers.length > 0 ? `No sellers matching "${searchQuery}"` : 'Add your first seller to get started'}
+                            icon={hasQuery ? 'search-outline' : 'people-outline'}
+                            title={hasQuery ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
+                            description={hasQuery ? `No sellers matching "${searchQuery}"` : 'Add your first seller to get started'}
                         />
                     }
                     refreshControl={

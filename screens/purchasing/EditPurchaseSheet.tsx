@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { View, Text as RNText } from 'react-native'
 import { BottomSheet, Text } from '@rneui/themed'
 import { useStyles } from '../../styles'
-import { MESSAGES, UI_TEXT } from '../../constants'
+import { MESSAGES, UI_TEXT, QUANTITY_PATTERN } from '../../constants'
 import { IPurchaseWithSeller } from '../../types/database'
 import { purchaseService } from '../../services/purchaseService'
 import { QuantityStepper } from '../../components/QuantityStepper'
@@ -29,14 +29,15 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
     }, [visible, purchase])
 
     const quantityValue = parseInt(quantity, 10)
+    const quantityValid = QUANTITY_PATTERN.test(quantity) && quantityValue > 0
     const newTotal =
-        purchase && Number.isInteger(quantityValue) && quantityValue > 0
+        purchase && quantityValid
             ? purchase.unit_price * quantityValue
             : 0
 
     const handleSave = async () => {
         if (!purchase) return
-        if (!Number.isInteger(quantityValue) || quantityValue <= 0) {
+        if (!quantityValid) {
             showError(MESSAGES.ERROR_INVALID_QUANTITY)
             return
         }

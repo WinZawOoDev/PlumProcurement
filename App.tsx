@@ -23,6 +23,7 @@ import { ThemeModeContext } from './context/ThemeModeContext';
 import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
 import { ROUTES, ThemeMode } from './constants';
+import Toast from 'react-native-toast-message';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
 import { settingsService } from './services/settingsService';
@@ -143,24 +144,15 @@ function Navigation({ onReady, isDarkMode }: { onReady?: () => void; isDarkMode:
 }
 
 
-function App() {
-  const systemIsDarkMode = useColorScheme() === 'dark';
-  const [themeMode, setThemeModeState] = React.useState<ThemeMode>('system');
-  const isDarkMode = themeMode === 'system' ? systemIsDarkMode : themeMode === 'dark';
-  const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
+interface AppShellProps {
+  isDarkMode: boolean;
+  themeModeContextValue: { mode: ThemeMode; setMode: (mode: ThemeMode) => void };
+}
+
+function AppShell({ isDarkMode, themeModeContextValue }: AppShellProps) {
   const [onboarded, setOnboarded] = React.useState(false);
   const [checkingData, setCheckingData] = React.useState(true);
   const [mainReady, setMainReady] = React.useState(false);
-
-  const handleSetThemeMode = useCallback((mode: ThemeMode) => {
-    setThemeModeState(mode);
-    settingsService.setThemeMode(mode).catch(() => undefined);
-  }, []);
-
-  const themeModeContextValue = useMemo(
-    () => ({ mode: themeMode, setMode: handleSetThemeMode }),
-    [themeMode, handleSetThemeMode]
-  );
 
   React.useEffect(() => {
     let cancelled = false;
@@ -168,9 +160,6 @@ function App() {
       // Skip onboarding for returning users: persisted flag first,
       // then data heuristic for installs that predate the flag.
       try {
-        settingsService.getThemeMode().then((mode) => {
-          if (!cancelled) setThemeModeState(mode);
-        }).catch(() => undefined);
         if (await settingsService.isOnboarded()) {
           if (!cancelled) setOnboarded(true);
           return;
@@ -202,36 +191,51 @@ function App() {
   const handleMainReady = React.useCallback(() => setMainReady(true), []);
 
   if (checkingData) {
-    return (
-      <ThemeProvider theme={appTheme}>
-        <SafeAreaProvider>
-          <StartupLoader />
-        </SafeAreaProvider>
-      </ThemeProvider>
-    );
+    return <StartupLoader />;
   }
 
   if (!onboarded) {
-    return (
-      <ThemeProvider theme={appTheme}>
-        <SafeAreaProvider>
-          <Onboarding onDone={handleOnboardingDone} />
-        </SafeAreaProvider>
-      </ThemeProvider>
-    );
+    return <Onboarding onDone={handleOnboardingDone} />;
   }
+
+  return (
+    <PriceProvider>
+      <ThemeModeContext.Provider value={themeModeContextValue}>
+        <Navigation onReady={handleMainReady} isDarkMode={isDarkMode} />
+      </ThemeModeContext.Provider>
+      {!mainReady && <StartupLoader overlay />}
+    </PriceProvider>
+  );
+}
+
+function App() {
+  const systemIsDarkMode = useColorScheme() === 'dark';
+  const [themeMode, setThemeModeState] = React.useState<ThemeMode>('system');
+  const isDarkMode = themeMode === 'system' ? systemIsDarkMode : themeMode === 'dark';
+  const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
+
+  const handleSetThemeMode = useCallback((mode: ThemeMode) => {
+    setThemeModeState(mode);
+    settingsService.setThemeMode(mode).catch(() => undefined);
+  }, []);
+
+  const themeModeContextValue = useMemo(
+    () => ({ mode: themeMode, setMode: handleSetThemeMode }),
+    [themeMode, handleSetThemeMode]
+  );
+
+  // Load the persisted theme preference as early as possible
+  React.useEffect(() => {
+    settingsService.getThemeMode().then(setThemeModeState).catch(() => undefined);
+  }, []);
 
   return (
     <ErrorBoundary>
       <ThemeProvider theme={appTheme}>
-        <PriceProvider>
-          <SafeAreaProvider>
-            <ThemeModeContext.Provider value={themeModeContextValue}>
-              <Navigation onReady={handleMainReady} isDarkMode={isDarkMode} />
-            </ThemeModeContext.Provider>
-            {!mainReady && <StartupLoader overlay />}
-          </SafeAreaProvider>
-        </PriceProvider>
+        <SafeAreaProvider>
+          <AppShell isDarkMode={isDarkMode} themeModeContextValue={themeModeContextValue} />
+          <Toast />
+        </SafeAreaProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

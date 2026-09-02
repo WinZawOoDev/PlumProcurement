@@ -243,9 +243,6 @@ export const useStyles = makeStyles((theme) => ({
     sellerDetailSheetContainer: {
         maxHeight: 400,
     },
-    sellerDetailList: {
-        marginTop: 12,
-    },
 
     // ===== ONBOARDING =====
     onboardingContainer: {
@@ -424,17 +421,6 @@ export const useStyles = makeStyles((theme) => ({
     },
 
     // ===== PRICING - PRICE CARD =====
-    priceCardContainer: {
-        width: '100%',
-        borderRadius: 12,
-        borderWidth: 0,
-        marginHorizontal: 'auto',
-        marginBottom: 8,
-        backgroundColor: theme.colors.surface ?? theme.colors.white,
-        overflow: 'hidden',
-        borderBottomWidth: 0.5,
-        borderColor: theme.colors.grey1,
-    },
     priceCardMinimal: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -448,12 +434,6 @@ export const useStyles = makeStyles((theme) => ({
         width: 3,
         alignSelf: 'stretch',
         borderRadius: 2,
-    },
-    priceCardHeader: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
     },
     priceCardTitle: {
         letterSpacing: TYPOGRAPHY.LETTER_SPACING,
@@ -475,25 +455,6 @@ export const useStyles = makeStyles((theme) => ({
         alignItems: 'center',
         gap: 8,
     },
-    priceCardEditButtonTitle: {
-        color: theme.colors.black,
-        fontWeight: '600',
-        fontSize: 14,
-    },
-    priceCardRow: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    priceCardLabel: {
-        marginBottom: 10,
-        fontWeight: 'thin',
-        fontSize: 13,
-        lineHeight: 17,
-        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
-        color: theme.colors.tertiary
-    },
     priceCardValue: {
         marginBottom: 10,
         fontWeight: 'bold',
@@ -503,22 +464,6 @@ export const useStyles = makeStyles((theme) => ({
     },
     priceCardCurrencySymbol: {
         fontWeight: '700'
-    },
-    priceCardCategoryValue: {
-        marginBottom: 10,
-        fontWeight: 'condensed',
-        fontSize: 14,
-        lineHeight: 17,
-        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
-    },
-    priceCardBadgeStyle: {
-        backgroundColor: theme.colors.neutral
-    },
-    priceCardBadgeText: {
-        fontSize: 12,
-        fontWeight: 'thin',
-        color: theme.colors.black,
-        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY
     },
     priceCardIconCircle: {
         width: 32,
@@ -587,30 +532,11 @@ export const useStyles = makeStyles((theme) => ({
         paddingHorizontal: 12,
         paddingBlock: 15
     },
-    titleDescription: {
-        marginBottom: 10
-    },
-    titleText: {
-        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
-        fontSize: 25,
-        fontWeight: '700',
-        color: theme.colors.primary,
-        letterSpacing: TYPOGRAPHY.LETTER_SPACING,
-        lineHeight: 40
-    },
     descriptionText: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         fontWeight: '500',
         fontSize: 16,
         lineHeight: 24,
-    },
-    emptyPriceListContainer: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: theme.colors.secondary,
-        height: DIMENSIONS.EMPTY_LIST_HEIGHT,
-        alignItems: 'center',
-        justifyContent: 'center'
     },
     priceListFlatList: {
         marginBottom: DIMENSIONS.FLAT_LIST_MARGIN_BOTTOM,
@@ -764,20 +690,6 @@ export const useStyles = makeStyles((theme) => ({
         borderBottomWidth: 0.5,
         borderColor: theme.colors.grey1,
         gap: 12,
-    },
-    stickySectionHeader: {
-        backgroundColor: theme.colors.background,
-        paddingVertical: 6,
-        paddingHorizontal: 4,
-        marginTop: 8,
-    },
-    stickySectionTitle: {
-        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
-        fontSize: 12,
-        fontWeight: '700',
-        color: theme.colors.grey4,
-        letterSpacing: 1,
-        textTransform: 'uppercase',
     },
     purchaseItemTitle: {
         fontWeight: '600',

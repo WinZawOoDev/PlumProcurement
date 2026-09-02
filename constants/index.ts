@@ -59,6 +59,7 @@ export const MESSAGES = {
   SELLER_UPDATE_SUCCESS: 'Seller updated successfully!',
   SELLER_DELETE_SUCCESS: 'Seller deleted successfully!',
   ERROR_PRICE_IN_USE: 'Cannot delete this price because purchases reference it.',
+  ERROR_SELLER_IN_USE: 'Cannot delete this seller because purchases reference it.',
   ERROR_SELECT_PRICE: 'Please select a price item first.',
   ERROR_SELECT_SELLER: 'Please select a seller first.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',

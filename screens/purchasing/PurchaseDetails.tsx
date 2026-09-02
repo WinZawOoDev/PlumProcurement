@@ -2,7 +2,6 @@ import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '@rneui/themed'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../../styles'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
@@ -12,8 +11,10 @@ import { buildPurchasesCsvWithBom, formatDate, getCsvFilename } from '../../util
 import { shareOrSaveCsv } from '../../utils/csvExport'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
 import { SearchBar } from '../../components/SearchBar'
+import { SearchIconButton } from '../../components/SearchIconButton'
 import { showError, showSuccess } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
+import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { PAGINATION_CONFIG } from '../../constants'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
@@ -27,9 +28,19 @@ export default function PurchaseDetails() {
     const [hasMore, setHasMore] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
     const { loading, withLoading } = useLoading(false)
-    const [searchVisible, setSearchVisible] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
     const [editingPurchase, setEditingPurchase] = useState<IPurchaseWithSeller | null>(null)
+    // Search here is server-side (paginated queries); only the shared
+    // visibility/query/toggle state comes from the hook.
+    const {
+        visible: searchVisible,
+        query: searchQuery,
+        setQuery: setSearchQuery,
+        toggle: handleToggleSearch,
+        hasQuery,
+    } = useSearchFilter(
+        purchases,
+        useCallback(() => true, [])
+    )
 
     const loadPurchases = useCallback(
         async (reset = true, queryOverride?: string) => {
@@ -95,13 +106,6 @@ export default function PurchaseDetails() {
 
     const csv = useMemo(() => buildPurchasesCsvWithBom(visiblePurchases), [visiblePurchases])
 
-    const handleToggleSearch = () => {
-        setSearchVisible((prev) => {
-            if (prev) setSearchQuery('')
-            return !prev
-        })
-    }
-
     const handleExport = async () => {
         if (visiblePurchases.length === 0) {
             showError(UI_TEXT.EMPTY_PURCHASE_LIST)
@@ -136,17 +140,7 @@ export default function PurchaseDetails() {
                         onPress={handleExport}
                         buttonStyle={styles.exportButton}
                     />
-                    <IconButton
-                        icon={
-                            <Ionicons
-                                name={searchVisible ? 'search' : 'search-outline'}
-                                size={DIMENSIONS.ICON_SIZE_MEDIUM}
-                                color={searchVisible ? theme.colors.primary : theme.colors.grey4}
-                            />
-                        }
-                        variant="ghost"
-                        onPress={handleToggleSearch}
-                    />
+                    <SearchIconButton active={searchVisible} onPress={handleToggleSearch} />
                 </View>
 
                 {searchVisible && (
@@ -183,8 +177,8 @@ export default function PurchaseDetails() {
                     ListEmptyComponent={
                         <EmptyState
                             icon="receipt-outline"
-                            title={purchases.length > 0 ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_PURCHASE_LIST}
-                            description={purchases.length > 0 ? `No purchases matching "${searchQuery}"` : 'Your purchase history will appear here'}
+                            title={hasQuery ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_PURCHASE_LIST}
+                            description={hasQuery ? `No purchases matching "${searchQuery}"` : 'Your purchase history will appear here'}
                         />
                     }
                     onEndReached={handleLoadMore}

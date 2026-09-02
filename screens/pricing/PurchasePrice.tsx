@@ -1,5 +1,5 @@
-import { Alert, RefreshControl, View, FlatList } from 'react-native'
-import React, { useEffect, useMemo, useState } from 'react'
+import { RefreshControl, View, FlatList } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -8,17 +8,15 @@ import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
 import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
-import { DatabaseError } from '../../database/connection'
 import { IPrice } from '../../types/database'
-import { showSuccess, showError } from '../../utils/notifications'
 import { SearchBar } from '../../components/SearchBar'
 import { PriceTrend } from '../../components/PriceTrend'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/Skeleton'
 import { PriceDetailSheet } from '../../components/PriceDetailSheet'
-import { buildPricesCsvWithBom, getCsvFilename } from '../../utils'
-import { shareOrSaveCsv } from '../../utils/csvExport'
+import { useSearchFilter } from '../../hooks/useSearchFilter'
+import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 
 export default function PurchasePrices() {
     const styles = useStyles()
@@ -26,83 +24,47 @@ export default function PurchasePrices() {
     const { prices, loading, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
     const [detailPrice, setDetailPrice] = useState<IPrice | null>(null)
-    const [searchVisible, setSearchVisible] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
     const [sortMode, setSortMode] = useState<SortMode>('default')
+    const {
+        visible: searchVisible,
+        query: searchQuery,
+        setQuery: setSearchQuery,
+        toggle: handleToggleSearch,
+        filtered: matchedPrices,
+        hasQuery,
+    } = useSearchFilter(
+        prices,
+        useCallback(
+            (p: IPrice, q: string) =>
+                p.category.toLowerCase().includes(q) || p.unit.toLowerCase().includes(q),
+            []
+        )
+    )
 
     useEffect(() => {
         refresh()
     }, [refresh])
 
-    const visiblePrices = useMemo(() => {
-        const query = searchQuery.trim().toLowerCase()
-        let list = prices
-        if (query) {
-            list = list.filter(
-                (p) =>
-                    p.category.toLowerCase().includes(query) ||
-                    p.unit.toLowerCase().includes(query)
-            )
-        }
+    const visiblePrices = (() => {
         if (sortMode === 'price_asc') {
-            list = [...list].sort((a, b) => a.price - b.price)
-        } else if (sortMode === 'price_desc') {
-            list = [...list].sort((a, b) => b.price - a.price)
+            return [...matchedPrices].sort((a, b) => a.price - b.price)
         }
-        return list
-    }, [prices, searchQuery, sortMode])
+        if (sortMode === 'price_desc') {
+            return [...matchedPrices].sort((a, b) => b.price - a.price)
+        }
+        return matchedPrices
+    })()
 
     const handleSortPress = () => {
         const nextIndex = (SORT_MODES.indexOf(sortMode) + 1) % SORT_MODES.length
         setSortMode(SORT_MODES[nextIndex])
     }
 
-    const handleToggleSearch = () => {
-        setSearchVisible((prev) => {
-            if (prev) setSearchQuery('')
-            return !prev
-        })
-    }
-
-    const handleExport = async () => {
-        if (prices.length === 0) {
-            showError(MESSAGES.EMPTY_PRICE_LIST)
-            return
-        }
-        const filename = getCsvFilename('prices')
-        const result = await shareOrSaveCsv(
-            buildPricesCsvWithBom(prices),
-            filename,
-            UI_TEXT.EXPORT_CSV
-        )
-        if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
-        else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${prices.length} rows`)
-    }
-
-    const handleDelete = (id: number) => {
-        Alert.alert(
-            UI_TEXT.DELETE_CONFIRM_TITLE,
-            UI_TEXT.DELETE_PRICE_CONFIRM_MESSAGE,
-            [
-                { text: UI_TEXT.CANCEL, style: 'cancel' },
-                {
-                    text: UI_TEXT.DELETE,
-                    style: 'destructive',
-                    onPress: () => performDelete(id),
-                },
-            ]
-        )
-    }
-
-    const performDelete = async (id: number) => {
-        try {
-            await removePrice(id)
-            showSuccess(MESSAGES.PRICE_DELETE_SUCCESS)
-        } catch (error) {
-            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            showError(message)
-        }
-    }
+    const confirmDelete = useConfirmDelete<[number]>({
+        remove: (id) => removePrice(id),
+        confirmMessage: UI_TEXT.DELETE_PRICE_CONFIRM_MESSAGE,
+        successMessage: MESSAGES.PRICE_DELETE_SUCCESS,
+    })
 
     return (
         <SafeAreaView
@@ -121,7 +83,6 @@ export default function PurchasePrices() {
                     sortActive={sortMode !== 'default'}
                     sortDirection={sortMode === 'price_asc' ? 'asc' : 'desc'}
                     onSortPress={handleSortPress}
-                    onExportPress={handleExport}
                 />
                 {searchVisible && (
                     <SearchBar
@@ -147,14 +108,14 @@ export default function PurchasePrices() {
                             <PriceCard
                                 {...item}
                                 onEdit={() => setEditing(item)}
-                                onDelete={() => handleDelete(item.id)}
+                                onDelete={() => confirmDelete(item.id)}
                             />
                         )}
                         ListEmptyComponent={
                             <EmptyState
-                                icon="pricetag-outline"
-                                title={searchQuery ? UI_TEXT.NO_MATCHING_RESULTS : MESSAGES.EMPTY_PRICE_LIST}
-                                description={searchQuery ? `No prices matching "${searchQuery}"` : UI_TEXT.PLUM_COUNT_TITLE}
+                                icon={hasQuery ? 'search-outline' : 'pricetag-outline'}
+                                title={hasQuery ? UI_TEXT.NO_MATCHING_RESULTS : MESSAGES.EMPTY_PRICE_LIST}
+                                description={hasQuery ? `No prices matching "${searchQuery}"` : UI_TEXT.PLUM_COUNT_TITLE}
                             />
                         }
                         removeClippedSubviews={true}
@@ -162,7 +123,6 @@ export default function PurchasePrices() {
                         updateCellsBatchingPeriod={50}
                         initialNumToRender={10}
                         windowSize={10}
-                        getItemLayout={(_, index) => ({ length: 72, offset: 72 * index, index })}
                         refreshControl={
                             <RefreshControl
                                 refreshing={loading}

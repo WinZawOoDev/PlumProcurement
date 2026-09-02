@@ -91,8 +91,27 @@ export async function deleteSeller(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        await db.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
+        // Guard + delete in a transaction so a concurrent purchase referencing
+        // this seller cannot slip in between the count check and the delete.
+        await db.executeAsync(`BEGIN IMMEDIATE`)
+        try {
+            const { results } = await db.executeAsync(
+                `SELECT COUNT(*) AS count FROM purchases WHERE seller_id = ?`,
+                [id]
+            );
+            const referencedCount =
+                (results as unknown as Array<{ count: number }>)[0]?.count ?? 0;
+            if (referencedCount > 0) {
+                throw new DatabaseError(MESSAGES.ERROR_SELLER_IN_USE)
+            }
+            await db.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
+            await db.executeAsync(`COMMIT`)
+        } catch (innerError) {
+            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
+            throw innerError
+        }
     } catch (error) {
+        if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete seller', error)
     }
 }

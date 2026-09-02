@@ -1,16 +1,9 @@
 import React from 'react'
-import { View, Text as RNText, Vibration, TouchableOpacity } from 'react-native'
+import { View, Text as RNText, TouchableOpacity } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useStyles } from '../styles'
 import { UI_TEXT, A11Y_LABELS } from '../constants'
-
-const lightHaptic = () => {
-    try {
-        Vibration.vibrate(10)
-    } catch {
-        // Vibration not available/permitted on this device — ignore
-    }
-}
+import { lightHaptic } from '../utils/haptics'
 
 interface QuantityStepperProps {
     value: string

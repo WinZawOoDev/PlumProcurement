@@ -6,6 +6,7 @@ import { IconButton } from '../../components/buttons/Button'
 import { UI_TEXT, ROUTES, DIMENSIONS } from '../../constants'
 import { useNavigation } from '@react-navigation/native'
 import { useStyles } from '../../styles'
+import { SearchIconButton } from '../../components/SearchIconButton'
 
 interface ActionButtonsProps {
     searchActive?: boolean
@@ -13,7 +14,6 @@ interface ActionButtonsProps {
     sortActive?: boolean
     sortDirection?: 'asc' | 'desc'
     onSortPress?: () => void
-    onExportPress?: () => void
 }
 
 export default function ActionButtons({
@@ -22,7 +22,6 @@ export default function ActionButtons({
     sortActive = false,
     sortDirection,
     onSortPress,
-    onExportPress: _onExportPress,
 }: ActionButtonsProps) {
     const styles = useStyles()
     const { theme } = useTheme()
@@ -37,17 +36,7 @@ export default function ActionButtons({
                 //@ts-expect-error
                 onPress={() => navigation.navigate(ROUTES.CREATE_PRICE)}
             />
-            <IconButton
-                icon={
-                    <Ionicons
-                        name={searchActive ? 'search' : 'search-outline'}
-                        size={DIMENSIONS.ICON_SIZE_MEDIUM}
-                        color={searchActive ? theme.colors.primary : theme.colors.grey4}
-                    />
-                }
-                variant="ghost"
-                onPress={onSearchPress}
-            />
+            <SearchIconButton active={searchActive} onPress={onSearchPress} />
             <IconButton
                 icon={
                     <Ionicons
@@ -65,18 +54,6 @@ export default function ActionButtons({
                 variant="ghost"
                 onPress={onSortPress}
             />
-            {/* <IconButton
-                icon={
-                    <Ionicons
-                        name="download-outline"
-                        size={DIMENSIONS.ICON_SIZE_MEDIUM}
-                        color={theme.colors.grey4}
-                    />
-                }
-                variant="ghost"
-                onPress={onExportPress}
-                accessibilityLabel={UI_TEXT.EXPORT_CSV}
-            /> */}
         </View>
     )
 }

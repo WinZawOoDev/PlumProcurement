@@ -1,6 +1,8 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { IPrice } from '../types/database'
 import { NewPrice, priceService } from '../services/priceService'
+import { showError } from '../utils/notifications'
+import { MESSAGES } from '../constants'
 
 interface PriceContextValue {
     prices: IPrice[]
@@ -16,14 +18,35 @@ const PriceContext = createContext<PriceContextValue | undefined>(undefined)
 export function PriceProvider({ children }: { children: React.ReactNode }) {
     const [prices, setPrices] = useState<IPrice[]>([])
     const [loading, setLoading] = useState(false)
+    // Monotonic token: only the most recent refresh call may commit its result,
+    // so overlapping calls (tab focus + pull-to-refresh) cannot race.
+    const refreshToken = useRef(0)
+    const mounted = useRef(true)
+
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+        }
+    }, [])
 
     const refresh = useCallback(async () => {
+        const token = ++refreshToken.current
         setLoading(true)
         try {
             const data = await priceService.getPrices()
-            setPrices(data)
+            if (mounted.current && token === refreshToken.current) {
+                setPrices(data)
+            }
+        } catch (error) {
+            // Never propagate: every screen treats refresh() as fire-and-forget.
+            if (token === refreshToken.current) {
+                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+            }
         } finally {
-            setLoading(false)
+            if (mounted.current && token === refreshToken.current) {
+                setLoading(false)
+            }
         }
     }, [])
 
