@@ -640,6 +640,18 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.primary,
         textAlign: 'center',
     },
+    quantityStepperButtonDisabled: {
+        opacity: 0.4,
+    },
+    quantityStepperTextDisabled: {
+        opacity: 0.4,
+    },
+    quantityStepperHint: {
+        marginTop: -8,
+        paddingHorizontal: 10,
+        fontSize: 12,
+        color: theme.colors.grey2,
+    },
     quantityValue: {
         fontSize: 32,
         fontWeight: '700',

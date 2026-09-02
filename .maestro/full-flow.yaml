@@ -15,6 +15,7 @@ appId: com.plumprocurement
 # Purchasing
 - tapOn: "Purchasing"
 - assertVisible: "Record Purchase"
+- tapOn: "Flow Seller"
 - tapOn: "PER KG"
 - inputText: "2"
 - tapOn: "Record Purchase"

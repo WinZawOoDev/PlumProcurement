@@ -34,6 +34,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const selectedPrice = prices.find((p) => p.id.toString() === selectedPriceId)
+    const sellerAndPriceSelected = Boolean(selectedPrice) && selectedSellerId !== ''
     const quantityValue = parseInt(quantity, 10)
     const total =
         selectedPrice && QUANTITY_PATTERN.test(quantity) && quantityValue > 0
@@ -41,6 +42,10 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
             : 0
 
     const handleRecord = async () => {
+        if (!selectedSellerId) {
+            showError(MESSAGES.ERROR_SELECT_SELLER)
+            return
+        }
         if (!selectedPrice) {
             showError(MESSAGES.ERROR_SELECT_PRICE)
             return
@@ -77,7 +82,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                 selectedValue={selectedSellerId}
                 onValueChange={setSelectedSellerId}
                 items={[
-                    { label: UI_TEXT.NO_SELLER, value: '' },
+                    { label: UI_TEXT.SELECT_SELLER_PLACEHOLDER, value: '' },
                     ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
                 ]}
             />
@@ -93,7 +98,10 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                     })),
                 ]}
             />
-            <QuantityStepper value={quantity} onChange={setQuantity} />
+            <QuantityStepper value={quantity} onChange={setQuantity} disabled={!sellerAndPriceSelected} />
+            {!sellerAndPriceSelected && (
+                <RNText style={styles.quantityStepperHint}>{UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST}</RNText>
+            )}
             <View style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}>
                 <View style={styles.purchaseSummaryRow}>
                     <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
@@ -105,7 +113,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                 </View>
             </View>
             <View style={styles.formActions}>
-                <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !selectedPrice} loading={recording} onPress={handleRecord} />
+                <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !sellerAndPriceSelected} loading={recording} onPress={handleRecord} />
                 <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)} />
             </View>
         </View>

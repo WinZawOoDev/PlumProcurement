@@ -34,12 +34,14 @@ const flush = async () => {
 }
 
 // PriceProvider does not auto-load; the real screen calls refresh() on mount
+const sellers = [{ id: 1, name: 'Test Seller' }]
+
 const Harness = () => {
     const { refresh } = usePrices()
     React.useEffect(() => {
         refresh()
     }, [refresh])
-    return <PurchaseForm sellers={[]} onRecorded={onRecorded} />
+    return <PurchaseForm sellers={sellers} onRecorded={onRecorded} />
 }
 
 const renderForm = async () => {
@@ -59,12 +61,19 @@ const renderForm = async () => {
 
 const onRecorded = jest.fn()
 
-const findPricePicker = (root: ReactTestRenderer.ReactTestRenderer) => {
-    // The price item picker is the SelectPicker labelled "Price Item"
-    const priceSelect = root.root
+const findPickerByLabel = (root: ReactTestRenderer.ReactTestRenderer, label: string) => {
+    const select = root.root
         .findAllByType(SelectPicker)
-        .find((p) => p.props.label === UI_TEXT.SELECT_PRICE_ITEM)!
-    return priceSelect.findAllByType(Picker)[0]
+        .find((p) => p.props.label === label)!
+    return select.findAllByType(Picker)[0]
+}
+
+const findPricePicker = (root: ReactTestRenderer.ReactTestRenderer) => {
+    return findPickerByLabel(root, UI_TEXT.SELECT_PRICE_ITEM)
+}
+
+const findSellerPicker = (root: ReactTestRenderer.ReactTestRenderer) => {
+    return findPickerByLabel(root, UI_TEXT.SELECT_SELLER)
 }
 
 const findRecordButton = (root: ReactTestRenderer.ReactTestRenderer) => {
@@ -85,30 +94,58 @@ beforeEach(() => {
 })
 
 describe('PurchaseForm', () => {
+    const selectSellerAndPrice = async (root: ReactTestRenderer.ReactTestRenderer) => {
+        await act(async () => {
+            findSellerPicker(root).props.onValueChange('1')
+            findPricePicker(root).props.onValueChange('1')
+            await flush()
+        })
+    }
+
     test('shows em dash total when no price is selected', async () => {
         const root = await renderForm()
         expect(textContent(root)).toContain('—')
     })
 
-    test('record button is disabled until a price is selected', async () => {
+    test('stepper is disabled until seller and price are selected', async () => {
         const root = await renderForm()
+        const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
+        expect(plus.props.disabled).toBe(true)
+
+        // + must not count without selections
+        await act(async () => {
+            plus.props.onPress()
+            await flush()
+        })
+        expect(textContent(root)).not.toContain('200.00$')
+
+        await selectSellerAndPrice(root)
+
+        const enabledPlus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
+        expect(enabledPlus.props.disabled).toBe(false)
+    })
+
+    test('record button is disabled until seller and price are selected', async () => {
+        const root = await renderForm()
+        expect(findRecordButton(root).props.disabled).toBe(true)
+
+        await act(async () => {
+            findSellerPicker(root).props.onValueChange('1')
+            await flush()
+        })
         expect(findRecordButton(root).props.disabled).toBe(true)
 
         await act(async () => {
             findPricePicker(root).props.onValueChange('1')
             await flush()
         })
-
         expect(findRecordButton(root).props.disabled).toBe(false)
     })
 
     test('computes total from unit price and quantity', async () => {
         const root = await renderForm()
 
-        await act(async () => {
-            findPricePicker(root).props.onValueChange('1')
-            await flush()
-        })
+        await selectSellerAndPrice(root)
         const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
         await act(async () => {
             plus.props.onPress()
@@ -121,10 +158,7 @@ describe('PurchaseForm', () => {
     test('records purchase with correct payload and refreshes recents', async () => {
         const root = await renderForm()
 
-        await act(async () => {
-            findPricePicker(root).props.onValueChange('1')
-            await flush()
-        })
+        await selectSellerAndPrice(root)
         await act(async () => {
             findRecordButton(root).props.onPress()
             await flush()
@@ -132,7 +166,7 @@ describe('PurchaseForm', () => {
 
         expect(purchaseService.recordPurchase).toHaveBeenCalledWith({
             price_id: 1,
-            seller_id: null,
+            seller_id: 1,
             category: 'grains',
             unit: 'PER KG',
             unit_price: 100,

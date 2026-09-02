@@ -15,15 +15,18 @@ const lightHaptic = () => {
 interface QuantityStepperProps {
     value: string
     onChange: (next: string) => void
+    disabled?: boolean
 }
 
-export function QuantityStepper({ value, onChange }: QuantityStepperProps) {
+export function QuantityStepper({ value, onChange, disabled = false }: QuantityStepperProps) {
     const styles = useStyles()
     const handleIncrease = () => {
+        if (disabled) return
         lightHaptic()
         onChange(String(Math.max(1, (parseInt(value, 10) || 1) + 1)))
     }
     const handleDecrease = () => {
+        if (disabled) return
         lightHaptic()
         onChange(String(Math.max(1, (parseInt(value, 10) || 1) - 1)))
     }
@@ -31,25 +34,29 @@ export function QuantityStepper({ value, onChange }: QuantityStepperProps) {
         <View style={styles.quantityRow}>
             <Text style={styles.categoryLabel}>{UI_TEXT.QUANTITY}</Text>
             <TouchableOpacity
-                style={styles.quantityStepperButton}
+                style={[styles.quantityStepperButton, disabled && styles.quantityStepperButtonDisabled]}
                 onPress={handleIncrease}
+                disabled={disabled}
                 activeOpacity={0.6}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.INCREASE_QUANTITY}
+                accessibilityState={{ disabled }}
             >
-                <RNText style={styles.quantityStepperButtonText}>+</RNText>
+                <RNText style={[styles.quantityStepperButtonText, disabled && styles.quantityStepperTextDisabled]}>+</RNText>
             </TouchableOpacity>
-            <RNText style={styles.quantityValue}>{value}</RNText>
+            <RNText style={[styles.quantityValue, disabled && styles.quantityStepperTextDisabled]}>{value}</RNText>
             <TouchableOpacity
-                style={styles.quantityStepperButton}
+                style={[styles.quantityStepperButton, disabled && styles.quantityStepperButtonDisabled]}
                 onPress={handleDecrease}
+                disabled={disabled}
                 activeOpacity={0.6}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.DECREASE_QUANTITY}
+                accessibilityState={{ disabled }}
             >
-                <RNText style={styles.quantityStepperButtonText}>−</RNText>
+                <RNText style={[styles.quantityStepperButtonText, disabled && styles.quantityStepperTextDisabled]}>−</RNText>
             </TouchableOpacity>
         </View>
     )
