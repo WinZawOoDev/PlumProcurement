@@ -81,7 +81,13 @@ export default function PurchaseDetails() {
         loadPurchases(true, '')
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Reload on search changes, but skip the mount-time run (initial load above)
+    const searchEffectReady = useRef(false)
     useEffect(() => {
+        if (!searchEffectReady.current) {
+            searchEffectReady.current = true
+            return
+        }
         if (searchVisible) {
             loadPurchases(true, searchQuery)
         } else if (searchQuery === '') {
