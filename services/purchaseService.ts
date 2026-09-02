@@ -1,19 +1,20 @@
 import {
-    countPurchases,
     createPurchase,
     deletePurchase,
     fetchPurchases,
     fetchPurchasesBySeller,
-    fetchPurchasesPaginated,
+    fetchPurchasesPage,
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
+    type PurchasesPage,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
 import { IPurchaseWithSeller, ISellerStat } from '../types/database'
 
 export type NewPurchase = Omit<IPurchaseWithSeller, 'id' | 'seller_name'>
 export type PurchaseUpdates = { quantity?: number; seller_id?: number | null }
+export type { PurchasesPage }
 
 /**
  * Abstraction layer over the purchases database.
@@ -26,15 +27,14 @@ export class PurchaseService {
         return fetchPurchases()
     }
 
-    async getPurchasesPaginated(page: number, pageSize: number, query?: string): Promise<{ items: IPurchaseWithSeller[]; total: number; hasMore: boolean }> {
+    /**
+     * Keyset pagination: pass the previous page's `nextCursor` as `cursor`
+     * (undefined for the first page). Query filters by category/seller name.
+     */
+    async getPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
         await initializeSellers()
         await initializePurchases()
-        const offset = page * pageSize
-        const [items, total] = await Promise.all([
-            fetchPurchasesPaginated({ limit: pageSize, offset, query }),
-            countPurchases(query),
-        ])
-        return { items, total, hasMore: offset + items.length < total }
+        return fetchPurchasesPage(options)
     }
 
     async recordPurchase(data: NewPurchase): Promise<number> {

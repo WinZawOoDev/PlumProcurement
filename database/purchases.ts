@@ -12,39 +12,58 @@ export async function initializePurchases(): Promise<void> {
 }
 
 export async function fetchPurchases(): Promise<IPurchaseWithSeller[]> {
-    return fetchPurchasesPaginated({ limit: 100, offset: 0 })
+    const { items } = await fetchPurchasesPage({ limit: 100 })
+    return items
 }
 
-export async function fetchPurchasesPaginated(options: { limit: number; offset: number; query?: string }): Promise<IPurchaseWithSeller[]> {
+export interface PurchasesPage {
+    items: IPurchaseWithSeller[]
+    /** id of the last item of this page; null when there are no more rows */
+    nextCursor: number | null
+}
+
+/**
+ * Keyset pagination over purchases (id DESC).
+ * The cursor is the id of the last row of the previous page, so inserts
+ * between page loads can no longer skip or duplicate rows the way
+ * LIMIT/OFFSET windows do.
+ */
+export async function fetchPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
     let db;
     try {
         db = initDb()
-        const { limit, offset, query } = options
+        const { limit, cursor, query } = options
         const q = query?.trim()
+
+        const where: string[] = []
+        const params: Array<string | number> = []
+        if (cursor !== undefined) {
+            where.push('p.id < ?')
+            params.push(cursor)
+        }
         if (q) {
             const like = `%${q}%`
-            const { results } = await db.executeAsync(
-                `
-                SELECT p.*, s.name AS seller_name
-                FROM purchases p
-                LEFT JOIN sellers s ON s.id = p.seller_id
-                WHERE p.category LIKE ? OR s.name LIKE ?
-                ORDER BY p.id DESC LIMIT ? OFFSET ?
-            `,
-                [like, like, limit, offset]
-            );
-            return results as unknown as IPurchaseWithSeller[]
+            where.push('(p.category LIKE ? OR s.name LIKE ?)')
+            params.push(like, like)
         }
+        const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
+
+        // Fetch one extra row to detect whether another page exists
         const { results } = await db.executeAsync(
             `
             SELECT p.*, s.name AS seller_name
             FROM purchases p
             LEFT JOIN sellers s ON s.id = p.seller_id
-            ORDER BY p.id DESC LIMIT ? OFFSET ?
+            ${whereSql}
+            ORDER BY p.id DESC LIMIT ?
         `,
-            [limit, offset]
+            [...params, limit + 1]
         );
-        return results as unknown as IPurchaseWithSeller[]
+        const rows = results as unknown as IPurchaseWithSeller[]
+        const hasMore = rows.length > limit
+        const items = hasMore ? rows.slice(0, limit) : rows
+        const last = items[items.length - 1]
+        return { items, nextCursor: hasMore && last ? last.id : null }
     } catch (error) {
         throw new DatabaseError('Failed to fetch purchases', error)
     }

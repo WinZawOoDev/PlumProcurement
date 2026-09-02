@@ -1,5 +1,5 @@
 import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '@rneui/themed'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
@@ -24,11 +24,12 @@ export default function PurchaseDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([])
-    const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
     const { loading, withLoading } = useLoading(false)
     const [editingPurchase, setEditingPurchase] = useState<IPurchaseWithSeller | null>(null)
+    // Keyset cursor (id of the last loaded row); undefined = first page.
+    const cursorRef = useRef<number | undefined>(undefined)
     // Search here is server-side (paginated queries); only the shared
     // visibility/query/toggle state comes from the hook.
     const {
@@ -45,7 +46,7 @@ export default function PurchaseDetails() {
     const loadPurchases = useCallback(
         async (reset = true, queryOverride?: string) => {
             const query = queryOverride !== undefined ? queryOverride : searchQuery
-            const targetPage = reset ? 0 : page
+            const cursor = reset ? undefined : cursorRef.current
             const loader = reset ? withLoading : async (fn: () => Promise<void>) => {
                 setLoadingMore(true)
                 try {
@@ -56,25 +57,24 @@ export default function PurchaseDetails() {
             }
             await loader(async () => {
                 try {
-                    const { items, hasMore: more } = await purchaseService.getPurchasesPaginated(
-                        targetPage,
-                        PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
-                        query.trim() || undefined
-                    )
+                    const { items, nextCursor } = await purchaseService.getPurchasesPage({
+                        limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+                        cursor,
+                        query: query.trim() || undefined,
+                    })
                     if (reset) {
                         setPurchases(items)
-                        setPage(1)
                     } else {
                         setPurchases((prev) => [...prev, ...items])
-                        setPage((p) => p + 1)
                     }
-                    setHasMore(more)
+                    cursorRef.current = nextCursor ?? undefined
+                    setHasMore(nextCursor !== null)
                 } catch (error) {
                     showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
                 }
             })
         },
-        [withLoading, page, searchQuery]
+        [withLoading, searchQuery]
     )
 
     useEffect(() => {
