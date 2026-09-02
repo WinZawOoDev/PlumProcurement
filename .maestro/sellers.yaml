@@ -1,14 +1,19 @@
 appId: com.plumprocurement
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- tapOn: "Skip"
 - tapOn: "Sellers"
-- assertVisible: "Sellers"
-- tapOn: "Add Seller"
 - assertVisible: "Add Seller"
-- tapOn: "Seller Name"
+- tapOn: "Add Seller"
+- tapOn: "e.g. U Ba"
 - inputText: "E2E Seller"
+- tapOn: "e.g. 09-123-456-789"
+- inputText: "09-123-456-789"
+- tapOn: "e.g. No. 123, Main Road"
+- inputText: "123 Main Road"
 - tapOn: "Save"
 - assertVisible: "Seller saved successfully!"
 - assertVisible: "E2E Seller"
-- tapOn:
-    point: "90%,50%"
+- assertVisible: "09-123-456-789"
+- assertVisible: "123 Main Road"

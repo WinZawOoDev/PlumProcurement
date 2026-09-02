@@ -1,25 +1,34 @@
 appId: com.plumprocurement
 ---
-- launchApp
-# Pricing
+- launchApp:
+    clearState: true
+- tapOn: "Skip"
+# Pricing: create a price
 - assertVisible: "Price Management"
 - tapOn: "Add New Price"
-- tapOn: "CUP"
+- assertVisible: "Price Entry"
+- tapOn: "e.g. 12.50"
 - inputText: "9.99"
 - tapOn: "Save Price"
-# Sellers
+- assertVisible: "Price saved successfully!"
+# Sellers: create a seller
 - tapOn: "Sellers"
 - tapOn: "Add Seller"
+- tapOn: "e.g. U Ba"
 - inputText: "Flow Seller"
 - tapOn: "Save"
-# Purchasing
+- assertVisible: "Seller saved successfully!"
+# Purchasing: stepper locked until seller + price are chosen
 - tapOn: "Purchasing"
 - assertVisible: "Record Purchase"
+- assertVisible: "Select a seller and a price item to set the quantity"
+- tapOn: "Select seller"
 - tapOn: "Flow Seller"
-- tapOn: "CUP"
-- inputText: "2"
+- tapOn: "Price Item"
+- tapOn: "fruit - 9.99"
 - tapOn: "Record Purchase"
 - assertVisible: "Purchase recorded successfully!"
+# History + export
 - tapOn: "View History"
 - assertVisible: "Purchase History"
 - tapOn: "Export CSV"
