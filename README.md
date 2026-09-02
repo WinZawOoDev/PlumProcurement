@@ -4,11 +4,12 @@ A React Native app for plum procurement: manage market prices, record purchases 
 
 ## Features
 
-- **Prices** — create, edit (bottom sheet), delete and browse price entries per category/unit; search by category or unit; sort by newest or price; CSV export
-- **Purchasing** — record purchases against a selected price item (available items only) with quantity stepper and live total preview; full purchase history with count and grand total; edit (quantity/seller) and delete per entry; CSV export
-- **Sellers** — add, edit and delete sellers with name and optional phone number; per-seller purchase stats aggregated in SQL; CSV export
+- **Prices** — create, edit (bottom sheet), delete and browse price entries per category (fruit/seed) and unit (cup/gallon/bushels); search by category or unit; sort by newest or price
+- **Purchasing** — record purchases against a selected price item (available items only); seller and price must be chosen before the quantity stepper unlocks; quantity stepper with live total preview; full purchase history with count and grand total; quantity-only edit per entry; CSV export
+- **Sellers** — add, edit and delete sellers with name, optional phone number and optional address; per-seller purchase stats aggregated in SQL
 - **Settings** — theme preference (system/light/dark), persisted on-device
-- Referential safety: prices referenced by recorded purchases cannot be deleted (guarded inside a transaction)
+- **Notifications** — native toast on Android, in-app toast (react-native-toast-message) on iOS
+- Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions)
 
 ## Tech Stack
 
@@ -16,7 +17,8 @@ A React Native app for plum procurement: manage market prices, record purchases 
 - [@react-navigation](https://reactnavigation.org/) v7 (bottom tabs + native stacks)
 - [react-native-nitro-sqlite](https://github.com/NitroModules/nitro-sqlite) for local storage (singleton cached handle)
 - [react-hook-form](https://react-hook-form.com/) for form state and validation
-- [RNEUI](https://rneui.dev/) themed components + Ionicons
+- [RNEUI](https://rneui.dev/) themed components + Ionicons/FontAwesome icons
+- [react-native-toast-message](https://github.com/calintamas/react-native-toast-message) for iOS notifications (Android uses native toasts)
 - Jest + react-test-renderer + Detox/Maestro for unit & E2E tests
 
 ## Project Structure
@@ -29,7 +31,7 @@ A React Native app for plum procurement: manage market prices, record purchases 
 │   ├── migrations.ts           # Versioned migrations (PRAGMA user_version) + indexes
 │   ├── prices.ts               # Transaction-guarded delete (referential check)
 │   ├── purchases.ts            # Paginated fetch, edit/delete, SQL seller stats
-│   ├── sellers.ts
+│   ├── sellers.ts              # Transaction-guarded delete (referential check)
 │   └── settings.ts
 ├── types/database.ts           # IPrice/IPurchase/ISeller/ISellerStat shared interfaces
 ├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN, THEME_MODES)
@@ -42,24 +44,31 @@ A React Native app for plum procurement: manage market prices, record purchases 
 │   ├── PriceContext.tsx        # Shared price list state (refresh/add/edit/remove)
 │   └── ThemeModeContext.tsx    # Theme preference (system/light/dark)
 ├── hooks/
-│   └── useAsync.ts             # useAsync/useLoading (centralized loading/error)
+│   ├── useAsync.ts             # useAsync/useLoading (centralized loading/error)
+│   ├── useConfirmDelete.ts     # Shared confirm-dialog → delete → toast → refresh flow
+│   └── useSearchFilter.ts      # Shared search visibility/query/filtered-list state
 ├── components/
 │   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton (a11y)
 │   ├── forms/FormFields.tsx    # FormSelectField, FormInputField, FormCheckboxField,
 │   │                           #   FormButtonGroupField (react-hook-form integrated)
 │   ├── SearchBar.tsx           # Debounced search (300ms)
+│   ├── SearchIconButton.tsx    # Shared search-toggle icon button
+│   ├── DetailSheet.tsx         # Shared BottomSheet scaffolding
 │   ├── SelectPicker.tsx        # Reusable Picker wrapper
-│   ├── QuantityStepper.tsx     # + / − stepper with a11y
+│   ├── QuantityStepper.tsx     # + / − stepper with a11y (supports disabled)
 │   ├── PriceTrend.tsx          # Sparkline for last 12 prices
+│   ├── PriceDetailSheet.tsx    # Price detail (uses DetailSheet)
+│   ├── SellerDetailSheet.tsx   # Seller detail + recent purchases (uses DetailSheet)
 │   └── ErrorBoundary.tsx       # Top-level crash fallback
 ├── screens/
-│   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards, CSV export
-│   ├── purchasing/             # Record purchase, paginated history (LIKE search), edit/delete sheet, CSV export
-│   ├── seller/                 # Seller list + SQL-aggregated stats, form sheet, CSV export
+│   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards
+│   ├── purchasing/             # Record purchase, paginated history (LIKE search), quantity edit sheet, CSV export
+│   ├── seller/                 # Seller list + SQL-aggregated stats, form sheet (name/phone/address)
 │   └── settings/               # Theme preference
 ├── utils/
 │   ├── index.ts                # Formatting/validation + CSV builders (BOM, filename)
-│   ├── notifications.ts        # showSuccess/showError centralized
+│   ├── notifications.ts        # Cross-platform showSuccess/showError
+│   ├── haptics.ts              # Shared light haptic feedback
 │   └── csvExport.ts            # shareOrSaveCsv (Share sheet)
 ├── styles.ts                   # Centralized makeStyles (incl. priceTrend*)
 ├── theme.ts                    # RNEUI theme + navigation theme
@@ -108,17 +117,17 @@ npm run ios
 | `npm run android` | Run on Android |
 | `npm run ios` | Run on iOS |
 | `npm run lint` | ESLint (e2e ignored) |
-| `npm test` | Jest unit tests (80 tests, 15 suites) |
+| `npm test` | Jest unit tests (85 tests, 16 suites) |
 | `npm run e2e:ios` | Detox iOS (ios.sim.debug) |
 | `npm run e2e:android` | Detox Android (android.emu.debug) |
 | `npm run maestro:test` | Maestro flows (`.maestro/`) |
 
 ## Testing
 
-Unit tests cover utilities (incl. all CSV builders/BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`, purchase edit/delete, seller stats), the schema/migration runner (bootstrap memoization, legacy `seller_id` migration, retry on failure), `useAsync`/`useLoading`, notification helpers, price context flows, the transaction-guarded price delete, error boundary, and referential guard. SQLite is mocked via `__mocks__/`. E2E via Detox + Maestro.
+Unit tests cover utilities (incl. all CSV builders/BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`, purchase edit/delete, seller stats), the schema/migration runner (bootstrap memoization, legacy `seller_id` migration, `sellers.address` migration, retry on failure), `useAsync`/`useLoading`, notification helpers, price context flows, the purchase record form (seller+price gating, stepper validation), the transaction-guarded price and seller delete guards, and error boundary. SQLite is mocked via `__mocks__/`. E2E via Detox + Maestro.
 
 ```sh
-npm test              # 80 tests, 15 suites
+npm test              # 85 tests, 16 suites
 npm run e2e:ios        # Detox
 maestro test .maestro/ # Maestro
 ```
@@ -126,6 +135,29 @@ maestro test .maestro/ # Maestro
 ## Changelog
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### 2026-09-02 (II)
+
+**Features**
+- Categories reduced to fruit/seed; units reduced to cup/gallon/bushels
+- Record-purchase form: seller and price item must be selected before the quantity stepper unlocks; seller required to record
+- Sellers: optional address field (DB migration v2 + form + detail sheet)
+- Purchase history: quantity-only edit (seller no longer editable); delete removed; FontAwesome edit icon shared with other screens
+- iOS notifications via react-native-toast-message (Android keeps native toasts)
+- Export CSV button: reduced vertical padding, vertically aligned with the search button
+
+**Fixes**
+- `PriceContext.refresh`: monotonic request token prevents stale overwrites; errors surfaced as toasts instead of unhandled rejections
+- `EditPurchaseSheet`: quantity validated with the shared `QUANTITY_PATTERN` (no more `1.5` → 1)
+- `deleteSeller` referential guard wrapped in a `BEGIN IMMEDIATE` transaction (matches `deletePrice`)
+- Removed misleading `getItemLayout` (hardcoded 72px) from price/seller lists
+- Settings tab: renamed nested screen to avoid duplicate-route-name navigation warning
+- Seller detail sheet: replaced nested `FlatList` with mapped list (VirtualizedList-in-ScrollView warning)
+
+**Refactor**
+- Extracted `useConfirmDelete`, `useSearchFilter`, `SearchIconButton`, `DetailSheet`, shared `lightHaptic` (`utils/haptics.ts`)
+- Removed unused root `index.ts` barrel, commented-out export/download code, and ~14 dead styles (incl. invalid `fontWeight` values)
+- SecondaryButton accepts an optional `buttonStyle` override
 
 ### 2026-09-02
 
@@ -171,7 +203,7 @@ maestro test .maestro/ # Maestro
 - Accessibility: `accessibilityRole/label` on all buttons and `SearchBar`
 - `PriceTrend` sparkline (last 12 prices, avg/min/max, opacity for availability) on `PurchasePrice`
 - `SellerRow` shows `purchaseCount · total` aggregation via `Promise.all(sellers+purchases)`
-- CI `.github/workflows/ci.yml` (Node 22, `lint` → `tsc --noEmit` → `npm test --ci`) — green
+- CI `.github/workflows/ci.yml` (Node 22, `lint` → `tsc --noEmit` → `npm test --ci`) — manual trigger only (`workflow_dispatch`)
 - E2E: Maestro `.maestro/{pricing,sellers,purchasing,full-flow}.yaml` + Detox `.detoxrc.js` + `e2e/app.test.js`
 
 ### Initial
