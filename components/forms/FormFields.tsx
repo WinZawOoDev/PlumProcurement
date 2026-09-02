@@ -77,7 +77,7 @@ export function FormInputField<T extends FieldValues>({
     label,
     placeholder,
     keyboardType = 'default',
-    required: _required = false,
+    required = false,
     rules,
 }: FormInputFieldProps<T>) {
     const styles = useStyles()
@@ -89,7 +89,7 @@ export function FormInputField<T extends FieldValues>({
             rules={rules}
             render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
                 <Input
-                    label={label}
+                    label={required ? `${label} *` : label}
                     labelStyle={styles.formInputLabel}
                     placeholder={placeholder}
                     onBlur={onBlur}
