@@ -13,18 +13,12 @@ interface PriceCardProps extends Omit<IPrice, 'id'> {
 }
 
 const CATEGORY_ACCENT: Record<string, string> = {
-    grains: '#E9C46A',
-    fruits: '#E76F51',
-    vegetables: '#2A9D8F',
-    dairy: '#F4A261',
-    meat: '#9C6644',
+    fruit: '#E76F51',
+    seed: '#E9C46A',
 }
 const CATEGORY_ICON: Record<string, string> = {
-    grains: 'leaf-outline',
-    fruits: 'nutrition-outline',
-    vegetables: 'leaf',
-    dairy: 'water-outline',
-    meat: 'restaurant-outline',
+    fruit: 'nutrition-outline',
+    seed: 'leaf-outline',
 }
 
 function PriceCardInner({ price, unit, category, is_available, created_at, onEdit, onDelete }: PriceCardProps) {

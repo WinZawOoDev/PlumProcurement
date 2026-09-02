@@ -4,7 +4,7 @@ appId: com.plumprocurement
 # Pricing
 - assertVisible: "Price Management"
 - tapOn: "Add New Price"
-- tapOn: "PER KG"
+- tapOn: "CUP"
 - inputText: "9.99"
 - tapOn: "Save Price"
 # Sellers
@@ -16,7 +16,7 @@ appId: com.plumprocurement
 - tapOn: "Purchasing"
 - assertVisible: "Record Purchase"
 - tapOn: "Flow Seller"
-- tapOn: "PER KG"
+- tapOn: "CUP"
 - inputText: "2"
 - tapOn: "Record Purchase"
 - assertVisible: "Purchase recorded successfully!"
