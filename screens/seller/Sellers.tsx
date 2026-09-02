@@ -9,7 +9,7 @@ import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../con
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { DatabaseError } from '../../database/connection'
-import { ISeller } from '../../types/database'
+import { ISeller, IPurchaseWithSeller } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -18,14 +18,16 @@ import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { SellerDetailSheet } from '../../components/SellerDetailSheet'
+import { buildSellersCsvWithBom, getCsvFilename } from '../../utils'
+import { shareOrSaveCsv } from '../../utils/csvExport'
 
 export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
-    const [allPurchases, setAllPurchases] = useState<any[]>([])
     const [detailSeller, setDetailSeller] = useState<ISeller | null>(null)
+    const [detailPurchases, setDetailPurchases] = useState<IPurchaseWithSeller[]>([])
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
@@ -35,22 +37,16 @@ export default function Sellers() {
     const loadSellers = useCallback(async () => {
         await withLoading(async () => {
             try {
-                const [sellerList, purchases] = await Promise.all([
+                const [sellerList, stats] = await Promise.all([
                     sellerService.getSellers(),
-                    purchaseService.getPurchases().catch(() => []),
+                    purchaseService.getSellerStats().catch(() => []),
                 ])
                 setSellers(sellerList)
-                setAllPurchases(purchases)
-                const stats: Record<number, { count: number; total: number }> = {}
-                for (const p of purchases) {
-                    if (p.seller_id) {
-                        const s = stats[p.seller_id] ?? { count: 0, total: 0 }
-                        s.count += 1
-                        s.total += p.total
-                        stats[p.seller_id] = s
-                    }
+                const statsMap: Record<number, { count: number; total: number }> = {}
+                for (const s of stats) {
+                    statsMap[s.seller_id] = { count: s.purchase_count, total: s.total_spent }
                 }
-                setSellerStats(stats)
+                setSellerStats(statsMap)
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
@@ -60,6 +56,16 @@ export default function Sellers() {
     useEffect(() => {
         loadSellers()
     }, [loadSellers])
+
+    const handleOpenDetail = useCallback(async (seller: ISeller) => {
+        setDetailSeller(seller)
+        setDetailPurchases([])
+        try {
+            setDetailPurchases(await purchaseService.getPurchasesBySeller(seller.id))
+        } catch {
+            // detail sheet shows an empty list on failure
+        }
+    }, [])
 
     const visibleSellers = useMemo(() => {
         const query = searchQuery.trim().toLowerCase()
@@ -104,6 +110,21 @@ export default function Sellers() {
         }
     }
 
+    const handleExport = async () => {
+        if (sellers.length === 0) {
+            showError(UI_TEXT.EMPTY_SELLER_LIST)
+            return
+        }
+        const filename = getCsvFilename('sellers')
+        const result = await shareOrSaveCsv(
+            buildSellersCsvWithBom(sellers),
+            filename,
+            UI_TEXT.EXPORT_CSV
+        )
+        if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
+        else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${sellers.length} rows`)
+    }
+
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={styles.priceListContainer}>
@@ -116,6 +137,18 @@ export default function Sellers() {
                             setEditing(null)
                             setSheetVisible(true)
                         }}
+                    />
+                    <IconButton
+                        icon={
+                            <Ionicons
+                                name="download-outline"
+                                size={DIMENSIONS.ICON_SIZE_MEDIUM}
+                                color={theme.colors.grey4}
+                            />
+                        }
+                        variant="ghost"
+                        onPress={handleExport}
+                        accessibilityLabel={UI_TEXT.EXPORT_CSV}
                     />
                     <IconButton
                         icon={
@@ -151,7 +184,7 @@ export default function Sellers() {
                             seller={item}
                             purchaseCount={sellerStats[item.id]?.count}
                             purchaseTotal={sellerStats[item.id]?.total}
-                            onPress={() => setDetailSeller(item)}
+                            onPress={() => handleOpenDetail(item)}
                             onEdit={() => {
                                 setEditing(item)
                                 setSheetVisible(true)
@@ -182,7 +215,7 @@ export default function Sellers() {
                 onClose={() => setSheetVisible(false)}
                 onSaved={loadSellers}
             />
-            <SellerDetailSheet visible={!!detailSeller} seller={detailSeller} purchases={allPurchases as any} onClose={() => setDetailSeller(null)} />
+            <SellerDetailSheet visible={!!detailSeller} seller={detailSeller} purchases={detailPurchases} onClose={() => setDetailSeller(null)} />
         </SafeAreaView>
     )
 }

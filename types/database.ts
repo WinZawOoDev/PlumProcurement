@@ -29,3 +29,9 @@ export interface ISeller {
     name: string
     phone: string | null
 }
+
+export interface ISellerStat {
+    seller_id: number
+    purchase_count: number
+    total_spent: number
+}

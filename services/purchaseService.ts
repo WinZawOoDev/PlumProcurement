@@ -1,14 +1,19 @@
 import {
     countPurchases,
     createPurchase,
+    deletePurchase,
     fetchPurchases,
+    fetchPurchasesBySeller,
     fetchPurchasesPaginated,
+    fetchSellerStats,
     initializePurchases,
+    updatePurchase,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
-import { IPurchaseWithSeller } from '../types/database'
+import { IPurchaseWithSeller, ISellerStat } from '../types/database'
 
 export type NewPurchase = Omit<IPurchaseWithSeller, 'id' | 'seller_name'>
+export type PurchaseUpdates = { quantity?: number; seller_id?: number | null }
 
 /**
  * Abstraction layer over the purchases database.
@@ -34,6 +39,24 @@ export class PurchaseService {
 
     async recordPurchase(data: NewPurchase): Promise<number> {
         return createPurchase(data)
+    }
+
+    async editPurchase(id: number, updates: PurchaseUpdates): Promise<void> {
+        await updatePurchase(id, updates)
+    }
+
+    async removePurchase(id: number): Promise<void> {
+        await deletePurchase(id)
+    }
+
+    async getSellerStats(): Promise<ISellerStat[]> {
+        await initializePurchases()
+        return fetchSellerStats()
+    }
+
+    async getPurchasesBySeller(sellerId: number): Promise<IPurchaseWithSeller[]> {
+        await initializePurchases()
+        return fetchPurchasesBySeller(sellerId)
     }
 }
 

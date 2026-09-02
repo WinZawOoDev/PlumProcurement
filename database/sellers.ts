@@ -1,20 +1,11 @@
 import { MESSAGES } from '../constants'
 import type { ISeller } from '../types/database'
 import { DatabaseError, initDb } from './connection'
+import { initializeSchema } from './schema'
 
 export async function initializeSellers(): Promise<void> {
-    let db;
     try {
-        db = initDb()
-        await db.executeAsync(`
-            CREATE TABLE IF NOT EXISTS sellers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                phone TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        `)
+        await initializeSchema()
     } catch (error) {
         throw new DatabaseError('Failed to initialize sellers table', error)
     }

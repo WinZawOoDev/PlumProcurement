@@ -9,21 +9,27 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import { DefaultTheme, DarkTheme, createStaticNavigation, NavigationContainer, NavigationIndependentTree, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Ionicons } from "@react-native-vector-icons/ionicons/static";
 import SellerStack from './screens/seller/Stack';
 import PriceStack from './screens/pricing/Stack';
 import PurchaseStack from './screens/purchasing/Stack';
+import SettingsStack from './screens/settings/Stack';
 import { makeAppTheme } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
+import { ThemeModeContext } from './context/ThemeModeContext';
 import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
-import { ROUTES } from './constants';
+import { ROUTES, ThemeMode } from './constants';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
 import { settingsService } from './services/settingsService';
+
+function SettingsTabIcon({ color, size }: { color: string; size: number }) {
+  return <Ionicons name="settings-outline" color={color} size={size} />;
+}
 
 function PriceTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="pricetags-outline" color={color} size={size} />;
@@ -38,9 +44,8 @@ function SellerTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 
-function Navigation({ onReady }: { onReady?: () => void }) {
+function Navigation({ onReady, isDarkMode }: { onReady?: () => void; isDarkMode: boolean }) {
 
-  const isDarkMode = useColorScheme() === 'dark';
   const { theme: currentTheme } = useTheme();
 
   // Signal that the main tab UI has mounted (NavigationContainer's onReady
@@ -101,6 +106,13 @@ function Navigation({ onReady }: { onReady?: () => void }) {
           tabBarLabel: "Sellers"
         }
       },
+      [ROUTES.SETTINGS_TAB]: {
+        screen: SettingsStack,
+        options: {
+          tabBarIcon: SettingsTabIcon,
+          tabBarLabel: "Settings"
+        }
+      },
     }
   }), [currentTheme]);
 
@@ -132,11 +144,23 @@ function Navigation({ onReady }: { onReady?: () => void }) {
 
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const systemIsDarkMode = useColorScheme() === 'dark';
+  const [themeMode, setThemeModeState] = React.useState<ThemeMode>('system');
+  const isDarkMode = themeMode === 'system' ? systemIsDarkMode : themeMode === 'dark';
   const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
   const [onboarded, setOnboarded] = React.useState(false);
   const [checkingData, setCheckingData] = React.useState(true);
   const [mainReady, setMainReady] = React.useState(false);
+
+  const handleSetThemeMode = useCallback((mode: ThemeMode) => {
+    setThemeModeState(mode);
+    settingsService.setThemeMode(mode).catch(() => undefined);
+  }, []);
+
+  const themeModeContextValue = useMemo(
+    () => ({ mode: themeMode, setMode: handleSetThemeMode }),
+    [themeMode, handleSetThemeMode]
+  );
 
   React.useEffect(() => {
     let cancelled = false;
@@ -144,6 +168,9 @@ function App() {
       // Skip onboarding for returning users: persisted flag first,
       // then data heuristic for installs that predate the flag.
       try {
+        settingsService.getThemeMode().then((mode) => {
+          if (!cancelled) setThemeModeState(mode);
+        }).catch(() => undefined);
         if (await settingsService.isOnboarded()) {
           if (!cancelled) setOnboarded(true);
           return;
@@ -199,7 +226,9 @@ function App() {
       <ThemeProvider theme={appTheme}>
         <PriceProvider>
           <SafeAreaProvider>
-            <Navigation onReady={handleMainReady} />
+            <ThemeModeContext.Provider value={themeModeContextValue}>
+              <Navigation onReady={handleMainReady} isDarkMode={isDarkMode} />
+            </ThemeModeContext.Provider>
             {!mainReady && <StartupLoader overlay />}
           </SafeAreaProvider>
         </PriceProvider>

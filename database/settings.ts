@@ -1,15 +1,9 @@
 import { DatabaseError, initDb } from './connection'
+import { initializeSchema } from './schema'
 
 export async function initializeSettings(): Promise<void> {
-    let db;
     try {
-        db = initDb()
-        await db.executeAsync(`
-            CREATE TABLE IF NOT EXISTS app_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )
-        `)
+        await initializeSchema()
     } catch (error) {
         throw new DatabaseError('Failed to initialize settings table', error)
     }

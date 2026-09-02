@@ -1,33 +1,13 @@
 import { Share } from 'react-native'
 
-export async function shareOrSaveCsv(csv: string, filename: string, title: string): Promise<'shared' | 'saved' | 'failed'> {
-    // Try file-system save if react-native-fs is available (optional dep)
+/**
+ * Share CSV text via the native share sheet.
+ * Previously tried react-native-fs as an optional dep, but Metro resolves
+ * literal requires at bundle time, so the missing dep broke production builds.
+ */
+export async function shareOrSaveCsv(csv: string, filename: string, title: string): Promise<'shared' | 'failed'> {
     try {
-        const RNFS: any = (() => {
-            try {
-                // @ts-ignore optional dep
-                return require('react-native-fs')
-            } catch {
-                return null
-            }
-        })()
-        if (RNFS?.CachesDirectoryPath && RNFS?.writeFile) {
-            const path = `${RNFS.CachesDirectoryPath}/${filename}`
-            await RNFS.writeFile(path, csv, 'utf8')
-            // If we saved, still offer Share with file URL where supported
-            try {
-                await Share.share({ message: csv, title, url: `file://${path}` } as any)
-                return 'shared'
-            } catch {
-                return 'saved'
-            }
-        }
-    } catch {
-        // optional dep not installed — fall through to Share
-    }
-
-    try {
-        await Share.share({ message: csv, title })
+        await Share.share({ message: csv, title: `${title} — ${filename}` })
         return 'shared'
     } catch {
         return 'failed'

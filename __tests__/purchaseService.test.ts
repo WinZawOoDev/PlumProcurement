@@ -2,9 +2,13 @@ import { purchaseService } from '../services/purchaseService'
 import {
     countPurchases,
     createPurchase,
+    deletePurchase,
     fetchPurchases,
+    fetchPurchasesBySeller,
     fetchPurchasesPaginated,
+    fetchSellerStats,
     initializePurchases,
+    updatePurchase,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
 import { IPurchaseWithSeller } from '../types/database'
@@ -15,6 +19,10 @@ jest.mock('../database/purchases', () => ({
     fetchPurchasesPaginated: jest.fn(),
     countPurchases: jest.fn(),
     createPurchase: jest.fn(),
+    updatePurchase: jest.fn(),
+    deletePurchase: jest.fn(),
+    fetchSellerStats: jest.fn(),
+    fetchPurchasesBySeller: jest.fn(),
 }))
 
 jest.mock('../database/sellers', () => ({
@@ -73,6 +81,53 @@ describe('PurchaseService.getPurchasesPaginated', () => {
         ;(countPurchases as jest.Mock).mockResolvedValue(1)
         const result = await purchaseService.getPurchasesPaginated(0, 20)
         expect(result.hasMore).toBe(false)
+    })
+})
+
+describe('PurchaseService.editPurchase', () => {
+    test('delegates to updatePurchase', async () => {
+        ;(updatePurchase as jest.Mock).mockResolvedValue(undefined)
+
+        await expect(
+            purchaseService.editPurchase(3, { quantity: 4, seller_id: null })
+        ).resolves.toBeUndefined()
+
+        expect(updatePurchase).toHaveBeenCalledWith(3, { quantity: 4, seller_id: null })
+    })
+
+    test('propagates validation errors from updatePurchase', async () => {
+        ;(updatePurchase as jest.Mock).mockRejectedValue(new Error('bad quantity'))
+        await expect(purchaseService.editPurchase(3, { quantity: 0 })).rejects.toThrow('bad quantity')
+    })
+})
+
+describe('PurchaseService.removePurchase', () => {
+    test('delegates to deletePurchase', async () => {
+        ;(deletePurchase as jest.Mock).mockResolvedValue(undefined)
+        await expect(purchaseService.removePurchase(9)).resolves.toBeUndefined()
+        expect(deletePurchase).toHaveBeenCalledWith(9)
+    })
+})
+
+describe('PurchaseService.getSellerStats', () => {
+    test('initializes then returns aggregated stats', async () => {
+        const stats = [{ seller_id: 2, purchase_count: 5, total_spent: 1200 }]
+        ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(fetchSellerStats as jest.Mock).mockResolvedValue(stats)
+
+        await expect(purchaseService.getSellerStats()).resolves.toEqual(stats)
+        expect(initializePurchases).toHaveBeenCalledTimes(1)
+        expect(fetchSellerStats).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('PurchaseService.getPurchasesBySeller', () => {
+    test('initializes then fetches purchases filtered by seller', async () => {
+        ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(fetchPurchasesBySeller as jest.Mock).mockResolvedValue(mockPurchases)
+
+        await expect(purchaseService.getPurchasesBySeller(2)).resolves.toEqual(mockPurchases)
+        expect(fetchPurchasesBySeller).toHaveBeenCalledWith(2)
     })
 })
 

@@ -157,6 +157,59 @@ export function buildPurchasesCsvWithBom(purchases: Parameters<typeof buildPurch
     return '\uFEFF' + buildPurchasesCsv(purchases)
 }
 
+/**
+ * Build CSV text from price records
+ */
+export function buildPricesCsv(
+    prices: Array<{
+        id: number
+        category: string
+        unit: string
+        price: number
+        is_available: boolean | number | null
+        created_at?: string | null
+    }>
+): string {
+    const header = ['id', 'date', 'category', 'unit', 'price', 'available']
+    if (prices.length === 0) {
+        return header.join(',')
+    }
+    const rows = prices.map((p) =>
+        [p.id, formatDate(p.created_at), p.category, p.unit, p.price, p.is_available ? 1 : 0]
+            .map(csvEscape)
+            .join(',')
+    )
+    return [header.join(','), ...rows].join('\n')
+}
+
+export function buildPricesCsvWithBom(prices: Parameters<typeof buildPricesCsv>[0]): string {
+    return '\uFEFF' + buildPricesCsv(prices)
+}
+
+/**
+ * Build CSV text from seller records
+ */
+export function buildSellersCsv(
+    sellers: Array<{
+        id: number
+        name: string
+        phone: string | null
+    }>
+): string {
+    const header = ['id', 'name', 'phone']
+    if (sellers.length === 0) {
+        return header.join(',')
+    }
+    const rows = sellers.map((s) =>
+        [s.id, s.name, s.phone ?? ''].map(csvEscape).join(',')
+    )
+    return [header.join(','), ...rows].join('\n')
+}
+
+export function buildSellersCsvWithBom(sellers: Parameters<typeof buildSellersCsv>[0]): string {
+    return '\uFEFF' + buildSellersCsv(sellers)
+}
+
 export function getCsvFilename(prefix = 'purchases'): string {
     const date = new Date().toISOString().slice(0, 10)
     return `${prefix}_${date}.csv`

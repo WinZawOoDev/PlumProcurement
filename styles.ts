@@ -255,6 +255,16 @@ export const useStyles = makeStyles((theme) => ({
         padding: 24,
         gap: 24,
     },
+    onboardingSlides: {
+        width: '100%',
+    },
+    onboardingSlide: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        minHeight: 260,
+        paddingHorizontal: 8,
+    },
     startupLoaderContainer: {
         flex: 1,
         backgroundColor: theme.colors.background,
@@ -768,6 +778,15 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 15,
         color: theme.colors.black,
     },
+    purchaseItemActions: {
+        alignItems: 'flex-end',
+        gap: 2,
+    },
+    purchaseItemButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 0,
+    },
 
 
     // ===== PRICE TREND =====
@@ -865,6 +884,33 @@ export const useStyles = makeStyles((theme) => ({
         flexDirection: 'row',
         gap: 8,
         marginTop: 4,
+    },
+
+    // ===== SETTINGS =====
+    settingsCard: {
+        backgroundColor: theme.colors.surface ?? theme.colors.white,
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+    },
+    settingsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    settingsLabel: {
+        fontWeight: '600',
+        fontSize: 15,
+        color: theme.colors.black,
+    },
+    settingsPickerWrapper: {
+        width: 150,
+    },
+    settingsFooterNote: {
+        fontSize: 12,
+        color: theme.colors.grey4,
+        textAlign: 'center',
+        marginTop: 8,
     },
 
 }));

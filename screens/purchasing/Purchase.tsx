@@ -1,8 +1,8 @@
 import { FlatList, Text as RNText, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { Text } from '@rneui/base'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
@@ -42,7 +42,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
 
     const handleRecord = async () => {
         if (!selectedPrice) {
-            showSuccess(UI_TEXT.SELECT_PRICE_ITEM)
+            showError(MESSAGES.ERROR_SELECT_PRICE)
             return
         }
         if (!QUANTITY_PATTERN.test(quantity) || quantityValue <= 0) {
@@ -87,7 +87,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                 onValueChange={setSelectedPriceId}
                 items={[
                     { label: UI_TEXT.SELECT_PRICE_ITEM, value: '' },
-                    ...prices.map((p) => ({
+                    ...prices.filter((p) => Boolean(p.is_available)).map((p) => ({
                         label: `${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`,
                         value: p.id.toString(),
                     })),
@@ -168,11 +168,14 @@ export default function Purchase() {
         }
     }, [])
 
-    useEffect(() => {
-        loadRecent()
-        loadSellers()
-        refreshPrices()
-    }, [loadRecent, loadSellers, refreshPrices])
+    // Reload on every focus so returning from history/detail screens shows fresh data
+    useFocusEffect(
+        useCallback(() => {
+            loadRecent()
+            loadSellers()
+            refreshPrices()
+        }, [loadRecent, loadSellers, refreshPrices])
+    )
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>

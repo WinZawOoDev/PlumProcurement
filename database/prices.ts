@@ -1,22 +1,11 @@
 import { MESSAGES } from '../constants'
 import type { IPrice } from '../types/database'
 import { DatabaseError, initDb } from './connection'
+import { initializeSchema } from './schema'
 
 export async function initializePrices(): Promise<void> {
-    let db;
     try {
-        db = initDb()
-        await db.executeAsync(`
-            CREATE TABLE IF NOT EXISTS prices ( 
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                price REAL NOT NULL,
-                unit TEXT NOT NULL,
-                category TEXT,
-                is_available BOOLEAN,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        `)
+        await initializeSchema()
     } catch (error) {
         throw new DatabaseError('Failed to initialize prices table', error)
     }
@@ -110,38 +99,27 @@ export async function deletePrice(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        const { results } = await db.executeAsync(
-            `SELECT COUNT(*) AS count FROM purchases WHERE price_id = ?`,
-            [id]
-        );
-        const referencedCount =
-            (results as unknown as Array<{ count: number }>)[0]?.count ?? 0;
-        if (referencedCount > 0) {
-            throw new DatabaseError(MESSAGES.ERROR_PRICE_IN_USE)
+        // Guard + delete in a transaction so a concurrent purchase referencing
+        // this price cannot slip in between the count check and the delete.
+        await db.executeAsync(`BEGIN IMMEDIATE`)
+        try {
+            const { results } = await db.executeAsync(
+                `SELECT COUNT(*) AS count FROM purchases WHERE price_id = ?`,
+                [id]
+            );
+            const referencedCount =
+                (results as unknown as Array<{ count: number }>)[0]?.count ?? 0;
+            if (referencedCount > 0) {
+                throw new DatabaseError(MESSAGES.ERROR_PRICE_IN_USE)
+            }
+            await db.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
+            await db.executeAsync(`COMMIT`)
+        } catch (innerError) {
+            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
+            throw innerError
         }
-        await db.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete price', error)
-    }
-}
-
-export async function truncatePrices(): Promise<void> {
-    let db;
-    try {
-        db = initDb()
-        await db.executeAsync(`DELETE FROM prices`)
-    } catch (error) {
-        throw new DatabaseError('Failed to truncate prices table', error)
-    }
-}
-
-export async function dropTblPrices(): Promise<void> {
-    let db;
-    try {
-        db = initDb()
-        await db.executeAsync(`DROP TABLE IF EXISTS prices`)
-    } catch (error) {
-        throw new DatabaseError('Failed to drop prices table', error)
     }
 }

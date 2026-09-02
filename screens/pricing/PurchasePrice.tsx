@@ -17,6 +17,8 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/Skeleton'
 import { PriceDetailSheet } from '../../components/PriceDetailSheet'
+import { buildPricesCsvWithBom, getCsvFilename } from '../../utils'
+import { shareOrSaveCsv } from '../../utils/csvExport'
 
 export default function PurchasePrices() {
     const styles = useStyles()
@@ -62,6 +64,21 @@ export default function PurchasePrices() {
         })
     }
 
+    const handleExport = async () => {
+        if (prices.length === 0) {
+            showError(MESSAGES.EMPTY_PRICE_LIST)
+            return
+        }
+        const filename = getCsvFilename('prices')
+        const result = await shareOrSaveCsv(
+            buildPricesCsvWithBom(prices),
+            filename,
+            UI_TEXT.EXPORT_CSV
+        )
+        if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
+        else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${prices.length} rows`)
+    }
+
     const handleDelete = (id: number) => {
         Alert.alert(
             UI_TEXT.DELETE_CONFIRM_TITLE,
@@ -104,6 +121,7 @@ export default function PurchasePrices() {
                     sortActive={sortMode !== 'default'}
                     sortDirection={sortMode === 'price_asc' ? 'asc' : 'desc'}
                     onSortPress={handleSortPress}
+                    onExportPress={handleExport}
                 />
                 {searchVisible && (
                     <SearchBar

@@ -13,6 +13,7 @@ interface ActionButtonsProps {
     sortActive?: boolean
     sortDirection?: 'asc' | 'desc'
     onSortPress?: () => void
+    onExportPress?: () => void
 }
 
 export default function ActionButtons({
@@ -21,6 +22,7 @@ export default function ActionButtons({
     sortActive = false,
     sortDirection,
     onSortPress,
+    onExportPress,
 }: ActionButtonsProps) {
     const styles = useStyles()
     const { theme } = useTheme()
@@ -62,6 +64,18 @@ export default function ActionButtons({
                 }
                 variant="ghost"
                 onPress={onSortPress}
+            />
+            <IconButton
+                icon={
+                    <Ionicons
+                        name="download-outline"
+                        size={DIMENSIONS.ICON_SIZE_MEDIUM}
+                        color={theme.colors.grey4}
+                    />
+                }
+                variant="ghost"
+                onPress={onExportPress}
+                accessibilityLabel={UI_TEXT.EXPORT_CSV}
             />
         </View>
     )

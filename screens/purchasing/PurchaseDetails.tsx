@@ -1,10 +1,10 @@
-import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View, Alert } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS } from '../../constants'
+import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseWithSeller } from '../../types/database'
 import { buildPurchasesCsvWithBom, formatDate, getCsvFilename } from '../../utils'
@@ -16,6 +16,7 @@ import { useLoading } from '../../hooks/useAsync'
 import { PAGINATION_CONFIG } from '../../constants'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
+import { EditPurchaseSheet } from './EditPurchaseSheet'
 
 export default function PurchaseDetails() {
     const styles = useStyles()
@@ -27,6 +28,7 @@ export default function PurchaseDetails() {
     const { loading, withLoading } = useLoading(false)
     const [searchVisible, setSearchVisible] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
+    const [editingPurchase, setEditingPurchase] = useState<IPurchaseWithSeller | null>(null)
 
     const loadPurchases = useCallback(
         async (reset = true, queryOverride?: string) => {
@@ -85,6 +87,31 @@ export default function PurchaseDetails() {
     const handleRefresh = useCallback(() => {
         loadPurchases(true, searchQuery)
     }, [loadPurchases, searchQuery])
+
+    const confirmDeletePurchase = (id: number) => {
+        Alert.alert(
+            UI_TEXT.DELETE_CONFIRM_TITLE,
+            UI_TEXT.DELETE_PURCHASE_CONFIRM_MESSAGE,
+            [
+                { text: UI_TEXT.CANCEL, style: 'cancel' },
+                {
+                    text: UI_TEXT.DELETE,
+                    style: 'destructive',
+                    onPress: () => performDeletePurchase(id),
+                },
+            ]
+        )
+    }
+
+    const performDeletePurchase = async (id: number) => {
+        try {
+            await purchaseService.removePurchase(id)
+            showSuccess(MESSAGES.PURCHASE_DELETE_SUCCESS)
+            await loadPurchases(true, searchQuery)
+        } catch (error) {
+            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+        }
+    }
 
     const visiblePurchases = purchases
 
@@ -164,7 +191,23 @@ export default function PurchaseDetails() {
                                 <RNText style={styles.purchaseItemSubtitle}>{formatDate(item.created_at)}{item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}</RNText>
                                 <RNText style={styles.purchaseItemSubtitle}>{item.quantity} × {item.unit_price.toFixed(2)}$</RNText>
                             </View>
-                            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                            <View style={styles.purchaseItemActions}>
+                                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                                <View style={styles.purchaseItemButtons}>
+                                    <IconButton
+                                        icon={<Ionicons name="pencil-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.grey5} />}
+                                        variant="ghost"
+                                        onPress={() => setEditingPurchase(item)}
+                                        accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
+                                    />
+                                    <IconButton
+                                        icon={<Ionicons name="trash-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.error} />}
+                                        variant="ghost"
+                                        onPress={() => confirmDeletePurchase(item.id)}
+                                        accessibilityLabel={A11Y_LABELS.DELETE_PURCHASE}
+                                    />
+                                </View>
+                            </View>
                         </View>
                     )}
                     ListEmptyComponent={
@@ -188,6 +231,13 @@ export default function PurchaseDetails() {
                     }
                 />
             </View>
+
+            <EditPurchaseSheet
+                visible={!!editingPurchase}
+                purchase={editingPurchase}
+                onClose={() => setEditingPurchase(null)}
+                onSaved={() => loadPurchases(true, searchQuery)}
+            />
 
         </SafeAreaView>
     )

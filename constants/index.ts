@@ -46,6 +46,7 @@ export const ROUTES = {
   PRICE_TAB: 'Price',
   PURCHASE_TAB: 'PurchaseTab',
   SELLER_TAB: 'SellerTab',
+  SETTINGS_TAB: 'SettingsTab',
   PURCHASE: 'Purchase',
   SELLER: 'Seller',
   PURCHASE_PRICE: 'PurchasePrice',
@@ -60,10 +61,13 @@ export const MESSAGES = {
   PRICE_UPDATE_SUCCESS: 'Price updated successfully!',
   PRICE_DELETE_SUCCESS: 'Price deleted successfully!',
   PURCHASE_RECORDED_SUCCESS: 'Purchase recorded successfully!',
+  PURCHASE_UPDATE_SUCCESS: 'Purchase updated successfully!',
+  PURCHASE_DELETE_SUCCESS: 'Purchase deleted successfully!',
   SELLER_SAVED_SUCCESS: 'Seller saved successfully!',
   SELLER_UPDATE_SUCCESS: 'Seller updated successfully!',
   SELLER_DELETE_SUCCESS: 'Seller deleted successfully!',
   ERROR_PRICE_IN_USE: 'Cannot delete this price because purchases reference it.',
+  ERROR_SELECT_PRICE: 'Please select a price item first.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',
   ERROR_DATABASE: 'Database error occurred.',
   ERROR_INVALID_INPUT: 'Invalid input. Please check your data.',
@@ -128,6 +132,7 @@ export const UI_TEXT = {
   RECENT_PURCHASES: 'Recent Purchases',
   PURCHASE_HISTORY_TITLE: 'Purchase History',
   PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
+  EDIT_PURCHASE: 'Edit Purchase',
   VIEW_HISTORY: 'View History',
   EXPORT_CSV: 'Export CSV',
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
@@ -142,11 +147,20 @@ export const UI_TEXT = {
   PHONE: 'Phone (optional)',
   EMPTY_SELLER_LIST: 'No sellers added yet',
 
+  // Settings
+  SETTINGS: 'Settings',
+  SETTINGS_DESCRIPTION: 'Personalize how the app looks and behaves.',
+  THEME: 'Theme',
+  THEME_MODE_SYSTEM: 'Match system',
+  THEME_MODE_LIGHT: 'Light',
+  THEME_MODE_DARK: 'Dark',
+
   // Deletion confirmations
   DELETE_CONFIRM_TITLE: 'Confirm deletion',
   DELETE_PRICE_CONFIRM_MESSAGE:
     'Delete this price? This cannot be undone.',
   DELETE_SELLER_CONFIRM_MESSAGE: 'Delete this seller? This cannot be undone.',
+  DELETE_PURCHASE_CONFIRM_MESSAGE: 'Delete this purchase? This cannot be undone.',
 } as const;
 
 // ===== ACCESSIBILITY LABELS =====
@@ -155,6 +169,8 @@ export const A11Y_LABELS = {
   DELETE_PRICE: 'Delete price',
   EDIT_SELLER: 'Edit seller',
   DELETE_SELLER: 'Delete seller',
+  EDIT_PURCHASE: 'Edit purchase',
+  DELETE_PURCHASE: 'Delete purchase',
   INCREASE_QUANTITY: 'Increase quantity',
   DECREASE_QUANTITY: 'Decrease quantity',
   CLEAR_SEARCH: 'Clear search',
@@ -239,4 +255,9 @@ export const SAFE_AREA = {
 // ===== APP SETTINGS (persisted in app_settings table) =====
 export const SETTINGS_KEYS = {
   ONBOARDED: 'onboarded',
+  THEME_MODE: 'theme_mode',
 } as const;
+
+export const THEME_MODES = ['system', 'light', 'dark'] as const;
+export type ThemeMode = (typeof THEME_MODES)[number];
+

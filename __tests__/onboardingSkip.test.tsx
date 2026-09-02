@@ -20,7 +20,7 @@ jest.mock('../services/sellerService', () => ({
     sellerService: { getSellers: jest.fn() },
 }))
 jest.mock('../services/settingsService', () => ({
-    settingsService: { isOnboarded: jest.fn(), setOnboarded: jest.fn() },
+    settingsService: { isOnboarded: jest.fn(), setOnboarded: jest.fn(), getThemeMode: jest.fn(), setThemeMode: jest.fn() },
 }))
 
 const mockPrice: IPrice = { id: 1, price: 100, unit: 'PER KG', category: 'grains', is_available: true }
@@ -46,6 +46,8 @@ beforeEach(() => {
     jest.clearAllMocks()
     ;(settingsService.isOnboarded as jest.Mock).mockResolvedValue(false)
     ;(settingsService.setOnboarded as jest.Mock).mockResolvedValue(undefined)
+    ;(settingsService.getThemeMode as jest.Mock).mockResolvedValue('system')
+    ;(settingsService.setThemeMode as jest.Mock).mockResolvedValue(undefined)
     ;(priceService.getPrices as jest.Mock).mockResolvedValue([])
     ;(sellerService.getSellers as jest.Mock).mockResolvedValue([])
 })
