@@ -18,8 +18,8 @@ import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { SellerDetailSheet } from '../../components/SellerDetailSheet'
-import { buildSellersCsvWithBom, getCsvFilename } from '../../utils'
-import { shareOrSaveCsv } from '../../utils/csvExport'
+// import { buildSellersCsvWithBom, getCsvFilename } from '../../utils'
+// import { shareOrSaveCsv } from '../../utils/csvExport'
 
 export default function Sellers() {
     const styles = useStyles()
@@ -110,20 +110,20 @@ export default function Sellers() {
         }
     }
 
-    const handleExport = async () => {
-        if (sellers.length === 0) {
-            showError(UI_TEXT.EMPTY_SELLER_LIST)
-            return
-        }
-        const filename = getCsvFilename('sellers')
-        const result = await shareOrSaveCsv(
-            buildSellersCsvWithBom(sellers),
-            filename,
-            UI_TEXT.EXPORT_CSV
-        )
-        if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
-        else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${sellers.length} rows`)
-    }
+    // const _handleExport = async () => {
+    //     if (sellers.length === 0) {
+    //         showError(UI_TEXT.EMPTY_SELLER_LIST)
+    //         return
+    //     }
+    //     const filename = getCsvFilename('sellers')
+    //     const result = await shareOrSaveCsv(
+    //         buildSellersCsvWithBom(sellers),
+    //         filename,
+    //         UI_TEXT.EXPORT_CSV
+    //     )
+    //     if (result === 'failed') showError(MESSAGES.ERROR_GENERIC)
+    //     else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${sellers.length} rows`)
+    // }
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
@@ -138,7 +138,7 @@ export default function Sellers() {
                             setSheetVisible(true)
                         }}
                     />
-                    <IconButton
+                    {/* <IconButton
                         icon={
                             <Ionicons
                                 name="download-outline"
@@ -147,9 +147,9 @@ export default function Sellers() {
                             />
                         }
                         variant="ghost"
-                        onPress={handleExport}
+                        onPress={_handleExport}
                         accessibilityLabel={UI_TEXT.EXPORT_CSV}
-                    />
+                    /> */}
                     <IconButton
                         icon={
                             <Ionicons
