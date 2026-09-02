@@ -13,6 +13,7 @@ import { showSuccess, showError } from '../../utils/notifications'
 type FormData = {
     name: string
     phone: string
+    address: string
 }
 
 interface SellerFormSheetProps {
@@ -27,7 +28,7 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
     const editing = !!seller
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({
-        defaultValues: { name: '', phone: '' },
+        defaultValues: { name: '', phone: '', address: '' },
         mode: 'onBlur',
     })
 
@@ -36,6 +37,7 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
             reset({
                 name: seller?.name ?? '',
                 phone: seller?.phone ?? '',
+                address: seller?.address ?? '',
             })
         }
     }, [visible, seller, reset])
@@ -45,6 +47,7 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
             const payload: NewSeller = {
                 name: data.name.trim(),
                 phone: data.phone.trim() || null,
+                address: data.address.trim() || null,
             }
             if (editing) {
                 await sellerService.editSeller(seller.id, payload)
@@ -83,6 +86,13 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
                     control={control}
                     label={UI_TEXT.PHONE}
                     placeholder="e.g. 09-123-456-789"
+                    keyboardType="default"
+                />
+                <FormInputField
+                    name="address"
+                    control={control}
+                    label={UI_TEXT.ADDRESS}
+                    placeholder="e.g. No. 123, Main Road"
                     keyboardType="default"
                 />
                 <PrimaryButton

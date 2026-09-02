@@ -140,6 +140,7 @@ export const UI_TEXT = {
   EDIT_SELLER: 'Edit Seller',
   SELLER_NAME: 'Seller Name',
   PHONE: 'Phone (optional)',
+  ADDRESS: 'Address (optional)',
   EMPTY_SELLER_LIST: 'No sellers added yet',
 
   // Settings

@@ -194,14 +194,15 @@ export function buildSellersCsv(
         id: number
         name: string
         phone: string | null
+        address: string | null
     }>
 ): string {
-    const header = ['id', 'name', 'phone']
+    const header = ['id', 'name', 'phone', 'address']
     if (sellers.length === 0) {
         return header.join(',')
     }
     const rows = sellers.map((s) =>
-        [s.id, s.name, s.phone ?? ''].map(csvEscape).join(',')
+        [s.id, s.name, s.phone ?? '', s.address ?? ''].map(csvEscape).join(',')
     )
     return [header.join(','), ...rows].join('\n')
 }

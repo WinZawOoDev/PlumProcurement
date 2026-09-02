@@ -17,7 +17,7 @@ jest.mock('../database/sellers', () => ({
 }))
 
 const mockSellers: ISeller[] = [
-    { id: 1, name: 'U Ba', phone: '09-123-456-789' },
+    { id: 1, name: 'U Ba', phone: '09-123-456-789', address: null },
 ]
 
 beforeEach(() => {
@@ -41,7 +41,7 @@ describe('SellerService.addSeller', () => {
     test('delegates to createSeller and returns insert id', async () => {
         ;(createSeller as jest.Mock).mockResolvedValue(9)
 
-        const data = { name: 'U Ba', phone: null }
+        const data = { name: 'U Ba', phone: null, address: null }
         const id = await sellerService.addSeller(data)
 
         expect(createSeller).toHaveBeenCalledWith(data)
@@ -51,7 +51,7 @@ describe('SellerService.addSeller', () => {
     test('propagates errors from createSeller', async () => {
         ;(createSeller as jest.Mock).mockRejectedValue(new Error('Failed to create seller'))
 
-        await expect(sellerService.addSeller({ name: '', phone: null })).rejects.toThrow(
+        await expect(sellerService.addSeller({ name: '', phone: null, address: null })).rejects.toThrow(
             'Failed to create seller'
         )
     })

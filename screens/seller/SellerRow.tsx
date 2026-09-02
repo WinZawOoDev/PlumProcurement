@@ -29,6 +29,7 @@ function SellerRowInner({ seller, onEdit, onDelete, onPress, purchaseCount, purc
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerNameText}>{seller.name}</RNText>
                 {!!seller.phone && <RNText style={styles.sellerPhoneText}>{seller.phone}</RNText>}
+                {!!seller.address && <RNText style={styles.sellerPhoneText}>{seller.address}</RNText>}
                 {(purchaseCount ?? 0) > 0 && (
                     <RNText style={[styles.sellerPhoneText, styles.sellerPurchaseStats]}>
                         {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$

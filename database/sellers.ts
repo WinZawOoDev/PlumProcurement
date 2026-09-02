@@ -27,7 +27,7 @@ export async function fetchSellers(): Promise<ISeller[]> {
 export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<number> {
     let db;
     try {
-        const { name, phone } = sellerData;
+        const { name, phone, address } = sellerData;
 
         if (!name || !name.trim()) {
             throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
@@ -35,9 +35,9 @@ export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<num
 
         db = initDb()
         const { insertId } = await db.executeAsync(`
-            INSERT INTO sellers (name, phone)
-            VALUES (?, ?)
-        `, [name.trim(), phone ?? null]);
+            INSERT INTO sellers (name, phone, address)
+            VALUES (?, ?, ?)
+        `, [name.trim(), phone ?? null, address ?? null]);
 
         return insertId as number;
     } catch (error) {
@@ -62,6 +62,10 @@ export async function updateSeller(id: number, sellerData: Partial<Omit<ISeller,
         if (sellerData.phone !== undefined) {
             updates.push('phone = ?')
             values.push(sellerData.phone)
+        }
+        if (sellerData.address !== undefined) {
+            updates.push('address = ?')
+            values.push(sellerData.address)
         }
 
         if (updates.length === 0) {

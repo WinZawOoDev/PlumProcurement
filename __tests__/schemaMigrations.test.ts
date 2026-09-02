@@ -44,13 +44,10 @@ describe('initializeSchema', () => {
         expect(executeAsync.mock.calls.length).toBe(callsAfterFirst)
     })
 
-    test('skips seller_id migration when the column already exists', async () => {
+    test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
-            if (query === 'PRAGMA table_info(purchases)') {
-                return { results: [{ name: 'id' }, { name: 'seller_id' }] }
-            }
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 1 }] }
+                return { results: [{ user_version: 2 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -60,6 +57,21 @@ describe('initializeSchema', () => {
         expect(queries().some((q) => q.includes('ALTER TABLE purchases'))).toBe(false)
         // user_version already applied — no migration statements, no version bump
         expect(queries().some((q) => q.includes('PRAGMA user_version ='))).toBe(false)
+    })
+
+    test('adds address column when missing (legacy installs)', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA table_info(purchases)') {
+                return { results: [{ name: 'id' }, { name: 'seller_id' }] }
+            }
+            if (query === 'PRAGMA table_info(sellers)') {
+                return { results: [{ name: 'id' }, { name: 'name' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+        expect(queries().some((q) => q.includes('ALTER TABLE sellers ADD COLUMN address'))).toBe(true)
     })
 
     test('adds seller_id column when missing (legacy installs)', async () => {

@@ -28,6 +28,7 @@ export interface ISeller {
     id: number
     name: string
     phone: string | null
+    address: string | null
 }
 
 export interface ISellerStat {

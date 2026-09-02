@@ -27,6 +27,18 @@ const MIGRATIONS: Migration[] = [
             await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_sellers_name ON sellers(name)`)
         },
     },
+    {
+        version: 2,
+        up: async () => {
+            const db = initDb()
+            // sellers.address for installs that predate the column
+            const { results } = await db.executeAsync(`PRAGMA table_info(sellers)`)
+            const columns = (results as unknown as Array<{ name: string }>).map((col) => col.name)
+            if (!columns.includes('address')) {
+                await db.executeAsync(`ALTER TABLE sellers ADD COLUMN address TEXT`)
+            }
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null

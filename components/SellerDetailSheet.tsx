@@ -16,6 +16,7 @@ export function SellerDetailSheet({ visible, seller, purchases, onClose }: { vis
             <View style={[styles.bottomSheetContainer, styles.sellerDetailSheetContainer]}>
                 <Text style={styles.bottomSheetTitle}>{seller.name}</Text>
                 {!!seller.phone && <RNText style={styles.purchaseItemSubtitle}>{seller.phone}</RNText>}
+                {!!seller.address && <RNText style={styles.purchaseItemSubtitle}>{seller.address}</RNText>}
                 <RNText style={styles.purchaseItemSubtitle}>{filtered.length} purchases · {total.toFixed(2)}$ total</RNText>
                 {recent.length > 0 ? (
                     recent.map((item) => (

@@ -24,7 +24,7 @@ jest.mock('../services/settingsService', () => ({
 }))
 
 const mockPrice: IPrice = { id: 1, price: 100, unit: 'PER KG', category: 'grains', is_available: true }
-const mockSeller: ISeller = { id: 1, name: 'U Ba', phone: null }
+const mockSeller: ISeller = { id: 1, name: 'U Ba', phone: null, address: null }
 
 const flush = async () => {
     // Drain microtasks and let React's scheduler flush re-renders
