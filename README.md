@@ -125,7 +125,9 @@ maestro test .maestro/ # Maestro
 
 ## Changelog
 
-### v0.2.1 — 2026-09-02
+> Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### 2026-09-02
 
 **Fixes**
 - Remove unused `react-native-fs` optional require from `csvExport` (Metro fails production bundling on unresolved literal requires); CSV now shares via the native Share sheet
@@ -144,7 +146,7 @@ maestro test .maestro/ # Maestro
 - Seller stats (purchase count/total) aggregated in SQL (`GROUP BY`) instead of loading all purchases client-side; seller detail sheet loads that seller's purchases on demand
 - CSV export for prices and sellers (BOM, dated filename)
 
-### v0.2.0 — 2026-08-27
+### 2026-08-27
 
 **Refactor**
 - Remove `zustand` dual state (`store/prices.ts`); `PriceContext` is single source
@@ -171,7 +173,6 @@ maestro test .maestro/ # Maestro
 - `SellerRow` shows `purchaseCount · total` aggregation via `Promise.all(sellers+purchases)`
 - CI `.github/workflows/ci.yml` (Node 22, `lint` → `tsc --noEmit` → `npm test --ci`) — green
 - E2E: Maestro `.maestro/{pricing,sellers,purchasing,full-flow}.yaml` + Detox `.detoxrc.js` + `e2e/app.test.js`
-- Version bump `0.1.0 → 0.2.0` (`package.json`, `app.json`), tag `v0.2.0`
 
-### v0.1.0 — Initial
+### Initial
 - Prices, purchasing, sellers with SQLite, referential guard, search/sort, CSV export
