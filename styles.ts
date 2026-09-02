@@ -722,7 +722,11 @@ export const useStyles = makeStyles((theme) => ({
         elevation: 1,
         gap: 2,
     },
-    exportButtonContainer: {
+    exportButton: {
+        paddingVertical: 10,
+        minHeight: 44,
+    },
+    purchaseActionsRow: {
         marginBottom: 15,
     },
     recentPurchasesTitle: {

@@ -129,12 +129,12 @@ export default function PurchaseDetails() {
                     </View>
                 </View>
 
-                <View style={styles.actionButtonsRow}>
+                <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
                     <SecondaryButton
                         title={UI_TEXT.EXPORT_CSV}
                         disabled={purchases.length === 0}
                         onPress={handleExport}
-                        containerStyle={styles.exportButtonContainer}
+                        buttonStyle={styles.exportButton}
                     />
                     <IconButton
                         icon={

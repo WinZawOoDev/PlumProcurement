@@ -47,9 +47,10 @@ interface SecondaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'contai
     onPress?: () => void
     disabled?: boolean
     containerStyle?: ViewStyle
+    buttonStyle?: ViewStyle
 }
 
-export function SecondaryButton({ title, onPress, disabled, containerStyle, ...props }: SecondaryButtonProps) {
+export function SecondaryButton({ title, onPress, disabled, containerStyle, buttonStyle, ...props }: SecondaryButtonProps) {
     const styles = useStyles()
     const handlePress = () => {
         if (!disabled) lightHaptic()
@@ -67,7 +68,7 @@ export function SecondaryButton({ title, onPress, disabled, containerStyle, ...p
                 ...styles.raisedButtonContainer,
                 ...containerStyle,
             }}
-            buttonStyle={styles.secondaryButton}
+            buttonStyle={{ ...styles.secondaryButton, ...buttonStyle }}
             titleStyle={styles.secondaryButtonTitle}
         />
     )
