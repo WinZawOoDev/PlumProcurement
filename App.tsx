@@ -36,7 +36,7 @@ function PriceTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 function PurchaseTabIcon({ color, size }: { color: string; size: number }) {
-  return <Ionicons name="grid-outline" color={color} size={size + 2} />;
+  return <Ionicons name="cart-outline" color={color} size={size + 2} />;
 }
 
 function SellerTabIcon({ color, size }: { color: string; size: number }) {
