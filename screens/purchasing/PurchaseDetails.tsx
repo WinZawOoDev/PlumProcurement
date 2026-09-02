@@ -1,8 +1,9 @@
-import { FlatList, RefreshControl, Text as RNText, View, Alert } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
+import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../../styles'
 import { UI_TEXT, MESSAGES, SAFE_AREA, DIMENSIONS, A11Y_LABELS } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
@@ -88,31 +89,6 @@ export default function PurchaseDetails() {
         loadPurchases(true, searchQuery)
     }, [loadPurchases, searchQuery])
 
-    const confirmDeletePurchase = (id: number) => {
-        Alert.alert(
-            UI_TEXT.DELETE_CONFIRM_TITLE,
-            UI_TEXT.DELETE_PURCHASE_CONFIRM_MESSAGE,
-            [
-                { text: UI_TEXT.CANCEL, style: 'cancel' },
-                {
-                    text: UI_TEXT.DELETE,
-                    style: 'destructive',
-                    onPress: () => performDeletePurchase(id),
-                },
-            ]
-        )
-    }
-
-    const performDeletePurchase = async (id: number) => {
-        try {
-            await purchaseService.removePurchase(id)
-            showSuccess(MESSAGES.PURCHASE_DELETE_SUCCESS)
-            await loadPurchases(true, searchQuery)
-        } catch (error) {
-            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
-        }
-    }
-
     const visiblePurchases = purchases
 
     const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0)
@@ -195,16 +171,10 @@ export default function PurchaseDetails() {
                                 <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
                                 <View style={styles.purchaseItemButtons}>
                                     <IconButton
-                                        icon={<Ionicons name="pencil-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.grey5} />}
+                                        icon={<FontAwesomeIcon name="edit" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.grey5} />}
                                         variant="ghost"
                                         onPress={() => setEditingPurchase(item)}
                                         accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
-                                    />
-                                    <IconButton
-                                        icon={<Ionicons name="trash-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color={theme.colors.error} />}
-                                        variant="ghost"
-                                        onPress={() => confirmDeletePurchase(item.id)}
-                                        accessibilityLabel={A11Y_LABELS.DELETE_PURCHASE}
                                     />
                                 </View>
                             </View>
