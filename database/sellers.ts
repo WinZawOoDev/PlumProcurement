@@ -112,6 +112,14 @@ export async function deleteSeller(id: number): Promise<void> {
         }
     } catch (error) {
         if (error instanceof DatabaseError) throw error
+        if (isForeignKeyViolation(error)) {
+            throw new DatabaseError(MESSAGES.ERROR_SELLER_IN_USE, error)
+        }
         throw new DatabaseError('Failed to delete seller', error)
     }
+}
+
+function isForeignKeyViolation(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? '')
+    return /foreign key|FOREIGN KEY|constraint failed/i.test(message)
 }

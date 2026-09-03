@@ -26,8 +26,8 @@ const TABLE_STATEMENTS = [
     )`,
     `CREATE TABLE IF NOT EXISTS purchases (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        price_id INTEGER NOT NULL,
-        seller_id INTEGER,
+        price_id INTEGER NOT NULL REFERENCES prices(id) ON DELETE RESTRICT,
+        seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
         category TEXT NOT NULL,
         unit TEXT NOT NULL,
         unit_price REAL NOT NULL,
@@ -55,6 +55,10 @@ export function initializeSchema(): Promise<void> {
 async function bootstrapSchema(): Promise<void> {
     try {
         const db = initDb()
+        // Foreign keys are per-connection in SQLite — must be enabled for the
+        // singleton handle. New installs get REFERENCES clauses above; legacy
+        // installs keep the app-level COUNT guards in deletePrice/deleteSeller.
+        await db.executeAsync(`PRAGMA foreign_keys = ON`)
         for (const statement of TABLE_STATEMENTS) {
             await db.executeAsync(statement)
         }
