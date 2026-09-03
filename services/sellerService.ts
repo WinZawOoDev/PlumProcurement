@@ -1,6 +1,7 @@
 import {
     createSeller,
     deleteSeller,
+    fetchSellerById,
     fetchSellers,
     initializeSellers,
     updateSeller,
@@ -17,6 +18,11 @@ export class SellerService {
     async getSellers(): Promise<ISeller[]> {
         await initializeSellers()
         return fetchSellers()
+    }
+
+    async getSellerById(id: number): Promise<ISeller | null> {
+        await initializeSellers()
+        return fetchSellerById(id)
     }
 
     async addSeller(data: NewSeller): Promise<number> {

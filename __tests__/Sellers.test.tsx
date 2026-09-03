@@ -8,6 +8,16 @@ import { purchaseService } from '../services/purchaseService'
 import { A11Y_LABELS, UI_TEXT } from '../constants'
 import { ISeller, ISellerStat } from '../types/database'
 import { makeAppTheme } from '../theme'
+import { ROUTES } from '../constants'
+
+const mockNavigate = jest.fn()
+jest.mock('@react-navigation/native', () => {
+    const actual = jest.requireActual('@react-navigation/native')
+    return {
+        ...actual,
+        useNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn() }),
+    }
+})
 
 jest.mock('../services/sellerService', () => ({
     sellerService: {
@@ -75,6 +85,7 @@ const findRowPressable = (root: ReactTestRenderer.ReactTestRenderer, name: strin
 
 beforeEach(() => {
     jest.clearAllMocks()
+    mockNavigate.mockClear()
     ;(sellerService.getSellers as jest.Mock).mockResolvedValue(mockSellers)
     ;(purchaseService.getSellerStats as jest.Mock).mockResolvedValue(mockStats)
     ;(sellerService.removeSeller as jest.Mock).mockResolvedValue(undefined)
@@ -141,13 +152,13 @@ describe('Sellers screen', () => {
         alertSpy.mockRestore()
     })
 
-    test('opens the detail sheet purchases on row press', async () => {
+    test('navigates to seller details on row press', async () => {
         const root = await renderScreen()
         const row = findRowPressable(root, 'U Ba')!
         expect(row).not.toBeNull()
         await act(async () => {
             row.props.onPress()
         })
-        expect(purchaseService.getPurchasesBySeller).toHaveBeenCalledWith(1)
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS, { sellerId: 1 })
     })
 })

@@ -24,6 +24,20 @@ export async function fetchSellers(): Promise<ISeller[]> {
     }
 }
 
+export async function fetchSellerById(id: number): Promise<ISeller | null> {
+    let db;
+    try {
+        db = initDb()
+        const { results } = await db.executeAsync(`
+            SELECT * FROM sellers WHERE id = ? LIMIT 1
+        `, [id]);
+        const rows = results as unknown as ISeller[]
+        return rows[0] ?? null
+    } catch (error) {
+        throw new DatabaseError('Failed to fetch seller', error)
+    }
+}
+
 export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<number> {
     let db;
     try {

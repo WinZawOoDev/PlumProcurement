@@ -1,13 +1,15 @@
 import { FlatList, RefreshControl, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { PrimaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS } from '../../constants'
+import { ROUTES, UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
-import { ISeller, IPurchaseWithSeller } from '../../types/database'
+import { ISeller } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
 import { showError } from '../../utils/notifications'
@@ -18,15 +20,13 @@ import { SearchIconButton } from '../../components/SearchIconButton'
 import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-import { SellerDetailSheet } from '../../components/SellerDetailSheet'
 
 export default function Sellers() {
     const styles = useStyles()
     const { theme } = useTheme()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
-    const [detailSeller, setDetailSeller] = useState<ISeller | null>(null)
-    const [detailPurchases, setDetailPurchases] = useState<IPurchaseWithSeller[]>([])
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
@@ -70,15 +70,9 @@ export default function Sellers() {
         loadSellers()
     }, [loadSellers])
 
-    const handleOpenDetail = useCallback(async (seller: ISeller) => {
-        setDetailSeller(seller)
-        setDetailPurchases([])
-        try {
-            setDetailPurchases(await purchaseService.getPurchasesBySeller(seller.id))
-        } catch {
-            // detail sheet shows an empty list on failure
-        }
-    }, [])
+    const handleOpenDetail = useCallback((seller: ISeller) => {
+        navigation.navigate(ROUTES.SELLER_DETAILS, { sellerId: seller.id })
+    }, [navigation])
 
     const confirmDelete = useConfirmDelete<[number]>({
         remove: (id) => sellerService.removeSeller(id),
@@ -157,7 +151,6 @@ export default function Sellers() {
                 onClose={() => setSheetVisible(false)}
                 onSaved={loadSellers}
             />
-            <SellerDetailSheet visible={!!detailSeller} seller={detailSeller} purchases={detailPurchases} onClose={() => setDetailSeller(null)} />
         </SafeAreaView>
     )
 }

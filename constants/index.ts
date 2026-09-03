@@ -44,6 +44,7 @@ export const ROUTES = {
   CREATE_PRICE: 'CreatePrice',
   PURCHASE_DETAILS: 'PurchaseDetails',
   SELLERS: 'Sellers',
+  SELLER_DETAILS: 'SellerDetails',
   SETTINGS: 'Settings',
 } as const;
 
@@ -134,6 +135,7 @@ export const UI_TEXT = {
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
   TOTAL_VALUE: 'Total Value',
   PURCHASES_COUNT: 'Purchases',
+  AVERAGE_VALUE: 'Average',
 
   // Sellers
   SELLERS_DESCRIPTION: 'Manage the sellers you buy from.',
@@ -172,6 +174,7 @@ export const A11Y_LABELS = {
   DECREASE_QUANTITY: 'Decrease quantity',
   CLEAR_SEARCH: 'Clear search',
   TOGGLE_SEARCH: 'Toggle search',
+  GO_BACK: 'Go back',
 } as const;
 
 export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;
