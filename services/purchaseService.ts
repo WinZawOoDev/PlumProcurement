@@ -38,23 +38,31 @@ export class PurchaseService {
     }
 
     async recordPurchase(data: NewPurchase): Promise<number> {
+        await initializeSellers()
+        await initializePurchases()
         return createPurchase(data)
     }
 
     async editPurchase(id: number, updates: PurchaseUpdates): Promise<void> {
+        await initializeSellers()
+        await initializePurchases()
         await updatePurchase(id, updates)
     }
 
     async removePurchase(id: number): Promise<void> {
+        await initializeSellers()
+        await initializePurchases()
         await deletePurchase(id)
     }
 
     async getSellerStats(): Promise<ISellerStat[]> {
+        await initializeSellers()
         await initializePurchases()
         return fetchSellerStats()
     }
 
     async getPurchasesBySeller(sellerId: number): Promise<IPurchaseWithSeller[]> {
+        await initializeSellers()
         await initializePurchases()
         return fetchPurchasesBySeller(sellerId)
     }

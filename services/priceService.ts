@@ -20,14 +20,17 @@ export class PriceService {
     }
 
     async addPrice(data: NewPrice): Promise<number> {
+        await initializePrices()
         return createPrice(data)
     }
 
     async editPrice(id: number, data: Partial<NewPrice>): Promise<void> {
+        await initializePrices()
         await updatePrice(id, data)
     }
 
     async removePrice(id: number): Promise<void> {
+        await initializePrices()
         await deletePrice(id)
     }
 }

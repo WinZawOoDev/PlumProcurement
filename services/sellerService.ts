@@ -20,14 +20,17 @@ export class SellerService {
     }
 
     async addSeller(data: NewSeller): Promise<number> {
+        await initializeSellers()
         return createSeller(data)
     }
 
     async editSeller(id: number, data: Partial<NewSeller>): Promise<void> {
+        await initializeSellers()
         await updateSeller(id, data)
     }
 
     async removeSeller(id: number): Promise<void> {
+        await initializeSellers()
         await deleteSeller(id)
     }
 }
