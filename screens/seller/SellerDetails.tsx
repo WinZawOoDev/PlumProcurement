@@ -13,10 +13,10 @@ import { IPurchaseWithSeller, ISeller } from '../../types/database'
 import { formatDate } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
+import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { IconButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-import SellerFormSheet from './SellerFormSheet'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -44,8 +44,14 @@ export default function SellerDetails() {
     const [seller, setSeller] = useState<ISeller | null>(null)
     const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([])
     const [notFound, setNotFound] = useState(false)
-    const [editVisible, setEditVisible] = useState(false)
     const { loading, withLoading } = useLoading(false)
+
+    const confirmDelete = useConfirmDelete<[number]>({
+        remove: (id) => sellerService.removeSeller(id),
+        confirmMessage: UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
+        successMessage: MESSAGES.SELLER_DELETE_SUCCESS,
+        onDeleted: () => navigation.goBack(),
+    })
 
     const loadDetails = useCallback(async () => {
         if (sellerId === undefined || sellerId === null) {
@@ -153,12 +159,16 @@ export default function SellerDetails() {
                                         description={headerDescription}
                                         action={
                                             <Pressable
-                                                onPress={() => setEditVisible(true)}
+                                                onPress={() => seller && confirmDelete(seller.id)}
                                                 hitSlop={8}
                                                 accessibilityRole="button"
-                                                accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
+                                                accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
+                                                style={({ pressed }) => [
+                                                    styles.sellerDeleteButton,
+                                                    pressed && styles.sellerDeleteButtonPressed,
+                                                ]}
                                             >
-                                                <RNText style={styles.sellerEditLabel}>{UI_TEXT.EDIT}</RNText>
+                                                <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
                                             </Pressable>
                                         }
                                     />
@@ -224,13 +234,6 @@ export default function SellerDetails() {
                     ].filter(Boolean) as any}
                 />
             </View>
-
-            <SellerFormSheet
-                visible={editVisible}
-                seller={seller}
-                onClose={() => setEditVisible(false)}
-                onSaved={loadDetails}
-            />
         </SafeAreaView>
     )
 }

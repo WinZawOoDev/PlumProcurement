@@ -14,7 +14,6 @@ import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
-import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { SearchIconButton } from '../../components/SearchIconButton'
 import { SellerRow } from './SellerRow'
@@ -29,6 +28,7 @@ export default function Sellers() {
     const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
+    const [editing, setEditing] = useState<ISeller | null>(null)
     const {
         visible: searchVisible,
         query: searchQuery,
@@ -73,13 +73,6 @@ export default function Sellers() {
         navigation.navigate(ROUTES.SELLER_DETAILS, { sellerId: seller.id })
     }, [navigation])
 
-    const confirmDelete = useConfirmDelete<[number]>({
-        remove: (id) => sellerService.removeSeller(id),
-        confirmMessage: UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
-        successMessage: MESSAGES.SELLER_DELETE_SUCCESS,
-        onDeleted: loadSellers,
-    })
-
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={styles.priceListContainer}>
@@ -88,7 +81,10 @@ export default function Sellers() {
                 <View style={styles.sellerActionsRow}>
                     <PrimaryButton
                         title={UI_TEXT.ADD_SELLER}
-                        onPress={() => setSheetVisible(true)}
+                        onPress={() => {
+                            setEditing(null)
+                            setSheetVisible(true)
+                        }}
                     />
                     <SearchIconButton
                         active={searchVisible}
@@ -117,7 +113,10 @@ export default function Sellers() {
                             purchaseCount={sellerStats[item.id]?.count}
                             purchaseTotal={sellerStats[item.id]?.total}
                             onPress={() => handleOpenDetail(item)}
-                            onDelete={() => confirmDelete(item.id)}
+                            onEdit={() => {
+                                setEditing(item)
+                                setSheetVisible(true)
+                            }}
                         />
                     )}
                     ListEmptyComponent={
@@ -139,8 +138,11 @@ export default function Sellers() {
 
             <SellerFormSheet
                 visible={sheetVisible}
-                seller={null}
-                onClose={() => setSheetVisible(false)}
+                seller={editing}
+                onClose={() => {
+                    setSheetVisible(false)
+                    setEditing(null)
+                }}
                 onSaved={loadSellers}
             />
         </SafeAreaView>

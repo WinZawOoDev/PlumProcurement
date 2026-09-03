@@ -1,14 +1,13 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
-import { Alert, Text as RNText } from 'react-native'
+import { Text as RNText } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
 import Sellers from '../screens/seller/Sellers'
 import { sellerService } from '../services/sellerService'
 import { purchaseService } from '../services/purchaseService'
-import { A11Y_LABELS, UI_TEXT } from '../constants'
+import { A11Y_LABELS, ROUTES } from '../constants'
 import { ISeller, ISellerStat } from '../types/database'
 import { makeAppTheme } from '../theme'
-import { ROUTES } from '../constants'
 
 const mockNavigate = jest.fn()
 jest.mock('@react-navigation/native', () => {
@@ -104,52 +103,11 @@ describe('Sellers screen', () => {
         expect(purchaseService.getSellerStats).toHaveBeenCalledTimes(1)
     })
 
-    test('confirm dialog guards the delete and reloads after success', async () => {
-        const alertSpy = jest.spyOn(Alert, 'alert')
+    test('row shows edit action', async () => {
         const root = await renderScreen()
-
-        // row delete icon → confirm dialog
-        const deleteButton = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.DELETE_SELLER })[0]
-        await act(async () => {
-            deleteButton.props.onPress()
-        })
-        expect(alertSpy).toHaveBeenCalledWith(
-            UI_TEXT.DELETE_CONFIRM_TITLE,
-            UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
-            expect.any(Array)
-        )
-        expect(sellerService.removeSeller).not.toHaveBeenCalled()
-
-        // confirming invokes the destructive action
-        const destructive = alertSpy.mock.calls[0][2]!.find((b: any) => b.style === 'destructive')!
-        await act(async () => {
-            destructive.onPress?.()
-        })
-
-        expect(sellerService.removeSeller).toHaveBeenCalledWith(1)
-        expect(sellerService.getSellers).toHaveBeenCalledTimes(2)
-        alertSpy.mockRestore()
-    })
-
-    test('delete failure surfaces the database error message without reloading', async () => {
-        const alertSpy = jest.spyOn(Alert, 'alert')
-        ;(sellerService.removeSeller as jest.Mock).mockRejectedValue(
-            new Error('Cannot delete this seller because purchases reference it.')
-        )
-        const root = await renderScreen()
-
-        const deleteButton = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.DELETE_SELLER })[0]
-        await act(async () => {
-            deleteButton.props.onPress()
-        })
-        const destructive = alertSpy.mock.calls[0][2]!.find((b: any) => b.style === 'destructive')!
-        await act(async () => {
-            destructive.onPress?.()
-        })
-
-        expect(sellerService.removeSeller).toHaveBeenCalledTimes(1)
-        expect(sellerService.getSellers).toHaveBeenCalledTimes(1)
-        alertSpy.mockRestore()
+        const editButtons = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_SELLER })
+        expect(editButtons.length).toBeGreaterThan(0)
+        expect(editButtons[0].props.accessibilityLabel).toBe(A11Y_LABELS.EDIT_SELLER)
     })
 
     test('navigates to seller details on row press', async () => {

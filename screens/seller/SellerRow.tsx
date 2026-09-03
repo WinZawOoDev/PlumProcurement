@@ -1,22 +1,19 @@
 import React from 'react'
 import { View, Text as RNText, Pressable } from 'react-native'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { useTheme } from '@rneui/themed'
-import { A11Y_LABELS } from '../../constants'
+import { A11Y_LABELS, UI_TEXT } from '../../constants'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
     seller: ISeller
-    onDelete: () => void
+    onEdit: () => void
     onPress?: () => void
     purchaseCount?: number
     purchaseTotal?: number
 }
 
-function SellerRowInner({ seller, onDelete, onPress, purchaseCount, purchaseTotal }: SellerRowProps) {
+function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal }: SellerRowProps) {
     const styles = useStyles()
-    const { theme } = useTheme()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
         <Pressable onPress={onPress} style={styles.purchaseItemRow}>
@@ -36,17 +33,13 @@ function SellerRowInner({ seller, onDelete, onPress, purchaseCount, purchaseTota
             <Pressable
                 onPress={(e: any) => {
                     e?.stopPropagation?.()
-                    onDelete()
+                    onEdit()
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
+                accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
                 hitSlop={8}
-                style={({ pressed }) => [
-                    styles.sellerDeleteButton,
-                    pressed && styles.sellerDeleteButtonPressed,
-                ]}
             >
-                <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
+                <RNText style={styles.sellerEditLabel}>{UI_TEXT.EDIT}</RNText>
             </Pressable>
         </Pressable>
     )
