@@ -18,7 +18,11 @@ export async function fetchPrices(): Promise<IPrice[]> {
         const { results } = await db.executeAsync(`
             SELECT * FROM prices ORDER BY id DESC
         `);
-        return results as unknown as IPrice[]
+        // SQLite has no native BOOLEAN — is_available comes back as 0/1.
+        // Normalize to a real boolean so UI truthiness is consistent.
+        return (results as unknown as Array<Omit<IPrice, 'is_available'> & { is_available: unknown }>).map(
+            (row) => ({ ...row, is_available: !!row.is_available } as IPrice)
+        )
     } catch (error) {
         throw new DatabaseError('Failed to fetch prices', error)
     }
@@ -41,7 +45,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         const { insertId } = await db.executeAsync(`
             INSERT INTO prices (price, unit, category, is_available)
             VALUES (?, ?, ?, ?)
-        `, [price, unit, category, is_available]);
+        `, [price, unit, category, is_available ? 1 : 0]);
 
         return insertId as number;
     } catch (error) {
@@ -73,7 +77,7 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         }
         if (priceData.is_available !== undefined) {
             updates.push('is_available = ?')
-            values.push(priceData.is_available)
+            values.push(priceData.is_available ? 1 : 0)
         }
 
         if (updates.length === 0) {
@@ -120,6 +124,14 @@ export async function deletePrice(id: number): Promise<void> {
         }
     } catch (error) {
         if (error instanceof DatabaseError) throw error
+        if (isForeignKeyViolation(error)) {
+            throw new DatabaseError(MESSAGES.ERROR_PRICE_IN_USE, error)
+        }
         throw new DatabaseError('Failed to delete price', error)
     }
+}
+
+function isForeignKeyViolation(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? '')
+    return /foreign key|FOREIGN KEY|constraint failed/i.test(message)
 }
