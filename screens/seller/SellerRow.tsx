@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, Text as RNText, Pressable } from 'react-native'
 import Ionicons from '@react-native-vector-icons/ionicons'
-import { Button } from '@rneui/themed'
 import { useStyles } from '../../styles'
-import { DIMENSIONS, A11Y_LABELS } from '../../constants'
+import { useTheme } from '@rneui/themed'
+import { A11Y_LABELS } from '../../constants'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
@@ -16,6 +16,7 @@ interface SellerRowProps {
 
 function SellerRowInner({ seller, onDelete, onPress, purchaseCount, purchaseTotal }: SellerRowProps) {
     const styles = useStyles()
+    const { theme } = useTheme()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
         <Pressable onPress={onPress} style={styles.purchaseItemRow}>
@@ -32,14 +33,21 @@ function SellerRowInner({ seller, onDelete, onPress, purchaseCount, purchaseTota
                     </RNText>
                 )}
             </View>
-            <View style={styles.priceCardActionsRow}>
-                <Button
-                    buttonStyle={[styles.rowIconButton, styles.rowIconDeleteButton]}
-                    icon={<Ionicons name="trash-outline" size={DIMENSIONS.ICON_SIZE_SMALL} color="white" />}
-                    onPress={onDelete}
-                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                />
-            </View>
+            <Pressable
+                onPress={(e: any) => {
+                    e?.stopPropagation?.()
+                    onDelete()
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
+                hitSlop={8}
+                style={({ pressed }) => [
+                    styles.sellerDeleteButton,
+                    pressed && styles.sellerDeleteButtonPressed,
+                ]}
+            >
+                <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
+            </Pressable>
         </Pressable>
     )
 }
