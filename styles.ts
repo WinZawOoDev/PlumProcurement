@@ -893,6 +893,23 @@ export const useStyles = makeStyles((theme) => ({
         letterSpacing: 0.3,
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
     },
+    sellerRowContactRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 3,
+    },
+    sellerRowContactText: {
+        fontSize: 13,
+        color: theme.colors.tertiary,
+    },
+    sellerRowEditButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     avatarCircle: {
         width: 44,
         height: 44,
