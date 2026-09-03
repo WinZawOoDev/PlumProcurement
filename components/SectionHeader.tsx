@@ -7,7 +7,7 @@ import { useTheme } from '@rneui/themed'
 interface SectionHeaderProps {
     icon?: string
     title: string
-    description?: string
+    description?: string | React.ReactNode
     action?: React.ReactNode
 }
 
@@ -21,7 +21,13 @@ export function SectionHeader({ icon, title, description, action }: SectionHeade
                     {!!icon && <Ionicons name={icon as any} size={22} color={theme.colors.primary} />}
                     <RNText style={styles.sectionHeaderTitle}>{title}</RNText>
                 </View>
-                {!!description && <RNText style={styles.sectionHeaderDescription}>{description}</RNText>}
+                {description ? (
+                    typeof description === 'string' ? (
+                        <RNText style={styles.sectionHeaderDescription}>{description}</RNText>
+                    ) : (
+                        <View style={styles.sectionHeaderDescriptionContainer}>{description}</View>
+                    )
+                ) : null}
             </View>
             {!!action && <View>{action}</View>}
         </View>

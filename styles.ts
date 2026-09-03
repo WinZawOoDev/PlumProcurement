@@ -183,6 +183,23 @@ export const useStyles = makeStyles((theme) => ({
         lineHeight: 18,
         marginTop: 2,
     },
+    sectionHeaderDescriptionContainer: {
+        gap: 6,
+        marginTop: 4,
+    },
+    sectionHeaderContactRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    sectionHeaderContactText: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        fontSize: 13,
+        fontWeight: '400',
+        color: theme.colors.grey4,
+        lineHeight: 18,
+        flexShrink: 1,
+    },
     emptyStateContainer: {
         alignItems: 'center',
         justifyContent: 'center',

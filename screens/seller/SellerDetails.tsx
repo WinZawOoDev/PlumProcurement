@@ -77,7 +77,29 @@ export default function SellerDetails() {
 
     const total = purchases.reduce((sum, p) => sum + p.total, 0)
     const average = purchases.length > 0 ? total / purchases.length : 0
-    const initial = seller?.name.trim().charAt(0).toUpperCase() || '?'
+    const headerDescription: React.ReactNode | undefined = seller
+        ? (() => {
+              const hasPhone = !!seller.phone?.trim()
+              const hasAddress = !!seller.address?.trim()
+              if (!hasPhone && !hasAddress) return undefined
+              return (
+                  <>
+                      {hasPhone && (
+                          <View style={styles.sectionHeaderContactRow}>
+                              <Ionicons name="call-outline" size={14} color={theme.colors.grey4} />
+                              <RNText style={styles.sectionHeaderContactText}>{seller.phone!.trim()}</RNText>
+                          </View>
+                      )}
+                      {hasAddress && (
+                          <View style={styles.sectionHeaderContactRow}>
+                              <Ionicons name="location-outline" size={14} color={theme.colors.grey4} />
+                              <RNText style={styles.sectionHeaderContactText}>{seller.address!.trim()}</RNText>
+                          </View>
+                      )}
+                  </>
+              )
+          })()
+        : undefined
 
     if (notFound) {
         return (
@@ -125,7 +147,7 @@ export default function SellerDetails() {
                                     <SectionHeader
                                         icon="person-outline"
                                         title={seller.name}
-                                        description={`${purchases.length} ${purchases.length === 1 ? 'purchase' : 'purchases'} · ${total.toFixed(2)}$ total`}
+                                        description={headerDescription}
                                         action={
                                             <Pressable
                                                 onPress={() => setEditVisible(true)}
@@ -137,30 +159,6 @@ export default function SellerDetails() {
                                             </Pressable>
                                         }
                                     />
-
-                                    <View style={styles.sellerProfileCard}>
-                                        <View style={styles.sellerProfileAvatar}>
-                                            <RNText style={styles.sellerProfileInitial}>{initial}</RNText>
-                                        </View>
-                                        <View style={styles.sellerInfo}>
-                                            <RNText style={styles.sellerNameText}>{seller.name}</RNText>
-                                            {!!seller.phone && (
-                                                <View style={styles.sellerProfileMetaRow}>
-                                                    <Ionicons name="call-outline" size={14} color={theme.colors.tertiary} />
-                                                    <RNText style={styles.sellerPhoneText}>{seller.phone}</RNText>
-                                                </View>
-                                            )}
-                                            {!!seller.address && (
-                                                <View style={styles.sellerProfileMetaRow}>
-                                                    <Ionicons name="location-outline" size={14} color={theme.colors.tertiary} />
-                                                    <RNText style={styles.sellerPhoneText}>{seller.address}</RNText>
-                                                </View>
-                                            )}
-                                            {!seller.phone && !seller.address && (
-                                                <RNText style={styles.sellerPhoneText}>No contact info</RNText>
-                                            )}
-                                        </View>
-                                    </View>
 
                                     <View style={styles.sellerStatsRow}>
                                         <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(purchases.length)} icon="receipt-outline" />
