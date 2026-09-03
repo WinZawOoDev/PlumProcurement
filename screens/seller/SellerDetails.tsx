@@ -90,6 +90,9 @@ export default function SellerDetails() {
                               <RNText style={styles.sectionHeaderContactText}>{seller.phone!.trim()}</RNText>
                           </View>
                       )}
+                      {hasPhone && hasAddress && (
+                          <RNText style={styles.sectionHeaderContactText}>·</RNText>
+                      )}
                       {hasAddress && (
                           <View style={styles.sectionHeaderContactRow}>
                               <Ionicons name="location-outline" size={14} color={theme.colors.grey4} />

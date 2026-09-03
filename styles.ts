@@ -184,7 +184,10 @@ export const useStyles = makeStyles((theme) => ({
         marginTop: 2,
     },
     sectionHeaderDescriptionContainer: {
-        gap: 6,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 12,
         marginTop: 4,
     },
     sectionHeaderContactRow: {
