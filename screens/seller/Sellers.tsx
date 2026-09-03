@@ -29,7 +29,6 @@ export default function Sellers() {
     const [sellerStats, setSellerStats] = useState<Record<number, { count: number; total: number }>>({})
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
-    const [editing, setEditing] = useState<ISeller | null>(null)
     const {
         visible: searchVisible,
         query: searchQuery,
@@ -89,10 +88,7 @@ export default function Sellers() {
                 <View style={styles.sellerActionsRow}>
                     <PrimaryButton
                         title={UI_TEXT.ADD_SELLER}
-                        onPress={() => {
-                            setEditing(null)
-                            setSheetVisible(true)
-                        }}
+                        onPress={() => setSheetVisible(true)}
                     />
                     <SearchIconButton
                         active={searchVisible}
@@ -121,10 +117,6 @@ export default function Sellers() {
                             purchaseCount={sellerStats[item.id]?.count}
                             purchaseTotal={sellerStats[item.id]?.total}
                             onPress={() => handleOpenDetail(item)}
-                            onEdit={() => {
-                                setEditing(item)
-                                setSheetVisible(true)
-                            }}
                             onDelete={() => confirmDelete(item.id)}
                         />
                     )}
@@ -147,7 +139,7 @@ export default function Sellers() {
 
             <SellerFormSheet
                 visible={sheetVisible}
-                seller={editing}
+                seller={null}
                 onClose={() => setSheetVisible(false)}
                 onSaved={loadSellers}
             />
