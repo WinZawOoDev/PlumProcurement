@@ -28,6 +28,14 @@ export interface PurchasesPage {
  * between page loads can no longer skip or duplicate rows the way
  * LIMIT/OFFSET windows do.
  */
+/**
+ * Escape LIKE wildcards so a search for `100%` or `a_b` matches literally.
+ * Backslash is the ESCAPE character used in the queries below.
+ */
+export function escapeLikePattern(value: string): string {
+    return value.replace(/[\\%_]/g, (char) => `\\${char}`)
+}
+
 export async function fetchPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
     let db;
     try {
@@ -42,8 +50,8 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
             params.push(cursor)
         }
         if (q) {
-            const like = `%${q}%`
-            where.push('(p.category LIKE ? OR s.name LIKE ?)')
+            const like = `%${escapeLikePattern(q)}%`
+            where.push(`(p.category LIKE ? ESCAPE '\\' COLLATE NOCASE OR s.name LIKE ? ESCAPE '\\' COLLATE NOCASE)`)
             params.push(like, like)
         }
         const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
@@ -75,9 +83,9 @@ export async function countPurchases(query?: string): Promise<number> {
         db = initDb()
         const q = query?.trim()
         if (q) {
-            const like = `%${q}%`
+            const like = `%${escapeLikePattern(q)}%`
             const { results } = await db.executeAsync(
-                `SELECT COUNT(*) as count FROM purchases p LEFT JOIN sellers s ON s.id = p.seller_id WHERE p.category LIKE ? OR s.name LIKE ?`,
+                `SELECT COUNT(*) as count FROM purchases p LEFT JOIN sellers s ON s.id = p.seller_id WHERE p.category LIKE ? ESCAPE '\\' COLLATE NOCASE OR s.name LIKE ? ESCAPE '\\' COLLATE NOCASE`,
                 [like, like]
             );
             return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
