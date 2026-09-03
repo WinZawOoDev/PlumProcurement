@@ -681,6 +681,19 @@ export const useStyles = makeStyles((theme) => ({
         flexGrow: 1,
         justifyContent: 'center',
     },
+    purchaseHistoryScreen: {
+        flexDirection: 'column',
+        padding: 15,
+        backgroundColor: theme.colors.background,
+        height: '100%',
+    },
+    purchaseHistoryContainer: {
+        paddingHorizontal: 12,
+        paddingBlock: 15
+    },
+    purchaseHistoryItems: {
+        marginBottom: 25,
+    },
     purchaseItemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
