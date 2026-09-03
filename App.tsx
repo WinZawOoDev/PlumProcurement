@@ -7,7 +7,7 @@
 
 import { StatusBar, useColorScheme } from 'react-native';
 import { ThemeProvider, useTheme } from '@rneui/themed';
-import { DefaultTheme, DarkTheme, createStaticNavigation, NavigationContainer, NavigationIndependentTree, Theme } from '@react-navigation/native';
+import { DefaultTheme, DarkTheme, createStaticNavigation, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { useCallback, useMemo } from 'react';
 import { Ionicons } from "@react-native-vector-icons/ionicons/static";
@@ -45,100 +45,101 @@ function SellerTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 
+// Static navigator definition — intentionally theme-independent so switching
+// light/dark mode never recreates the navigator (which would reset tab state).
+// Dynamic colors flow via the NavigationContainer theme below; bottom tabs fall
+// back to theme.colors.primary/card/text/border when tabBar*TintColor is unset.
+const RootStack = createBottomTabNavigator({
+  initialRouteName: ROUTES.PRICE_TAB,
+  screenOptions: {
+    headerShown: false,
+    tabBarStyle: {
+      minHeight: 68,
+      paddingTop: 6,
+      paddingBottom: 6,
+      alignItems: 'center',
+      borderTopWidth: 0.5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    tabBarLabelStyle: {
+      fontWeight: '700',
+      fontSize: 11,
+      letterSpacing: 0.3,
+      marginTop: 2,
+    },
+    tabBarIconStyle: {
+      marginTop: 2,
+    },
+  },
+  screens: {
+    [ROUTES.PRICE_TAB]: {
+      screen: PriceStack,
+      options: {
+        tabBarIcon: PriceTabIcon,
+        tabBarLabel: "Prices"
+      }
+    },
+    [ROUTES.PURCHASE_TAB]: {
+      screen: PurchaseStack,
+      options: {
+        tabBarIcon: PurchaseTabIcon,
+        tabBarLabel: "Purchasing"
+      }
+    },
+    [ROUTES.SELLER_TAB]: {
+      screen: SellerStack,
+      options: {
+        tabBarIcon: SellerTabIcon,
+        tabBarLabel: "Sellers"
+      }
+    },
+    [ROUTES.SETTINGS_TAB]: {
+      screen: SettingsStack,
+      options: {
+        tabBarIcon: SettingsTabIcon,
+        tabBarLabel: "Settings"
+      }
+    },
+  }
+});
+
+const Navigator = createStaticNavigation(RootStack);
+
 function Navigation({ onReady, isDarkMode }: { onReady?: () => void; isDarkMode: boolean }) {
 
   const { theme: currentTheme } = useTheme();
 
-  // Signal that the main tab UI has mounted (NavigationContainer's onReady
-  // does not fire reliably when the tree is wrapped in NavigationIndependentTree)
-  React.useEffect(() => {
-    onReady?.();
-  }, [onReady]);
+  const navigationTheme: Theme = useMemo(() => {
+    const base = isDarkMode ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: currentTheme.colors.primary,
+        background: currentTheme.colors.background,
+        card: currentTheme.colors.surface ?? currentTheme.colors.white ?? base.colors.card,
+        border: currentTheme.colors.grey1 ?? base.colors.border,
+        text: currentTheme.colors.grey4 ?? base.colors.text,
+      },
+      dark: isDarkMode,
+    };
+  }, [isDarkMode, currentTheme]);
 
-  const RootStack = useMemo(() => createBottomTabNavigator({
-    initialRouteName: ROUTES.PRICE_TAB,
-    screenOptions: {
-      headerShown: false,
-      tabBarActiveTintColor: currentTheme.colors.primary,
-      tabBarInactiveTintColor: currentTheme.colors.grey4,
-      tabBarStyle: {
-        minHeight: 68,
-        paddingTop: 6,
-        paddingBottom: 6,
-        alignItems: 'center',
-        backgroundColor: currentTheme.colors.surface ?? currentTheme.colors.white,
-        borderTopWidth: 0.5,
-        borderTopColor: currentTheme.colors.grey1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        elevation: 2,
-      },
-      tabBarLabelStyle: {
-        fontWeight: '700',
-        fontSize: 11,
-        letterSpacing: 0.3,
-        marginTop: 2,
-      },
-      tabBarIconStyle: {
-        marginTop: 2,
-      },
-    },
-    screens: {
-      [ROUTES.PRICE_TAB]: {
-        screen: PriceStack,
-        options: {
-          tabBarIcon: PriceTabIcon,
-          tabBarLabel: "Prices"
-        }
-      },
-      [ROUTES.PURCHASE_TAB]: {
-        screen: PurchaseStack,
-        options: {
-          tabBarIcon: PurchaseTabIcon,
-          tabBarLabel: "Purchasing"
-        }
-      },
-      [ROUTES.SELLER_TAB]: {
-        screen: SellerStack,
-        options: {
-          tabBarIcon: SellerTabIcon,
-          tabBarLabel: "Sellers"
-        }
-      },
-      [ROUTES.SETTINGS_TAB]: {
-        screen: SettingsStack,
-        options: {
-          tabBarIcon: SettingsTabIcon,
-          tabBarLabel: "Settings"
-        }
-      },
-    }
-  }), [currentTheme]);
-
-  const Navigator = useMemo(() => createStaticNavigation(RootStack), [RootStack]);
-
+  // NOTE: with the static API, Navigator already renders its own
+  // NavigationContainer internally — do not wrap it again (that produces a
+  // nested-container error and an extra navigation tree).
   return (
-    <NavigationContainer
-      theme={{
-        ...(isDarkMode ? DarkTheme : DefaultTheme) as unknown as Theme,
-        colors: {
-          ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
-          background: currentTheme.colors.background,
-          primary: currentTheme.colors.primary,
-        },
-        dark: isDarkMode
-      }}
-    >
-      <NavigationIndependentTree>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={currentTheme.colors.background}
-        />
-        <Navigator />
-      </NavigationIndependentTree>
-    </NavigationContainer>
+    <>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={currentTheme.colors.background}
+      />
+      <Navigator theme={navigationTheme} onReady={onReady} />
+    </>
 
   )
 }
@@ -146,10 +147,9 @@ function Navigation({ onReady, isDarkMode }: { onReady?: () => void; isDarkMode:
 
 interface AppShellProps {
   isDarkMode: boolean;
-  themeModeContextValue: { mode: ThemeMode; setMode: (mode: ThemeMode) => void };
 }
 
-function AppShell({ isDarkMode, themeModeContextValue }: AppShellProps) {
+function AppShell({ isDarkMode }: AppShellProps) {
   const [onboarded, setOnboarded] = React.useState(false);
   const [checkingData, setCheckingData] = React.useState(true);
   const [mainReady, setMainReady] = React.useState(false);
@@ -199,12 +199,10 @@ function AppShell({ isDarkMode, themeModeContextValue }: AppShellProps) {
   }
 
   return (
-    <PriceProvider>
-      <ThemeModeContext.Provider value={themeModeContextValue}>
-        <Navigation onReady={handleMainReady} isDarkMode={isDarkMode} />
-      </ThemeModeContext.Provider>
+    <>
+      <Navigation onReady={handleMainReady} isDarkMode={isDarkMode} />
       {!mainReady && <StartupLoader overlay />}
-    </PriceProvider>
+    </>
   );
 }
 
@@ -233,7 +231,11 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider theme={appTheme}>
         <SafeAreaProvider>
-          <AppShell isDarkMode={isDarkMode} themeModeContextValue={themeModeContextValue} />
+          <PriceProvider>
+            <ThemeModeContext.Provider value={themeModeContextValue}>
+              <AppShell isDarkMode={isDarkMode} />
+            </ThemeModeContext.Provider>
+          </PriceProvider>
           <Toast />
         </SafeAreaProvider>
       </ThemeProvider>
