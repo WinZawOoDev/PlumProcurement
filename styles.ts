@@ -866,6 +866,26 @@ export const useStyles = makeStyles((theme) => ({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    // Enhanced edit button for seller detail — soft primary tint with icon
+    sellerEditButton: {
+        backgroundColor: theme.colors.primary + '0F',
+        borderWidth: 1,
+        borderColor: theme.colors.primary + '18',
+        borderRadius: 10,
+        paddingVertical: 9,
+        paddingHorizontal: 14,
+        minHeight: 36,
+        gap: 6,
+        shadowColor: 'transparent',
+        elevation: 0,
+    },
+    sellerEditButtonTitle: {
+        color: theme.colors.primary,
+        fontWeight: '700',
+        fontSize: 13,
+        letterSpacing: 0.3,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+    },
     avatarCircle: {
         width: 44,
         height: 44,

@@ -1,4 +1,4 @@
-import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -13,8 +13,6 @@ import { IPurchaseWithSeller, ISeller } from '../../types/database'
 import { formatDate } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
-import { useConfirmDelete } from '../../hooks/useConfirmDelete'
-import { Button } from '@rneui/themed'
 import { IconButton, SecondaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
@@ -48,13 +46,6 @@ export default function SellerDetails() {
     const [notFound, setNotFound] = useState(false)
     const [editVisible, setEditVisible] = useState(false)
     const { loading, withLoading } = useLoading(false)
-
-    const confirmDelete = useConfirmDelete<[number]>({
-        remove: (id) => sellerService.removeSeller(id),
-        confirmMessage: UI_TEXT.DELETE_SELLER_CONFIRM_MESSAGE,
-        successMessage: MESSAGES.SELLER_DELETE_SUCCESS,
-        onDeleted: () => navigation.goBack(),
-    })
 
     const loadDetails = useCallback(async () => {
         if (sellerId === undefined || sellerId === null) {
@@ -136,24 +127,14 @@ export default function SellerDetails() {
                                         title={seller.name}
                                         description={`${purchases.length} ${purchases.length === 1 ? 'purchase' : 'purchases'} · ${total.toFixed(2)}$ total`}
                                         action={
-                                            <View style={styles.sellerDetailHeaderActions}>
-                                                <SecondaryButton
-                                                    title={UI_TEXT.EDIT}
-                                                    onPress={() => setEditVisible(true)}
-                                                />
-                                                <Pressable
-                                                    onPress={() => seller && confirmDelete(seller.id)}
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                                                    hitSlop={6}
-                                                    style={({ pressed }) => [
-                                                        styles.sellerDetailDeleteIconButton,
-                                                        pressed && styles.sellerDeleteButtonPressed,
-                                                    ]}
-                                                >
-                                                    <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
-                                                </Pressable>
-                                            </View>
+                                            <SecondaryButton
+                                                title={UI_TEXT.EDIT}
+                                                icon={<Ionicons name="create-outline" size={14} color={theme.colors.primary} />}
+                                                iconPosition="left"
+                                                onPress={() => setEditVisible(true)}
+                                                buttonStyle={styles.sellerEditButton}
+                                                titleStyle={styles.sellerEditButtonTitle}
+                                            />
                                         }
                                     />
 
@@ -235,29 +216,6 @@ export default function SellerDetails() {
                     }
                     refreshControl={
                         <RefreshControl refreshing={loading} onRefresh={loadDetails} colors={[theme.colors.primary]} />
-                    }
-                    ListFooterComponent={
-                        seller ? (
-                            <View style={styles.sellerDangerCard}>
-                                <View style={styles.sellerProfileMetaRow}>
-                                    <Ionicons name="warning-outline" size={16} color={theme.colors.error} />
-                                    <RNText style={styles.sellerDangerTitle}>Danger zone</RNText>
-                                </View>
-                                <RNText style={styles.sellerDangerDescription}>
-                                    Deleting a seller is permanent. Sellers with recorded purchases cannot be deleted.
-                                </RNText>
-                                <Button
-                                    title={UI_TEXT.DELETE}
-                                    icon={<Ionicons name="trash-outline" size={16} color="white" />}
-                                    iconPosition="left"
-                                    onPress={() => confirmDelete(seller.id)}
-                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                                    buttonStyle={styles.sellerDangerButton}
-                                    titleStyle={styles.sellerDangerButtonTitle}
-                                    containerStyle={styles.raisedButtonContainer as any}
-                                />
-                            </View>
-                        ) : null
                     }
                     contentContainerStyle={[
                         purchases.length === 0 ? styles.sellerHistoryEmptyContent : null,
