@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
+import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -13,7 +13,7 @@ import { IPurchaseWithSeller, ISeller } from '../../types/database'
 import { formatDate } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
-import { IconButton, SecondaryButton } from '../../components/buttons/Button'
+import { IconButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import SellerFormSheet from './SellerFormSheet'
@@ -127,14 +127,14 @@ export default function SellerDetails() {
                                         title={seller.name}
                                         description={`${purchases.length} ${purchases.length === 1 ? 'purchase' : 'purchases'} · ${total.toFixed(2)}$ total`}
                                         action={
-                                            <SecondaryButton
-                                                title={UI_TEXT.EDIT}
-                                                icon={<Ionicons name="create-outline" size={14} color={theme.colors.primary} />}
-                                                iconPosition="left"
+                                            <Pressable
                                                 onPress={() => setEditVisible(true)}
-                                                buttonStyle={styles.sellerEditButton}
-                                                titleStyle={styles.sellerEditButtonTitle}
-                                            />
+                                                hitSlop={8}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
+                                            >
+                                                <RNText style={styles.sellerEditLabel}>{UI_TEXT.EDIT}</RNText>
+                                            </Pressable>
                                         }
                                     />
 
