@@ -153,6 +153,20 @@ export const UI_TEXT = {
   THEME_MODE_SYSTEM: 'Match system',
   THEME_MODE_LIGHT: 'Light',
   THEME_MODE_DARK: 'Dark',
+  APPEARANCE: 'Appearance',
+  APPEARANCE_DESCRIPTION: 'Choose how the app looks on this device.',
+  THEME_MODE_SYSTEM_HINT: 'Follow system',
+  THEME_MODE_LIGHT_HINT: 'Always light',
+  THEME_MODE_DARK_HINT: 'Always dark',
+  THEME_PREVIEW_TITLE: 'Preview',
+  THEME_PREVIEW_DESCRIPTION: 'How the current theme looks.',
+  DATA_STORAGE: 'Data & storage',
+  DATA_STORAGE_DESCRIPTION: 'Your prices, purchases and sellers are stored locally on this device with SQLite. No account needed.',
+  ABOUT: 'About',
+  APP_NAME: 'Plum Procurement',
+  APP_VERSION: 'Version 0.1.0',
+  APP_TAGLINE: 'Manage market prices, record purchases and maintain your seller directory.',
+  SETTINGS_FOOTER_NOTE: 'Preferences are saved on this device.',
 
   // Deletion confirmations
   DELETE_CONFIRM_TITLE: 'Confirm deletion',
@@ -175,6 +189,7 @@ export const A11Y_LABELS = {
   CLEAR_SEARCH: 'Clear search',
   TOGGLE_SEARCH: 'Toggle search',
   GO_BACK: 'Go back',
+  SELECT_THEME_MODE: 'Select theme mode',
 } as const;
 
 export const SORT_MODES = ['default', 'price_asc', 'price_desc'] as const;

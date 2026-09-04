@@ -2,9 +2,7 @@ import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
 import { ThemeProvider } from '@rneui/themed'
 import Settings from '../screens/settings/Settings'
-import { SelectPicker } from '../components/SelectPicker'
-import { Picker } from '@react-native-picker/picker'
-import { UI_TEXT } from '../constants'
+import { A11Y_LABELS, UI_TEXT } from '../constants'
 import { makeAppTheme } from '../theme'
 
 const setMode = jest.fn()
@@ -24,6 +22,11 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
         .join(' ')
 }
 
+const themeOptions = (root: ReactTestRenderer.ReactTestRenderer) =>
+    root.root
+        .findAllByProps({ accessibilityRole: 'radio' })
+        .filter((inst) => typeof inst.props.onPress === 'function')
+
 const renderScreen = async () => {
     let root!: ReactTestRenderer.ReactTestRenderer
     await act(async () => {
@@ -42,29 +45,56 @@ beforeEach(() => {
 })
 
 describe('Settings screen', () => {
-    test('renders the theme preference picker with the current mode', async () => {
+    test('renders appearance, preview, storage and about sections', async () => {
         const root = await renderScreen()
-        expect(textContent(root)).toContain(UI_TEXT.SETTINGS)
-        expect(textContent(root)).toContain(UI_TEXT.THEME)
+        const content = textContent(root)
+        expect(content).toContain(UI_TEXT.SETTINGS)
+        expect(content).toContain(UI_TEXT.APPEARANCE)
+        expect(content).toContain(UI_TEXT.THEME_PREVIEW_TITLE)
+        expect(content).toContain(UI_TEXT.DATA_STORAGE)
+        expect(content).toContain(UI_TEXT.ABOUT)
+        expect(content).toContain(UI_TEXT.APP_NAME)
+        expect(content).toContain(UI_TEXT.SETTINGS_FOOTER_NOTE)
+        expect(themeOptions(root)).toHaveLength(3)
+    })
 
-        const picker = root.root
-            .findAllByType(SelectPicker)
-            .find((p) => p.props.label === UI_TEXT.THEME)!
-        const rnPicker = picker.findAllByType(Picker)[0]
-        expect(rnPicker.props.selectedValue).toBe('light')
+    test('marks the current theme mode as checked', async () => {
+        const root = await renderScreen()
+        const options = themeOptions(root)
+        const lightOption = options.find((p) =>
+            String(p.props.accessibilityLabel).includes(UI_TEXT.THEME_MODE_LIGHT)
+        )!
+        expect(lightOption.props.accessibilityState).toEqual({ checked: true })
+        expect(lightOption.props.accessibilityLabel).toBe(
+            `${A11Y_LABELS.SELECT_THEME_MODE}: ${UI_TEXT.THEME_MODE_LIGHT}`
+        )
     })
 
     test('propagates theme mode changes to the context', async () => {
         const root = await renderScreen()
-        const picker = root.root
-            .findAllByType(SelectPicker)
-            .find((p) => p.props.label === UI_TEXT.THEME)!
-        const rnPicker = picker.findAllByType(Picker)[0]
+        const options = themeOptions(root)
+        const darkOption = options.find((p) =>
+            String(p.props.accessibilityLabel).includes(UI_TEXT.THEME_MODE_DARK)
+        )!
 
         await act(async () => {
-            rnPicker.props.onValueChange('dark')
+            darkOption.props.onPress()
         })
 
         expect(setMode).toHaveBeenCalledWith('dark')
+    })
+
+    test('does not call setMode when the active mode is pressed again', async () => {
+        const root = await renderScreen()
+        const options = themeOptions(root)
+        const lightOption = options.find((p) =>
+            String(p.props.accessibilityLabel).includes(UI_TEXT.THEME_MODE_LIGHT)
+        )!
+
+        await act(async () => {
+            lightOption.props.onPress()
+        })
+
+        expect(setMode).not.toHaveBeenCalled()
     })
 })
