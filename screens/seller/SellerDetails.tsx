@@ -35,6 +35,63 @@ function StatCell({ label, value, icon }: { label: string; value: string; icon: 
     )
 }
 
+function SellerDetailsSkeleton() {
+    const styles = useStyles()
+    return (
+        <>
+            <View style={styles.sellerProfileCard}>
+                <Skeleton width={56} height={56} radius={28} />
+                <View style={styles.sellerProfileSkeletonText}>
+                    <Skeleton width="60%" height={16} />
+                    <Skeleton width="40%" height={12} />
+                </View>
+            </View>
+            <View style={styles.sellerStatsRow}>
+                <View style={styles.sellerStatCell}>
+                    <Skeleton width={32} height={32} radius={16} />
+                    <Skeleton width="70%" height={14} />
+                    <Skeleton width="50%" height={10} />
+                </View>
+                <View style={styles.sellerStatDivider} />
+                <View style={styles.sellerStatCell}>
+                    <Skeleton width={32} height={32} radius={16} />
+                    <Skeleton width="70%" height={14} />
+                    <Skeleton width="50%" height={10} />
+                </View>
+                <View style={styles.sellerStatDivider} />
+                <View style={styles.sellerStatCell}>
+                    <Skeleton width={32} height={32} radius={16} />
+                    <Skeleton width="70%" height={14} />
+                    <Skeleton width="50%" height={10} />
+                </View>
+            </View>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+        </>
+    )
+}
+
+function SellerPurchaseRow({ item }: { item: IPurchaseWithSeller }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.purchaseItemRow}>
+            <View style={styles.sellerInfo}>
+                <RNText style={styles.purchaseItemTitle}>
+                    {item.category} × {item.quantity}
+                </RNText>
+                <RNText style={styles.purchaseItemSubtitle}>
+                    {formatDate(item.created_at)} · {item.unit} @ {item.unit_price.toFixed(2)}$
+                </RNText>
+                <RNText style={styles.purchaseItemSubtitle}>
+                    {item.quantity} × {item.unit_price.toFixed(2)}$ = {item.total.toFixed(2)}$
+                </RNText>
+            </View>
+            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+        </View>
+    )
+}
+
 export default function SellerDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
@@ -190,59 +247,14 @@ export default function SellerDetails() {
                         </View>
                     </>
                 ) : (
-                    <>
-                        <View style={styles.sellerProfileCard}>
-                            <Skeleton width={56} height={56} radius={28} />
-                            <View style={styles.sellerProfileSkeletonText}>
-                                <Skeleton width="60%" height={16} />
-                                <Skeleton width="40%" height={12} />
-                            </View>
-                        </View>
-                        <View style={styles.sellerStatsRow}>
-                            <View style={styles.sellerStatCell}>
-                                <Skeleton width={32} height={32} radius={16} />
-                                <Skeleton width="70%" height={14} />
-                                <Skeleton width="50%" height={10} />
-                            </View>
-                            <View style={styles.sellerStatDivider} />
-                            <View style={styles.sellerStatCell}>
-                                <Skeleton width={32} height={32} radius={16} />
-                                <Skeleton width="70%" height={14} />
-                                <Skeleton width="50%" height={10} />
-                            </View>
-                            <View style={styles.sellerStatDivider} />
-                            <View style={styles.sellerStatCell}>
-                                <Skeleton width={32} height={32} radius={16} />
-                                <Skeleton width="70%" height={14} />
-                                <Skeleton width="50%" height={10} />
-                            </View>
-                        </View>
-                        <CardSkeleton />
-                        <CardSkeleton />
-                        <CardSkeleton />
-                    </>
+                    <SellerDetailsSkeleton />
                 )}
 
                 {seller && (
                     <FlatList
                         data={purchases.slice(0, 20)}
                         keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <View style={styles.purchaseItemRow}>
-                                <View style={styles.sellerInfo}>
-                                    <RNText style={styles.purchaseItemTitle}>
-                                        {item.category} × {item.quantity}
-                                    </RNText>
-                                    <RNText style={styles.purchaseItemSubtitle}>
-                                        {formatDate(item.created_at)} · {item.unit} @ {item.unit_price.toFixed(2)}$
-                                    </RNText>
-                                    <RNText style={styles.purchaseItemSubtitle}>
-                                        {item.quantity} × {item.unit_price.toFixed(2)}$ = {item.total.toFixed(2)}$
-                                    </RNText>
-                                </View>
-                                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
-                            </View>
-                        )}
+                        renderItem={({ item }) => <SellerPurchaseRow item={item} />}
                         ListEmptyComponent={
                             !loading ? (
                                 <EmptyState
