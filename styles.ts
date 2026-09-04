@@ -1029,6 +1029,10 @@ export const useStyles = makeStyles((theme) => ({
         paddingVertical: 24,
         alignItems: 'center',
     },
+    sellerProfileSkeletonText: {
+        flex: 1,
+        gap: 8,
+    },
     sellerHistoryEmptyContent: {
         flexGrow: 1,
     },

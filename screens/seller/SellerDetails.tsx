@@ -17,6 +17,7 @@ import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { IconButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
+import { CardSkeleton, Skeleton } from '../../components/Skeleton'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -189,9 +190,37 @@ export default function SellerDetails() {
                         </View>
                     </>
                 ) : (
-                    <View style={styles.sellerStatsSkeleton}>
-                        <RNText style={styles.emptyPriceListText}>{MESSAGES.LOADING}</RNText>
-                    </View>
+                    <>
+                        <View style={styles.sellerProfileCard}>
+                            <Skeleton width={56} height={56} radius={28} />
+                            <View style={styles.sellerProfileSkeletonText}>
+                                <Skeleton width="60%" height={16} />
+                                <Skeleton width="40%" height={12} />
+                            </View>
+                        </View>
+                        <View style={styles.sellerStatsRow}>
+                            <View style={styles.sellerStatCell}>
+                                <Skeleton width={32} height={32} radius={16} />
+                                <Skeleton width="70%" height={14} />
+                                <Skeleton width="50%" height={10} />
+                            </View>
+                            <View style={styles.sellerStatDivider} />
+                            <View style={styles.sellerStatCell}>
+                                <Skeleton width={32} height={32} radius={16} />
+                                <Skeleton width="70%" height={14} />
+                                <Skeleton width="50%" height={10} />
+                            </View>
+                            <View style={styles.sellerStatDivider} />
+                            <View style={styles.sellerStatCell}>
+                                <Skeleton width={32} height={32} radius={16} />
+                                <Skeleton width="70%" height={14} />
+                                <Skeleton width="50%" height={10} />
+                            </View>
+                        </View>
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                    </>
                 )}
 
                 {seller && (
