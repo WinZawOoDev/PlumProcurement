@@ -37,6 +37,122 @@ import { EmptyState } from '../../components/EmptyState';
 import { CardSkeleton, Skeleton } from '../../components/Skeleton';
 import { EditPurchaseSheet } from './EditPurchaseSheet';
 
+function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
+  const styles = useStyles();
+  return (
+    <View style={styles.purchaseSummaryCard}>
+      <View style={styles.purchaseSummaryRow}>
+        <RNText style={styles.purchaseSummaryLabel}>
+          {UI_TEXT.PURCHASES_COUNT}
+        </RNText>
+        <RNText style={styles.purchaseSummaryValue}>{count}</RNText>
+      </View>
+      <View
+        style={[
+          styles.purchaseSummaryRow,
+          styles.purchaseDetailsSummaryDivider,
+        ]}
+      >
+        <RNText style={styles.purchaseSummaryLabel}>
+          {UI_TEXT.TOTAL_VALUE}
+        </RNText>
+        <RNText style={styles.purchaseTotalText}>{total.toFixed(2)}$</RNText>
+      </View>
+    </View>
+  );
+}
+
+function PurchaseSummarySkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={styles.purchaseSummaryCard}>
+      <View style={styles.purchaseSummaryRow}>
+        <RNText style={styles.purchaseSummaryLabel}>
+          {UI_TEXT.PURCHASES_COUNT}
+        </RNText>
+        <Skeleton width={48} height={16} />
+      </View>
+      <View
+        style={[
+          styles.purchaseSummaryRow,
+          styles.purchaseDetailsSummaryDivider,
+        ]}
+      >
+        <RNText style={styles.purchaseSummaryLabel}>
+          {UI_TEXT.TOTAL_VALUE}
+        </RNText>
+        <Skeleton width={80} height={18} />
+      </View>
+    </View>
+  );
+}
+
+function PurchaseRow({
+  item,
+  onEdit,
+}: {
+  item: IPurchaseWithSeller;
+  onEdit: (item: IPurchaseWithSeller) => void;
+}) {
+  const styles = useStyles();
+  const { theme } = useTheme();
+  return (
+    <View style={styles.purchaseItemRow}>
+      <View style={styles.sellerInfo}>
+        <RNText style={styles.purchaseItemTitle}>
+          {item.category} ({item.unit})
+        </RNText>
+        <RNText style={styles.purchaseItemSubtitle}>
+          {formatDate(item.created_at)}
+          {item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}
+        </RNText>
+        <RNText style={styles.purchaseItemSubtitle}>
+          {item.quantity} × {item.unit_price.toFixed(2)}$
+        </RNText>
+      </View>
+      <View style={styles.purchaseItemActions}>
+        <RNText style={styles.purchaseItemTotal}>
+          {item.total.toFixed(2)}$
+        </RNText>
+        <View style={styles.purchaseItemButtons}>
+          <IconButton
+            icon={
+              <FontAwesomeIcon
+                name="edit"
+                size={DIMENSIONS.ICON_SIZE_SMALL}
+                color={theme.colors.grey5}
+              />
+            }
+            variant="ghost"
+            onPress={() => onEdit(item)}
+            accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function PurchaseListSkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={styles.purchaseHistoryItems}>
+      <CardSkeleton />
+      <CardSkeleton />
+      <CardSkeleton />
+    </View>
+  );
+}
+
+function LoadMoreSkeleton() {
+  return (
+    <>
+      <CardSkeleton />
+      <CardSkeleton />
+    </>
+  );
+}
+
 export default function PurchaseDetails() {
   const styles = useStyles();
   const { theme } = useTheme();
@@ -160,37 +276,11 @@ export default function PurchaseDetails() {
           description={UI_TEXT.PURCHASE_HISTORY_DESCRIPTION}
         />
 
-        <View style={styles.purchaseSummaryCard}>
-          <View style={styles.purchaseSummaryRow}>
-            <RNText style={styles.purchaseSummaryLabel}>
-              {UI_TEXT.PURCHASES_COUNT}
-            </RNText>
-            {isInitialLoading ? (
-              <Skeleton width={48} height={16} />
-            ) : (
-              <RNText style={styles.purchaseSummaryValue}>
-                {visiblePurchases.length}
-              </RNText>
-            )}
-          </View>
-          <View
-            style={[
-              styles.purchaseSummaryRow,
-              styles.purchaseDetailsSummaryDivider,
-            ]}
-          >
-            <RNText style={styles.purchaseSummaryLabel}>
-              {UI_TEXT.TOTAL_VALUE}
-            </RNText>
-            {isInitialLoading ? (
-              <Skeleton width={80} height={18} />
-            ) : (
-              <RNText style={styles.purchaseTotalText}>
-                {grandTotal.toFixed(2)}$
-              </RNText>
-            )}
-          </View>
-        </View>
+        {isInitialLoading ? (
+          <PurchaseSummarySkeleton />
+        ) : (
+          <PurchaseSummaryCard count={visiblePurchases.length} total={grandTotal} />
+        )}
 
         <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
           <SecondaryButton
@@ -214,52 +304,14 @@ export default function PurchaseDetails() {
         )}
 
         {isInitialLoading ? (
-          <View style={styles.purchaseHistoryItems}>
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-          </View>
+          <PurchaseListSkeleton />
         ) : (
           <FlatList
             style={styles.purchaseHistoryItems}
             data={visiblePurchases}
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
-              <View style={styles.purchaseItemRow}>
-                <View style={styles.sellerInfo}>
-                  <RNText style={styles.purchaseItemTitle}>
-                    {item.category} ({item.unit})
-                  </RNText>
-                  <RNText style={styles.purchaseItemSubtitle}>
-                    {formatDate(item.created_at)}
-                    {item.seller_name
-                      ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}`
-                      : ''}
-                  </RNText>
-                  <RNText style={styles.purchaseItemSubtitle}>
-                    {item.quantity} × {item.unit_price.toFixed(2)}$
-                  </RNText>
-                </View>
-                <View style={styles.purchaseItemActions}>
-                  <RNText style={styles.purchaseItemTotal}>
-                    {item.total.toFixed(2)}$
-                  </RNText>
-                  <View style={styles.purchaseItemButtons}>
-                    <IconButton
-                      icon={
-                        <FontAwesomeIcon
-                          name="edit"
-                          size={DIMENSIONS.ICON_SIZE_SMALL}
-                          color={theme.colors.grey5}
-                        />
-                      }
-                      variant="ghost"
-                      onPress={() => setEditingPurchase(item)}
-                      accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
-                    />
-                  </View>
-                </View>
-              </View>
+              <PurchaseRow item={item} onEdit={setEditingPurchase} />
             )}
             ListEmptyComponent={
               loading ? null : (
@@ -280,14 +332,7 @@ export default function PurchaseDetails() {
             }
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              loadingMore ? (
-                <>
-                  <CardSkeleton />
-                  <CardSkeleton />
-                </>
-              ) : null
-            }
+            ListFooterComponent={loadingMore ? <LoadMoreSkeleton /> : null}
             refreshControl={
               <RefreshControl
                 refreshing={loading}
