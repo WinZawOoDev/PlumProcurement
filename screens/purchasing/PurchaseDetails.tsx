@@ -34,6 +34,7 @@ import { useSearchFilter } from '../../hooks/useSearchFilter';
 import { PAGINATION_CONFIG } from '../../constants';
 import { SectionHeader } from '../../components/SectionHeader';
 import { EmptyState } from '../../components/EmptyState';
+import { CardSkeleton, Skeleton } from '../../components/Skeleton';
 import { EditPurchaseSheet } from './EditPurchaseSheet';
 
 export default function PurchaseDetails() {
@@ -126,6 +127,7 @@ export default function PurchaseDetails() {
   }, [loadPurchases, searchQuery]);
 
   const visiblePurchases = purchases;
+  const isInitialLoading = loading && purchases.length === 0;
 
   const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0);
 
@@ -163,9 +165,13 @@ export default function PurchaseDetails() {
             <RNText style={styles.purchaseSummaryLabel}>
               {UI_TEXT.PURCHASES_COUNT}
             </RNText>
-            <RNText style={styles.purchaseSummaryValue}>
-              {visiblePurchases.length}
-            </RNText>
+            {isInitialLoading ? (
+              <Skeleton width={48} height={16} />
+            ) : (
+              <RNText style={styles.purchaseSummaryValue}>
+                {visiblePurchases.length}
+              </RNText>
+            )}
           </View>
           <View
             style={[
@@ -176,9 +182,13 @@ export default function PurchaseDetails() {
             <RNText style={styles.purchaseSummaryLabel}>
               {UI_TEXT.TOTAL_VALUE}
             </RNText>
-            <RNText style={styles.purchaseTotalText}>
-              {grandTotal.toFixed(2)}$
-            </RNText>
+            {isInitialLoading ? (
+              <Skeleton width={80} height={18} />
+            ) : (
+              <RNText style={styles.purchaseTotalText}>
+                {grandTotal.toFixed(2)}$
+              </RNText>
+            )}
           </View>
         </View>
 
@@ -203,79 +213,90 @@ export default function PurchaseDetails() {
           />
         )}
 
-        <FlatList
-          style={styles.purchaseHistoryItems}
-          data={visiblePurchases}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.purchaseItemRow}>
-              <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>
-                  {item.category} ({item.unit})
-                </RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                  {formatDate(item.created_at)}
-                  {item.seller_name
-                    ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}`
-                    : ''}
-                </RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                  {item.quantity} × {item.unit_price.toFixed(2)}$
-                </RNText>
-              </View>
-              <View style={styles.purchaseItemActions}>
-                <RNText style={styles.purchaseItemTotal}>
-                  {item.total.toFixed(2)}$
-                </RNText>
-                <View style={styles.purchaseItemButtons}>
-                  <IconButton
-                    icon={
-                      <FontAwesomeIcon
-                        name="edit"
-                        size={DIMENSIONS.ICON_SIZE_SMALL}
-                        color={theme.colors.grey5}
-                      />
-                    }
-                    variant="ghost"
-                    onPress={() => setEditingPurchase(item)}
-                    accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
-                  />
+        {isInitialLoading ? (
+          <View style={styles.purchaseHistoryItems}>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </View>
+        ) : (
+          <FlatList
+            style={styles.purchaseHistoryItems}
+            data={visiblePurchases}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.purchaseItemRow}>
+                <View style={styles.sellerInfo}>
+                  <RNText style={styles.purchaseItemTitle}>
+                    {item.category} ({item.unit})
+                  </RNText>
+                  <RNText style={styles.purchaseItemSubtitle}>
+                    {formatDate(item.created_at)}
+                    {item.seller_name
+                      ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}`
+                      : ''}
+                  </RNText>
+                  <RNText style={styles.purchaseItemSubtitle}>
+                    {item.quantity} × {item.unit_price.toFixed(2)}$
+                  </RNText>
+                </View>
+                <View style={styles.purchaseItemActions}>
+                  <RNText style={styles.purchaseItemTotal}>
+                    {item.total.toFixed(2)}$
+                  </RNText>
+                  <View style={styles.purchaseItemButtons}>
+                    <IconButton
+                      icon={
+                        <FontAwesomeIcon
+                          name="edit"
+                          size={DIMENSIONS.ICON_SIZE_SMALL}
+                          color={theme.colors.grey5}
+                        />
+                      }
+                      variant="ghost"
+                      onPress={() => setEditingPurchase(item)}
+                      accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-          ListEmptyComponent={
-            <EmptyState
-              icon="receipt-outline"
-              title={
-                hasQuery
-                  ? UI_TEXT.NO_MATCHING_RESULTS
-                  : UI_TEXT.EMPTY_PURCHASE_LIST
-              }
-              description={
-                hasQuery
-                  ? `No purchases matching "${searchQuery}"`
-                  : 'Your purchase history will appear here'
-              }
-            />
-          }
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loadingMore ? (
-              <RNText style={styles.emptyPriceListText}>
-                {MESSAGES.LOADING}
-              </RNText>
-            ) : null
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={handleRefresh}
-              colors={[theme.colors.primary]}
-            />
-          }
-        />
+            )}
+            ListEmptyComponent={
+              loading ? null : (
+                <EmptyState
+                  icon="receipt-outline"
+                  title={
+                    hasQuery
+                      ? UI_TEXT.NO_MATCHING_RESULTS
+                      : UI_TEXT.EMPTY_PURCHASE_LIST
+                  }
+                  description={
+                    hasQuery
+                      ? `No purchases matching "${searchQuery}"`
+                      : 'Your purchase history will appear here'
+                  }
+                />
+              )
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loadingMore ? (
+                <>
+                  <CardSkeleton />
+                  <CardSkeleton />
+                </>
+              ) : null
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={handleRefresh}
+                colors={[theme.colors.primary]}
+              />
+            }
+          />
+        )}
       </View>
 
       <EditPurchaseSheet
