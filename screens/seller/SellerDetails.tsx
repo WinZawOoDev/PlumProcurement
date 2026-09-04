@@ -135,104 +135,105 @@ export default function SellerDetails() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={styles.priceListContainer}>
-                <FlatList
-                    data={purchases.slice(0, 20)}
-                    keyExtractor={(item) => item.id.toString()}
-                    ListHeaderComponent={
-                        <>
-                            <View style={styles.sellerDetailsBackRow}>
-                                <IconButton
-                                    icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                                    variant="ghost"
-                                    onPress={() => navigation.goBack()}
-                                    accessibilityLabel={A11Y_LABELS.GO_BACK}
-                                />
-                                <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
-                            </View>
+            <View style={[styles.priceListContainer, styles.fillContainer]}>
+                <View style={styles.sellerDetailsBackRow}>
+                    <IconButton
+                        icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
+                        variant="ghost"
+                        onPress={() => navigation.goBack()}
+                        accessibilityLabel={A11Y_LABELS.GO_BACK}
+                    />
+                    <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
+                </View>
 
-                            {seller ? (
-                                <>
-                                    <SectionHeader
-                                        icon="person-outline"
-                                        title={seller.name}
-                                        description={headerDescription}
-                                        action={
-                                            <Pressable
-                                                onPress={() => seller && confirmDelete(seller.id)}
-                                                hitSlop={8}
-                                                accessibilityRole="button"
-                                                accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                                                style={({ pressed }) => [
-                                                    styles.sellerDeleteButton,
-                                                    pressed && styles.sellerDeleteButtonPressed,
-                                                ]}
-                                            >
-                                                <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
-                                            </Pressable>
-                                        }
-                                    />
+                {seller ? (
+                    <>
+                        <SectionHeader
+                            icon="person-outline"
+                            title={seller.name}
+                            description={headerDescription}
+                            action={
+                                <Pressable
+                                    onPress={() => seller && confirmDelete(seller.id)}
+                                    hitSlop={8}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
+                                    style={({ pressed }) => [
+                                        styles.sellerDeleteButton,
+                                        pressed && styles.sellerDeleteButtonPressed,
+                                    ]}
+                                >
+                                    <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
+                                </Pressable>
+                            }
+                        />
 
-                                    <View style={styles.sellerStatsRow}>
-                                        <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(purchases.length)} icon="receipt-outline" />
-                                        <View style={styles.sellerStatDivider} />
-                                        <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
-                                        <View style={styles.sellerStatDivider} />
-                                        <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
-                                    </View>
-
-                                    <View style={styles.sellerSectionSpacer}>
-                                        <SectionHeader
-                                            icon="time-outline"
-                                            title={UI_TEXT.RECENT_PURCHASES}
-                                            description={
-                                                purchases.length > 0
-                                                    ? `Last ${Math.min(purchases.length, 20)} transactions`
-                                                    : undefined
-                                            }
-                                        />
-                                    </View>
-                                </>
-                            ) : (
-                                <View style={styles.sellerStatsSkeleton}>
-                                    <RNText style={styles.emptyPriceListText}>{MESSAGES.LOADING}</RNText>
-                                </View>
-                            )}
-                        </>
-                    }
-                    renderItem={({ item }) => (
-                        <View style={styles.purchaseItemRow}>
-                            <View style={styles.sellerInfo}>
-                                <RNText style={styles.purchaseItemTitle}>
-                                    {item.category} × {item.quantity}
-                                </RNText>
-                                <RNText style={styles.purchaseItemSubtitle}>
-                                    {formatDate(item.created_at)} · {item.unit} @ {item.unit_price.toFixed(2)}$
-                                </RNText>
-                                <RNText style={styles.purchaseItemSubtitle}>
-                                    {item.quantity} × {item.unit_price.toFixed(2)}$ = {item.total.toFixed(2)}$
-                                </RNText>
-                            </View>
-                            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                        <View style={styles.sellerStatsRow}>
+                            <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(purchases.length)} icon="receipt-outline" />
+                            <View style={styles.sellerStatDivider} />
+                            <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
+                            <View style={styles.sellerStatDivider} />
+                            <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
                         </View>
-                    )}
-                    ListEmptyComponent={
-                        !loading && seller ? (
-                            <EmptyState
-                                icon="receipt-outline"
-                                title={UI_TEXT.EMPTY_PURCHASE_LIST}
-                                description={`No purchases recorded for ${seller.name} yet`}
+
+                        <View style={styles.sellerSectionSpacer}>
+                            <SectionHeader
+                                icon="time-outline"
+                                title={UI_TEXT.RECENT_PURCHASES}
+                                description={
+                                    purchases.length > 0
+                                        ? `Last ${Math.min(purchases.length, 20)} transactions`
+                                        : undefined
+                                }
                             />
-                        ) : !loading ? null : null
-                    }
-                    refreshControl={
-                        <RefreshControl refreshing={loading} onRefresh={loadDetails} colors={[theme.colors.primary]} />
-                    }
-                    contentContainerStyle={[
-                        purchases.length === 0 ? styles.sellerHistoryEmptyContent : null,
-                        seller ? { paddingBottom: 16 } as any : null,
-                    ].filter(Boolean) as any}
-                />
+                        </View>
+                    </>
+                ) : (
+                    <View style={styles.sellerStatsSkeleton}>
+                        <RNText style={styles.emptyPriceListText}>{MESSAGES.LOADING}</RNText>
+                    </View>
+                )}
+
+                {seller && (
+                    <FlatList
+                        data={purchases.slice(0, 20)}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <View style={styles.purchaseItemRow}>
+                                <View style={styles.sellerInfo}>
+                                    <RNText style={styles.purchaseItemTitle}>
+                                        {item.category} × {item.quantity}
+                                    </RNText>
+                                    <RNText style={styles.purchaseItemSubtitle}>
+                                        {formatDate(item.created_at)} · {item.unit} @ {item.unit_price.toFixed(2)}$
+                                    </RNText>
+                                    <RNText style={styles.purchaseItemSubtitle}>
+                                        {item.quantity} × {item.unit_price.toFixed(2)}$ = {item.total.toFixed(2)}$
+                                    </RNText>
+                                </View>
+                                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                            </View>
+                        )}
+                        ListEmptyComponent={
+                            !loading ? (
+                                <EmptyState
+                                    icon="receipt-outline"
+                                    title={UI_TEXT.EMPTY_PURCHASE_LIST}
+                                    description={`No purchases recorded for ${seller.name} yet`}
+                                />
+                            ) : null
+                        }
+                        refreshControl={
+                            <RefreshControl refreshing={loading} onRefresh={loadDetails} colors={[theme.colors.primary]} />
+                        }
+                        style={styles.recentPurchasesList}
+                        contentContainerStyle={
+                            purchases.length === 0
+                                ? styles.recentPurchasesEmpty
+                                : ({ paddingBottom: 16 } as any)
+                        }
+                    />
+                )}
             </View>
         </SafeAreaView>
     )
