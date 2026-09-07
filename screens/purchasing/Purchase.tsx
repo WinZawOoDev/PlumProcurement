@@ -23,6 +23,42 @@ interface PurchaseFormProps {
     onRecorded: () => void
 }
 
+function PurchaseSummary({ unitPrice, total }: { unitPrice?: number; total: number }) {
+    const styles = useStyles()
+    return (
+        <View style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}>
+            <View style={styles.purchaseSummaryRow}>
+                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
+                <Text style={styles.purchaseSummaryValue}>{unitPrice !== undefined ? `${unitPrice.toFixed(2)}$` : '—'}</Text>
+            </View>
+            <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
+                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
+                <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
+            </View>
+        </View>
+    )
+}
+
+function PurchaseFormActions({
+    recording,
+    canRecord,
+    onRecord,
+    onViewHistory,
+}: {
+    recording: boolean
+    canRecord: boolean
+    onRecord: () => void
+    onViewHistory: () => void
+}) {
+    const styles = useStyles()
+    return (
+        <View style={styles.formActions}>
+            <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !canRecord} loading={recording} onPress={onRecord} />
+            <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={onViewHistory} />
+        </View>
+    )
+}
+
 export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
@@ -102,20 +138,13 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
             {!sellerAndPriceSelected && (
                 <RNText style={styles.quantityStepperHint}>{UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST}</RNText>
             )}
-            <View style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}>
-                <View style={styles.purchaseSummaryRow}>
-                    <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.UNIT_PRICE}</Text>
-                    <Text style={styles.purchaseSummaryValue}>{selectedPrice ? `${selectedPrice.price.toFixed(2)}$` : '—'}</Text>
-                </View>
-                <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
-                    <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
-                    <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
-                </View>
-            </View>
-            <View style={styles.formActions}>
-                <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !sellerAndPriceSelected} loading={recording} onPress={handleRecord} />
-                <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)} />
-            </View>
+            <PurchaseSummary unitPrice={selectedPrice?.price} total={total} />
+            <PurchaseFormActions
+                recording={recording}
+                canRecord={sellerAndPriceSelected}
+                onRecord={handleRecord}
+                onViewHistory={() => navigation.navigate(ROUTES.PURCHASE_DETAILS)}
+            />
         </View>
     )
 }
