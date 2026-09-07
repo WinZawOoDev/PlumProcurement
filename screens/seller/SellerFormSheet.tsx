@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
-import { useForm } from 'react-hook-form'
+import { Control, useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import { FormInputField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
@@ -21,6 +21,65 @@ interface SellerFormSheetProps {
     seller: ISeller | null
     onClose: () => void
     onSaved: () => void
+}
+
+function SellerFormFields({ control }: { control: Control<FormData> }) {
+    return (
+        <>
+            <FormInputField
+                name="name"
+                control={control}
+                label={UI_TEXT.SELLER_NAME}
+                placeholder="e.g. U Ba"
+                required
+                rules={{ required: VALIDATION_MESSAGES.NAME_REQUIRED }}
+            />
+            <FormInputField
+                name="phone"
+                control={control}
+                label={UI_TEXT.PHONE}
+                placeholder="e.g. 09-123-456-789"
+                keyboardType="default"
+            />
+            <FormInputField
+                name="address"
+                control={control}
+                label={UI_TEXT.ADDRESS}
+                placeholder="e.g. No. 123, Main Road"
+                keyboardType="default"
+            />
+        </>
+    )
+}
+
+function SellerFormActions({
+    editing,
+    saving,
+    onSubmit,
+    onCancel,
+}: {
+    editing: boolean
+    saving: boolean
+    onSubmit: () => void
+    onCancel: () => void
+}) {
+    const styles = useStyles()
+    return (
+        <>
+            <PrimaryButton
+                title={editing ? UI_TEXT.UPDATE : UI_TEXT.SAVE}
+                disabled={saving}
+                loading={saving}
+                onPress={onSubmit}
+                containerStyle={styles.updateButtonContainerStyle}
+            />
+            <SecondaryButton
+                title={UI_TEXT.CANCEL}
+                onPress={onCancel}
+                containerStyle={styles.updateButtonContainerStyle}
+            />
+        </>
+    )
 }
 
 export default function SellerFormSheet({ visible, seller, onClose, onSaved }: SellerFormSheetProps) {
@@ -73,39 +132,12 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
                 <Text style={styles.bottomSheetTitle}>
                     {editing ? UI_TEXT.EDIT_SELLER : UI_TEXT.ADD_SELLER}
                 </Text>
-                <FormInputField
-                    name="name"
-                    control={control}
-                    label={UI_TEXT.SELLER_NAME}
-                    placeholder="e.g. U Ba"
-                    required
-                    rules={{ required: VALIDATION_MESSAGES.NAME_REQUIRED }}
-                />
-                <FormInputField
-                    name="phone"
-                    control={control}
-                    label={UI_TEXT.PHONE}
-                    placeholder="e.g. 09-123-456-789"
-                    keyboardType="default"
-                />
-                <FormInputField
-                    name="address"
-                    control={control}
-                    label={UI_TEXT.ADDRESS}
-                    placeholder="e.g. No. 123, Main Road"
-                    keyboardType="default"
-                />
-                <PrimaryButton
-                    title={editing ? UI_TEXT.UPDATE : UI_TEXT.SAVE}
-                    disabled={formState.isSubmitting}
-                    loading={formState.isSubmitting}
-                    onPress={handleSubmit(handleSave)}
-                    containerStyle={styles.updateButtonContainerStyle}
-                />
-                <SecondaryButton
-                    title={UI_TEXT.CANCEL}
-                    onPress={onClose}
-                    containerStyle={styles.updateButtonContainerStyle}
+                <SellerFormFields control={control} />
+                <SellerFormActions
+                    editing={editing}
+                    saving={formState.isSubmitting}
+                    onSubmit={handleSubmit(handleSave)}
+                    onCancel={onClose}
                 />
             </View>
         </BottomSheet>
