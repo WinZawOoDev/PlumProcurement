@@ -5,8 +5,9 @@ A React Native app for plum procurement: manage market prices, record purchases 
 ## Features
 
 - **Prices** — create, edit (bottom sheet), delete and browse price entries per category (fruit/seed) and unit (cup/gallon/bushels); search by category or unit; sort by newest or price
-- **Purchasing** — record purchases against a selected price item (available items only); seller and price must be chosen before the quantity stepper unlocks; quantity stepper with live total preview; full purchase history with count and grand total; quantity-only edit per entry; CSV export
+- **Purchasing** — record purchases with multiple line items per transaction; each line is a price item with its own quantity stepper; live grand-total preview; full purchase history with count and grand total; per-line edit; CSV export
 - **Sellers** — add, edit and delete sellers with name, optional phone number and optional address; per-seller purchase stats aggregated in SQL
+- **Payments** — record payments against each seller's sold total; per-seller Owed/Paid/Balance summary; outstanding balance shown on seller rows; payment history with delete; overpayment guard (cannot pay more than the balance)
 - **Settings** — theme preference (system/light/dark), persisted on-device
 - **Notifications** — native toast on Android, in-app toast (react-native-toast-message) on iOS
 - Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions)
@@ -30,14 +31,16 @@ A React Native app for plum procurement: manage market prices, record purchases 
 │   ├── schema.ts               # One-time bootstrap: all CREATE TABLE IF NOT EXISTS
 │   ├── migrations.ts           # Versioned migrations (PRAGMA user_version) + indexes
 │   ├── prices.ts               # Transaction-guarded delete (referential check)
-│   ├── purchases.ts            # Paginated fetch, edit/delete, SQL seller stats
+│   ├── purchases.ts            # Paginated fetch (header + line items), edit/delete, SQL seller stats
+│   ├── payments.ts             # Payment CRUD, per-seller owed/paid/balance, overpayment guard
 │   ├── sellers.ts              # Transaction-guarded delete (referential check)
 │   └── settings.ts
-├── types/database.ts           # IPrice/IPurchase/ISeller/ISellerStat shared interfaces
+├── types/database.ts           # IPrice/IPurchase/IPurchaseItem/IPayment/ISeller/ISellerStat/ISellerPaymentStat shared interfaces
 ├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN, THEME_MODES)
 ├── services/                   # Data-access layer wrapping database/
 │   ├── priceService.ts
 │   ├── purchaseService.ts      # getPurchasesPaginated(page,size,query) + edit/remove + seller stats
+│   ├── paymentService.ts       # record/edit/remove payments + summaries
 │   ├── sellerService.ts
 │   └── settingsService.ts      # onboarded flag + theme preference
 ├── context/
@@ -62,8 +65,8 @@ A React Native app for plum procurement: manage market prices, record purchases 
 │   └── ErrorBoundary.tsx       # Top-level crash fallback
 ├── screens/
 │   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards
-│   ├── purchasing/             # Record purchase, paginated history (LIKE search), quantity edit sheet, CSV export
-│   ├── seller/                 # Seller list + SQL-aggregated stats, form sheet (name/phone/address)
+│   ├── purchasing/             # Record purchase (multi-line), paginated history (LIKE search), edit sheet, CSV export
+│   ├── seller/                 # Seller list + SQL-aggregated stats + balances, form sheet, detail + payments
 │   └── settings/               # Theme preference
 ├── utils/
 │   ├── index.ts                # Formatting/validation + CSV builders (BOM, filename)
@@ -135,6 +138,21 @@ maestro test .maestro/ # Maestro
 ## Changelog
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### 2026-09-07
+
+**Database**
+- Normalized `purchases` into a header (`purchases`) + line items (`purchase_items`) so a single purchase can hold multiple plum types/units; migration v3 backfills legacy rows (one header + one item each, ids/totals preserved) and skips the swap when already normalized
+- New `payments` table (seller-level, optional `purchase_id` tie) with indexes
+
+**Features**
+- Purchasing: record a purchase with multiple line items (price + quantity per line), add/remove lines, live grand total; history rows list each line; edit sheet updates per-line quantities; CSV exports one row per line item
+- Payments: per-seller Owed/Paid/Balance summary, "Record Payment" sheet (amount, optional method/note), payment history with delete, outstanding balance badge on seller rows
+- Overpayment guard: a payment cannot exceed a seller's outstanding balance (transaction-guarded); sellers with payments cannot be deleted
+
+**Refactor**
+- `IPurchase` split into `IPurchase` + `IPurchaseItem` + `IPurchaseDetail`; search matches seller name or line-item category/unit
+- Seller detail switched to a ScrollView with payment + purchase sections (no nested VirtualizedList)
 
 ### 2026-09-02 (II)
 
