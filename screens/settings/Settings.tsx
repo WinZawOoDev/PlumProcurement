@@ -43,9 +43,127 @@ function SettingsSectionHeader({ icon, title, description }: { icon: string; tit
     )
 }
 
-export default function Settings() {
+function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected: boolean; onPress: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    return (
+        <Pressable
+            onPress={onPress}
+            hitSlop={4}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={`${A11Y_LABELS.SELECT_THEME_MODE}: ${THEME_MODE_LABELS[mode]}`}
+            style={({ pressed }) => [
+                styles.settingsThemeOption,
+                selected && styles.settingsThemeOptionSelected,
+                pressed && styles.settingsThemeOptionPressed,
+            ]}
+        >
+            <View
+                style={[
+                    styles.settingsThemeOptionIconCircle,
+                    selected && styles.settingsThemeOptionIconCircleSelected,
+                ]}
+            >
+                <Ionicons
+                    name={THEME_MODE_ICONS[mode] as any}
+                    size={18}
+                    color={selected ? theme.colors.white : theme.colors.primary}
+                />
+            </View>
+            <RNText
+                style={[
+                    styles.settingsThemeOptionLabel,
+                    selected && styles.settingsThemeOptionLabelSelected,
+                ]}
+            >
+                {THEME_MODE_LABELS[mode]}
+            </RNText>
+            <RNText style={styles.settingsThemeOptionHint}>{THEME_MODE_HINTS[mode]}</RNText>
+        </Pressable>
+    )
+}
+
+function AppearanceSection({ mode, onSelect }: { mode: ThemeMode; onSelect: (mode: ThemeMode) => void }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.settingsSectionCard}>
+            <SettingsSectionHeader
+                icon="contrast-outline"
+                title={UI_TEXT.APPEARANCE}
+                description={UI_TEXT.APPEARANCE_DESCRIPTION}
+            />
+            <View style={styles.settingsThemeOptionsRow}>
+                {THEME_MODES.map((m) => (
+                    <ThemeModeTile key={m} mode={m} selected={mode === m} onPress={() => onSelect(m)} />
+                ))}
+            </View>
+        </View>
+    )
+}
+
+function ThemePreviewSection({ mode }: { mode: ThemeMode }) {
+    const styles = useStyles()
+    const { theme } = useTheme()
+    return (
+        <View style={styles.settingsSectionCard}>
+            <SettingsSectionHeader
+                icon="eye-outline"
+                title={UI_TEXT.THEME_PREVIEW_TITLE}
+                description={UI_TEXT.THEME_PREVIEW_DESCRIPTION}
+            />
+            <View style={styles.settingsPreviewRow}>
+                <View style={styles.settingsPreviewDot}>
+                    <Ionicons name="pricetag-outline" size={20} color={theme.colors.white} />
+                </View>
+                <View style={styles.settingsPreviewTextBlock}>
+                    <View style={[styles.settingsPreviewBar, styles.settingsPreviewBarWide]} />
+                    <View style={[styles.settingsPreviewBar, styles.settingsPreviewBarNarrow]} />
+                </View>
+                <View style={styles.settingsPreviewPill}>
+                    <RNText style={[styles.settingsThemeOptionLabel, styles.settingsThemeOptionLabelSelected]}>
+                        {THEME_MODE_LABELS[mode]}
+                    </RNText>
+                </View>
+            </View>
+        </View>
+    )
+}
+
+function DataStorageSection() {
+    const styles = useStyles()
+    return (
+        <View style={styles.settingsSectionCard}>
+            <SettingsSectionHeader
+                icon="server-outline"
+                title={UI_TEXT.DATA_STORAGE}
+                description={UI_TEXT.DATA_STORAGE_DESCRIPTION}
+            />
+        </View>
+    )
+}
+
+function AboutSection() {
+    const styles = useStyles()
+    return (
+        <View style={styles.settingsSectionCard}>
+            <SettingsSectionHeader
+                icon="information-circle-outline"
+                title={UI_TEXT.ABOUT}
+                description={UI_TEXT.APP_TAGLINE}
+            />
+            <View style={styles.settingsAboutNameRow}>
+                <RNText style={styles.settingsAppName}>{UI_TEXT.APP_NAME}</RNText>
+                <View style={styles.settingsVersionPill}>
+                    <RNText style={styles.settingsVersionText}>{UI_TEXT.APP_VERSION}</RNText>
+                </View>
+            </View>
+        </View>
+    )
+}
+
+export default function Settings() {
+    const styles = useStyles()
     const { mode, setMode } = useThemeMode()
 
     const handleSelectMode = (next: ThemeMode) => {
@@ -64,99 +182,10 @@ export default function Settings() {
                     contentContainerStyle={styles.settingsScrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.settingsSectionCard}>
-                        <SettingsSectionHeader
-                            icon="contrast-outline"
-                            title={UI_TEXT.APPEARANCE}
-                            description={UI_TEXT.APPEARANCE_DESCRIPTION}
-                        />
-                        <View style={styles.settingsThemeOptionsRow}>
-                            {THEME_MODES.map((m) => {
-                                const selected = mode === m
-                                return (
-                                    <Pressable
-                                        key={m}
-                                        onPress={() => handleSelectMode(m)}
-                                        hitSlop={4}
-                                        accessibilityRole="radio"
-                                        accessibilityState={{ checked: selected }}
-                                        accessibilityLabel={`${A11Y_LABELS.SELECT_THEME_MODE}: ${THEME_MODE_LABELS[m]}`}
-                                        style={({ pressed }) => [
-                                            styles.settingsThemeOption,
-                                            selected && styles.settingsThemeOptionSelected,
-                                            pressed && styles.settingsThemeOptionPressed,
-                                        ]}
-                                    >
-                                        <View
-                                            style={[
-                                                styles.settingsThemeOptionIconCircle,
-                                                selected && styles.settingsThemeOptionIconCircleSelected,
-                                            ]}
-                                        >
-                                            <Ionicons
-                                                name={THEME_MODE_ICONS[m] as any}
-                                                size={18}
-                                                color={selected ? theme.colors.white : theme.colors.primary}
-                                            />
-                                        </View>
-                                        <RNText
-                                            style={[
-                                                styles.settingsThemeOptionLabel,
-                                                selected && styles.settingsThemeOptionLabelSelected,
-                                            ]}
-                                        >
-                                            {THEME_MODE_LABELS[m]}
-                                        </RNText>
-                                        <RNText style={styles.settingsThemeOptionHint}>{THEME_MODE_HINTS[m]}</RNText>
-                                    </Pressable>
-                                )
-                            })}
-                        </View>
-                    </View>
-
-                    <View style={styles.settingsSectionCard}>
-                        <SettingsSectionHeader
-                            icon="eye-outline"
-                            title={UI_TEXT.THEME_PREVIEW_TITLE}
-                            description={UI_TEXT.THEME_PREVIEW_DESCRIPTION}
-                        />
-                        <View style={styles.settingsPreviewRow}>
-                            <View style={styles.settingsPreviewDot}>
-                                <Ionicons name="pricetag-outline" size={20} color={theme.colors.white} />
-                            </View>
-                            <View style={styles.settingsPreviewTextBlock}>
-                                <View style={[styles.settingsPreviewBar, styles.settingsPreviewBarWide]} />
-                                <View style={[styles.settingsPreviewBar, styles.settingsPreviewBarNarrow]} />
-                            </View>
-                            <View style={styles.settingsPreviewPill}>
-                                <RNText style={[styles.settingsThemeOptionLabel, styles.settingsThemeOptionLabelSelected]}>
-                                    {THEME_MODE_LABELS[mode]}
-                                </RNText>
-                            </View>
-                        </View>
-                    </View>
-
-                    <View style={styles.settingsSectionCard}>
-                        <SettingsSectionHeader
-                            icon="server-outline"
-                            title={UI_TEXT.DATA_STORAGE}
-                            description={UI_TEXT.DATA_STORAGE_DESCRIPTION}
-                        />
-                    </View>
-
-                    <View style={styles.settingsSectionCard}>
-                        <SettingsSectionHeader
-                            icon="information-circle-outline"
-                            title={UI_TEXT.ABOUT}
-                            description={UI_TEXT.APP_TAGLINE}
-                        />
-                        <View style={styles.settingsAboutNameRow}>
-                            <RNText style={styles.settingsAppName}>{UI_TEXT.APP_NAME}</RNText>
-                            <View style={styles.settingsVersionPill}>
-                                <RNText style={styles.settingsVersionText}>{UI_TEXT.APP_VERSION}</RNText>
-                            </View>
-                        </View>
-                    </View>
+                    <AppearanceSection mode={mode} onSelect={handleSelectMode} />
+                    <ThemePreviewSection mode={mode} />
+                    <DataStorageSection />
+                    <AboutSection />
 
                     <RNText style={styles.settingsFooterNote}>{UI_TEXT.SETTINGS_FOOTER_NOTE}</RNText>
                 </ScrollView>
