@@ -39,6 +39,75 @@ const MIGRATIONS: Migration[] = [
             }
         },
     },
+    {
+        version: 3,
+        up: async () => {
+            const db = initDb()
+            // Normalize purchases: split the flattened rows into a purchases
+            // header + purchase_items lines, and introduce the payments table.
+            const { results: infoResults } = await db.executeAsync(`PRAGMA table_info(purchases)`)
+            const columns = (infoResults as unknown as Array<{ name: string }>).map((col) => col.name)
+
+            const legacyFlat = columns.includes('price_id') && columns.includes('quantity')
+
+            await db.executeAsync(`CREATE TABLE IF NOT EXISTS purchase_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+                price_id INTEGER REFERENCES prices(id) ON DELETE RESTRICT,
+                category TEXT NOT NULL,
+                unit TEXT NOT NULL,
+                unit_price REAL NOT NULL,
+                quantity INTEGER NOT NULL CHECK(quantity > 0),
+                line_total REAL NOT NULL
+            )`)
+            await db.executeAsync(`CREATE TABLE IF NOT EXISTS payments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                seller_id INTEGER NOT NULL REFERENCES sellers(id) ON DELETE RESTRICT,
+                purchase_id INTEGER REFERENCES purchases(id) ON DELETE SET NULL,
+                amount REAL NOT NULL CHECK(amount > 0),
+                method TEXT,
+                note TEXT,
+                paid_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )`)
+
+            if (legacyFlat) {
+                // Recreate purchases with the normalized header shape while
+                // preserving ids, totals and timestamps for existing history.
+                await db.executeAsync(`PRAGMA foreign_keys = OFF`)
+                try {
+                    await db.executeAsync(`CREATE TABLE purchases_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
+                        total REAL NOT NULL,
+                        purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )`)
+                    await db.executeAsync(
+                        `INSERT INTO purchases_new (id, seller_id, total, purchased_at, created_at, updated_at)
+                         SELECT id, seller_id, total, created_at, created_at, created_at FROM purchases`
+                    )
+                    // Each legacy row becomes one line item.
+                    await db.executeAsync(
+                        `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
+                         SELECT id, price_id, category, unit, unit_price, quantity, total FROM purchases`
+                    )
+                    await db.executeAsync(`DROP TABLE purchases`)
+                    await db.executeAsync(`ALTER TABLE purchases_new RENAME TO purchases`)
+                } finally {
+                    await db.executeAsync(`PRAGMA foreign_keys = ON`)
+                }
+            }
+
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_seller_id ON purchases(seller_id)`)
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_created_at ON purchases(created_at)`)
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase_id ON purchase_items(purchase_id)`)
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchase_items_price_id ON purchase_items(price_id)`)
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_payments_seller_id ON payments(seller_id)`)
+            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_payments_paid_at ON payments(paid_at)`)
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null

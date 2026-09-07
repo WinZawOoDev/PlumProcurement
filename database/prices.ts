@@ -108,7 +108,7 @@ export async function deletePrice(id: number): Promise<void> {
         await db.executeAsync(`BEGIN IMMEDIATE`)
         try {
             const { results } = await db.executeAsync(
-                `SELECT COUNT(*) AS count FROM purchases WHERE price_id = ?`,
+                `SELECT COUNT(*) AS count FROM purchase_items WHERE price_id = ?`,
                 [id]
             );
             const referencedCount =

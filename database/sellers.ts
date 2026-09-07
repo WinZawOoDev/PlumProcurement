@@ -118,6 +118,15 @@ export async function deleteSeller(id: number): Promise<void> {
             if (referencedCount > 0) {
                 throw new DatabaseError(MESSAGES.ERROR_SELLER_IN_USE)
             }
+            const { results: paymentResults } = await db.executeAsync(
+                `SELECT COUNT(*) AS count FROM payments WHERE seller_id = ?`,
+                [id]
+            );
+            const paymentCount =
+                (paymentResults as unknown as Array<{ count: number }>)[0]?.count ?? 0;
+            if (paymentCount > 0) {
+                throw new DatabaseError(MESSAGES.ERROR_SELLER_HAS_PAYMENTS)
+            }
             await db.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
             await db.executeAsync(`COMMIT`)
         } catch (innerError) {
