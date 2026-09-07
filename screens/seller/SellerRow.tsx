@@ -4,7 +4,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, DIMENSIONS } from '../../constants'
+import { A11Y_LABELS, DIMENSIONS, UI_TEXT } from '../../constants'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
@@ -13,9 +13,10 @@ interface SellerRowProps {
     onPress?: () => void
     purchaseCount?: number
     purchaseTotal?: number
+    balance?: number
 }
 
-function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal }: SellerRowProps) {
+function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal, balance }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
@@ -41,6 +42,11 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal 
                 {(purchaseCount ?? 0) > 0 && (
                     <RNText style={[styles.sellerPhoneText, styles.sellerPurchaseStats]}>
                         {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$
+                    </RNText>
+                )}
+                {(balance ?? 0) > 0 && (
+                    <RNText style={[styles.sellerPhoneText, styles.sellerBalanceText]}>
+                        {UI_TEXT.BALANCE}: {(balance ?? 0).toFixed(2)}$
                     </RNText>
                 )}
             </View>

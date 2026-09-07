@@ -9,6 +9,7 @@ import { PrimaryButton } from '../../components/buttons/Button'
 import { ROUTES, UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
+import { paymentService } from '../../services/paymentService'
 import { ISeller } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
@@ -100,6 +101,7 @@ function SellerListSkeleton() {
 function SellerList({
     sellers,
     sellerStats,
+    balances,
     loading,
     hasQuery,
     searchQuery,
@@ -109,6 +111,7 @@ function SellerList({
 }: {
     sellers: ISeller[]
     sellerStats: SellerStats
+    balances: Record<number, number>
     loading: boolean
     hasQuery: boolean
     searchQuery: string
@@ -134,6 +137,7 @@ function SellerList({
                     seller={item}
                     purchaseCount={sellerStats[item.id]?.count}
                     purchaseTotal={sellerStats[item.id]?.total}
+                    balance={balances[item.id]}
                     onPress={() => onOpenDetail(item)}
                     onEdit={() => onEdit(item)}
                 />
@@ -182,6 +186,7 @@ export default function Sellers() {
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [sellerStats, setSellerStats] = useState<SellerStats>({})
+    const [balances, setBalances] = useState<Record<number, number>>({})
     const { loading, withLoading } = useLoading(false)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISeller | null>(null)
@@ -205,9 +210,10 @@ export default function Sellers() {
     const loadSellers = useCallback(async () => {
         await withLoading(async () => {
             try {
-                const [sellerList, stats] = await Promise.all([
+                const [sellerList, stats, summaries] = await Promise.all([
                     sellerService.getSellers(),
                     purchaseService.getSellerStats().catch(() => []),
+                    paymentService.getPaymentSummaries().catch(() => []),
                 ])
                 setSellers(sellerList)
                 const statsMap: Record<number, { count: number; total: number }> = {}
@@ -215,6 +221,11 @@ export default function Sellers() {
                     statsMap[s.seller_id] = { count: s.purchase_count, total: s.total_spent }
                 }
                 setSellerStats(statsMap)
+                const balanceMap: Record<number, number> = {}
+                for (const s of summaries) {
+                    balanceMap[s.seller_id] = s.balance
+                }
+                setBalances(balanceMap)
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
@@ -249,6 +260,7 @@ export default function Sellers() {
                 <SellerList
                     sellers={visibleSellers}
                     sellerStats={sellerStats}
+                    balances={balances}
                     loading={loading}
                     hasQuery={hasQuery}
                     searchQuery={searchQuery}

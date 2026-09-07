@@ -1,0 +1,110 @@
+import { View, Text as RNText } from 'react-native'
+import React, { useEffect } from 'react'
+import { BottomSheet, Text } from '@rneui/themed'
+import { useForm } from 'react-hook-form'
+import { useStyles } from '../../styles'
+import { FormInputField, FormSelectField } from '../../components/forms/FormFields'
+import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
+import {
+    UI_TEXT,
+    MESSAGES,
+    VALIDATION_MESSAGES,
+    AMOUNT_PATTERN,
+    PAYMENT_METHODS,
+} from '../../constants'
+import { paymentService } from '../../services/paymentService'
+import { showSuccess, showError } from '../../utils/notifications'
+
+type FormData = {
+    amount: string
+    method: string
+    note: string
+}
+
+interface PaymentFormSheetProps {
+    visible: boolean
+    sellerId: number
+    balance: number
+    onClose: () => void
+    onSaved: () => void
+}
+
+export default function PaymentFormSheet({ visible, sellerId, balance, onClose, onSaved }: PaymentFormSheetProps) {
+    const styles = useStyles()
+
+    const { control, handleSubmit, reset, formState } = useForm<FormData>({
+        defaultValues: { amount: '', method: '', note: '' },
+        mode: 'onBlur',
+    })
+
+    useEffect(() => {
+        if (visible) {
+            reset({ amount: '', method: '', note: '' })
+        }
+    }, [visible, reset])
+
+    const handleSave = async (data: FormData) => {
+        const amount = parseFloat(data.amount)
+        if (!AMOUNT_PATTERN.test(data.amount.trim()) || amount <= 0) {
+            showError(MESSAGES.ERROR_INVALID_AMOUNT)
+            return
+        }
+        try {
+            await paymentService.recordPayment({
+                seller_id: sellerId,
+                purchase_id: null,
+                amount,
+                method: data.method || null,
+                note: data.note.trim() || null,
+            })
+            showSuccess(MESSAGES.PAYMENT_RECORDED_SUCCESS)
+            onSaved()
+            onClose()
+        } catch (error) {
+            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+        }
+    }
+
+    return (
+        <BottomSheet isVisible={visible} onBackdropPress={onClose} modalProps={{ animationType: 'slide' }}>
+            <View style={styles.bottomSheetContainer}>
+                <Text style={styles.bottomSheetTitle}>{UI_TEXT.RECORD_PAYMENT}</Text>
+                <RNText style={styles.purchaseItemSubtitle}>
+                    {UI_TEXT.OUTSTANDING_BALANCE}: {balance.toFixed(2)}$
+                </RNText>
+                <FormInputField
+                    name="amount"
+                    control={control}
+                    label={UI_TEXT.AMOUNT}
+                    placeholder="e.g. 50.00"
+                    keyboardType="decimal-pad"
+                    required
+                    rules={{ required: VALIDATION_MESSAGES.AMOUNT_REQUIRED }}
+                />
+                <FormSelectField
+                    name="method"
+                    control={control}
+                    label={UI_TEXT.PAYMENT_METHOD}
+                    options={[...PAYMENT_METHODS]}
+                    placeholder="Select method"
+                />
+                <FormInputField
+                    name="note"
+                    control={control}
+                    label={UI_TEXT.NOTE}
+                    placeholder="Optional note"
+                    keyboardType="default"
+                />
+                <View style={styles.formActions}>
+                    <PrimaryButton
+                        title={UI_TEXT.SAVE}
+                        disabled={formState.isSubmitting}
+                        loading={formState.isSubmitting}
+                        onPress={handleSubmit(handleSave)}
+                    />
+                    <SecondaryButton title={UI_TEXT.CANCEL} onPress={onClose} />
+                </View>
+            </View>
+        </BottomSheet>
+    )
+}
