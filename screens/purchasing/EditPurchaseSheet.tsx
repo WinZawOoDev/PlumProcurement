@@ -17,6 +17,36 @@ interface EditPurchaseSheetProps {
     onSaved: () => void
 }
 
+function EditPurchaseSummary({ total }: { total: number }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.purchaseSummaryCard}>
+            <View style={styles.purchaseSummaryRow}>
+                <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
+                <RNText style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</RNText>
+            </View>
+        </View>
+    )
+}
+
+function EditPurchaseActions({
+    saving,
+    onSave,
+    onCancel,
+}: {
+    saving: boolean
+    onSave: () => void
+    onCancel: () => void
+}) {
+    const styles = useStyles()
+    return (
+        <View style={styles.formActions}>
+            <PrimaryButton title={UI_TEXT.SAVE} disabled={saving} loading={saving} onPress={onSave} />
+            <SecondaryButton title={UI_TEXT.CANCEL} onPress={onCancel} />
+        </View>
+    )
+}
+
 export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditPurchaseSheetProps) {
     const styles = useStyles()
     const [quantity, setQuantity] = useState('1')
@@ -70,16 +100,8 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
                     </RNText>
                 )}
                 <QuantityStepper value={quantity} onChange={setQuantity} />
-                <View style={styles.purchaseSummaryCard}>
-                    <View style={styles.purchaseSummaryRow}>
-                        <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
-                        <RNText style={styles.purchaseTotalText}>{newTotal > 0 ? `${newTotal.toFixed(2)}$` : '—'}</RNText>
-                    </View>
-                </View>
-                <View style={styles.formActions}>
-                    <PrimaryButton title={UI_TEXT.SAVE} disabled={saving} loading={saving} onPress={handleSave} />
-                    <SecondaryButton title={UI_TEXT.CANCEL} onPress={onClose} />
-                </View>
+                <EditPurchaseSummary total={newTotal} />
+                <EditPurchaseActions saving={saving} onSave={handleSave} onCancel={onClose} />
             </View>
         </BottomSheet>
     )
