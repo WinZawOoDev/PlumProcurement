@@ -18,7 +18,7 @@ import {
   A11Y_LABELS,
 } from '../../constants';
 import { purchaseService } from '../../services/purchaseService';
-import { IPurchaseWithSeller } from '../../types/database';
+import { IPurchaseDetail } from '../../types/database';
 import {
   buildPurchasesCsvWithBom,
   formatDate,
@@ -91,8 +91,8 @@ function PurchaseRow({
   item,
   onEdit,
 }: {
-  item: IPurchaseWithSeller;
-  onEdit: (item: IPurchaseWithSeller) => void;
+  item: IPurchaseDetail;
+  onEdit: (item: IPurchaseDetail) => void;
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
@@ -100,15 +100,16 @@ function PurchaseRow({
     <View style={styles.purchaseItemRow}>
       <View style={styles.sellerInfo}>
         <RNText style={styles.purchaseItemTitle}>
-          {item.category} ({item.unit})
+          {item.seller_name ?? UI_TEXT.NO_SELLER}
         </RNText>
         <RNText style={styles.purchaseItemSubtitle}>
           {formatDate(item.created_at)}
-          {item.seller_name ? ` · ${UI_TEXT.SOLD_BY}: ${item.seller_name}` : ''}
         </RNText>
-        <RNText style={styles.purchaseItemSubtitle}>
-          {item.quantity} × {item.unit_price.toFixed(2)}$
-        </RNText>
+        {item.items.map((line) => (
+          <RNText key={line.id} style={styles.purchaseItemSubtitle}>
+            {line.category} ({line.unit}) × {line.quantity} @ {line.unit_price.toFixed(2)}$
+          </RNText>
+        ))}
       </View>
       <View style={styles.purchaseItemActions}>
         <RNText style={styles.purchaseItemTotal}>
@@ -202,12 +203,12 @@ function PurchaseSearch({
 export default function PurchaseDetails() {
   const styles = useStyles();
   const { theme } = useTheme();
-  const [purchases, setPurchases] = useState<IPurchaseWithSeller[]>([]);
+  const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const { loading, withLoading } = useLoading(false);
   const [editingPurchase, setEditingPurchase] =
-    useState<IPurchaseWithSeller | null>(null);
+    useState<IPurchaseDetail | null>(null);
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
@@ -293,13 +294,45 @@ export default function PurchaseDetails() {
 
   const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0);
 
-  const csv = useMemo(
-    () => buildPurchasesCsvWithBom(visiblePurchases),
+  // Flatten each purchase into one CSV row per line item.
+  const csvRows = useMemo(
+    () =>
+      visiblePurchases.flatMap((p) => {
+        if (p.items.length === 0) {
+          return [
+            {
+              id: p.id,
+              created_at: p.created_at,
+              seller_name: p.seller_name,
+              category: '',
+              unit: '',
+              unit_price: 0,
+              quantity: 0,
+              total: p.total,
+            },
+          ];
+        }
+        return p.items.map((line) => ({
+          id: p.id,
+          created_at: p.created_at,
+          seller_name: p.seller_name,
+          category: line.category,
+          unit: line.unit,
+          unit_price: line.unit_price,
+          quantity: line.quantity,
+          total: line.line_total,
+        }));
+      }),
     [visiblePurchases],
   );
 
+  const csv = useMemo(
+    () => buildPurchasesCsvWithBom(csvRows),
+    [csvRows],
+  );
+
   const handleExport = async () => {
-    if (visiblePurchases.length === 0) {
+    if (csvRows.length === 0) {
       showError(UI_TEXT.EMPTY_PURCHASE_LIST);
       return;
     }
@@ -310,7 +343,7 @@ export default function PurchaseDetails() {
       `${UI_TEXT.EXPORT_CSV}: ${filename}`,
     );
     if (result === 'failed') showError(MESSAGES.ERROR_GENERIC);
-    else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${visiblePurchases.length} rows`);
+    else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${csvRows.length} rows`);
   };
 
   return (

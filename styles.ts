@@ -745,6 +745,31 @@ export const useStyles = makeStyles((theme) => ({
         alignItems: 'center',
         gap: 0,
     },
+    purchaseItemEditor: {
+        borderWidth: 1,
+        borderColor: theme.colors.grey1,
+        borderRadius: 12,
+        padding: 10,
+        marginTop: 12,
+        gap: 4,
+    },
+    purchaseItemEditorFooter: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    addItemButton: {
+        paddingVertical: 8,
+        minHeight: 40,
+        paddingHorizontal: 14,
+    },
+    addItemButtonTitle: {
+        fontSize: 13,
+    },
+    editItemBlock: {
+        marginTop: 8,
+    },
 
 
     // ===== PRICE TREND =====
@@ -803,6 +828,10 @@ export const useStyles = makeStyles((theme) => ({
     },
     sellerPurchaseStats: {
         color: theme.colors.success,
+        fontWeight: '600',
+    },
+    sellerBalanceText: {
+        color: theme.colors.warning,
         fontWeight: '600',
     },
     rowIconButton: {
@@ -1024,6 +1053,12 @@ export const useStyles = makeStyles((theme) => ({
     },
     sellerSectionSpacer: {
         marginTop: 4,
+    },
+    recordPaymentButton: {
+        shadowColor: 'transparent',
+        elevation: 0,
+        shadowOpacity: 0,
+        marginBottom: 14,
     },
     sellerStatsSkeleton: {
         paddingVertical: 24,
