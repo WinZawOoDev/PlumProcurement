@@ -56,13 +56,20 @@ export const MESSAGES = {
   PURCHASE_RECORDED_SUCCESS: 'Purchase recorded successfully!',
   PURCHASE_UPDATE_SUCCESS: 'Purchase updated successfully!',
   PURCHASE_DELETE_SUCCESS: 'Purchase deleted successfully!',
+  PAYMENT_RECORDED_SUCCESS: 'Payment recorded successfully!',
+  PAYMENT_UPDATE_SUCCESS: 'Payment updated successfully!',
+  PAYMENT_DELETE_SUCCESS: 'Payment deleted successfully!',
   SELLER_SAVED_SUCCESS: 'Seller saved successfully!',
   SELLER_UPDATE_SUCCESS: 'Seller updated successfully!',
   SELLER_DELETE_SUCCESS: 'Seller deleted successfully!',
   ERROR_PRICE_IN_USE: 'Cannot delete this price because purchases reference it.',
   ERROR_SELLER_IN_USE: 'Cannot delete this seller because purchases reference it.',
+  ERROR_SELLER_HAS_PAYMENTS: 'Cannot delete this seller because payments reference it.',
   ERROR_SELECT_PRICE: 'Please select a price item first.',
   ERROR_SELECT_SELLER: 'Please select a seller first.',
+  ERROR_NO_ITEMS: 'Add at least one item to record a purchase.',
+  ERROR_PAYMENT_EXCEEDS_BALANCE: 'Payment exceeds the outstanding balance.',
+  ERROR_INVALID_AMOUNT: 'Amount must be greater than zero.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',
   ERROR_DATABASE: 'Database error occurred.',
   ERROR_INVALID_INPUT: 'Invalid input. Please check your data.',
@@ -126,6 +133,9 @@ export const UI_TEXT = {
   QUANTITY: 'Quantity',
   UNIT_PRICE: 'Unit Price',
   TOTAL: 'Total',
+  ITEMS: 'Items',
+  ADD_ITEM: 'Add Item',
+  REMOVE_ITEM: 'Remove',
   RECENT_PURCHASES: 'Recent Purchases',
   PURCHASE_HISTORY_TITLE: 'Purchase History',
   PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
@@ -136,6 +146,18 @@ export const UI_TEXT = {
   TOTAL_VALUE: 'Total Value',
   PURCHASES_COUNT: 'Purchases',
   AVERAGE_VALUE: 'Average',
+
+  // Payments
+  OWED: 'Owed',
+  PAID: 'Paid',
+  BALANCE: 'Balance',
+  RECORD_PAYMENT: 'Record Payment',
+  PAYMENT_HISTORY: 'Payment History',
+  PAYMENT_METHOD: 'Payment Method',
+  NOTE: 'Note (optional)',
+  AMOUNT: 'Amount',
+  OUTSTANDING_BALANCE: 'Outstanding Balance',
+  EMPTY_PAYMENT_LIST: 'No payments recorded yet',
 
   // Sellers
   SELLERS_DESCRIPTION: 'Manage the sellers you buy from.',
@@ -184,6 +206,11 @@ export const A11Y_LABELS = {
   DELETE_SELLER: 'Delete seller',
   EDIT_PURCHASE: 'Edit purchase',
   DELETE_PURCHASE: 'Delete purchase',
+  RECORD_PAYMENT: 'Record payment',
+  EDIT_PAYMENT: 'Edit payment',
+  DELETE_PAYMENT: 'Delete payment',
+  ADD_PURCHASE_ITEM: 'Add purchase item',
+  REMOVE_PURCHASE_ITEM: 'Remove purchase item',
   INCREASE_QUANTITY: 'Increase quantity',
   DECREASE_QUANTITY: 'Decrease quantity',
   CLEAR_SEARCH: 'Clear search',
@@ -246,10 +273,19 @@ export const VALIDATION_MESSAGES = {
   PRICE_REQUIRED: 'Price is required',
   PRICE_INVALID: 'Enter a valid price (e.g. 12.50)',
   NAME_REQUIRED: 'Name is required',
+  AMOUNT_REQUIRED: 'Amount is required',
 } as const;
 
 export const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;
 export const QUANTITY_PATTERN = /^\d+$/;
+export const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
+
+// ===== PAYMENT METHODS =====
+export const PAYMENT_METHODS = [
+    { label: 'Cash', value: 'cash' },
+    { label: 'Bank transfer', value: 'bank' },
+    { label: 'Mobile money', value: 'mobile' },
+] as const;
 
 // ===== PICKER CONFIGURATION =====
 export const PICKER_CONFIG = {
