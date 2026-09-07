@@ -7,21 +7,22 @@ import {
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
+    type NewPurchase,
+    type NewPurchaseItem,
+    type PurchaseUpdates,
     type PurchasesPage,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
-import { IPurchaseWithSeller, ISellerStat } from '../types/database'
+import { IPurchaseDetail, ISellerStat } from '../types/database'
 
-export type NewPurchase = Omit<IPurchaseWithSeller, 'id' | 'seller_name'>
-export type PurchaseUpdates = { quantity?: number; seller_id?: number | null }
-export type { PurchasesPage }
+export type { NewPurchase, NewPurchaseItem, PurchaseUpdates, PurchasesPage }
 
 /**
  * Abstraction layer over the purchases database.
  * Components depend on this service instead of importing database.ts directly.
  */
 export class PurchaseService {
-    async getPurchases(): Promise<IPurchaseWithSeller[]> {
+    async getPurchases(): Promise<IPurchaseDetail[]> {
         await initializeSellers()
         await initializePurchases()
         return fetchPurchases()
@@ -29,7 +30,8 @@ export class PurchaseService {
 
     /**
      * Keyset pagination: pass the previous page's `nextCursor` as `cursor`
-     * (undefined for the first page). Query filters by category/seller name.
+     * (undefined for the first page). Query filters by seller name or item
+     * category/unit.
      */
     async getPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
         await initializeSellers()
@@ -61,7 +63,7 @@ export class PurchaseService {
         return fetchSellerStats()
     }
 
-    async getPurchasesBySeller(sellerId: number): Promise<IPurchaseWithSeller[]> {
+    async getPurchasesBySeller(sellerId: number): Promise<IPurchaseDetail[]> {
         await initializeSellers()
         await initializePurchases()
         return fetchPurchasesBySeller(sellerId)
