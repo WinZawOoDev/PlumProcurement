@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { BottomSheet } from '@rneui/themed'
-import { useForm } from 'react-hook-form'
+import { Control, useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import {
     FormInputField,
@@ -35,6 +35,77 @@ interface EditPriceProps {
     visible: boolean
     price: IPrice | null
     onClose: () => void
+}
+
+function EditPriceFields({ control }: { control: Control<FormData> }) {
+    return (
+        <>
+            <FormSelectField
+                name="category"
+                control={control}
+                label={UI_TEXT.CATEGORY}
+                options={CATEGORY_LIST}
+                required
+                rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
+            />
+            <FormButtonGroupField
+                name="unit"
+                control={control}
+                label={UI_TEXT.UNIT_SELECTION}
+                buttons={UNIT_LIST}
+                required
+                rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
+            />
+            <FormInputField
+                name="price"
+                control={control}
+                label={UI_TEXT.PRICE}
+                placeholder={FORM_CONFIG.PRICE_PLACEHOLDER}
+                keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
+                required
+                rules={{
+                    required: VALIDATION_MESSAGES.PRICE_REQUIRED,
+                    pattern: {
+                        value: PRICE_PATTERN,
+                        message: VALIDATION_MESSAGES.PRICE_INVALID,
+                    },
+                }}
+            />
+            <FormCheckboxField
+                name="isAvailable"
+                control={control}
+                label={UI_TEXT.AVAILABLE}
+            />
+        </>
+    )
+}
+
+function EditPriceActions({
+    saving,
+    onSubmit,
+    onCancel,
+}: {
+    saving: boolean
+    onSubmit: () => void
+    onCancel: () => void
+}) {
+    const styles = useStyles()
+    return (
+        <>
+            <PrimaryButton
+                title={UI_TEXT.UPDATE}
+                disabled={saving}
+                loading={saving}
+                onPress={onSubmit}
+                containerStyle={styles.updateButtonContainerStyle}
+            />
+            <SecondaryButton
+                title={UI_TEXT.CANCEL}
+                onPress={onCancel}
+                containerStyle={styles.updateButtonContainerStyle}
+            />
+        </>
+    )
 }
 
 export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
@@ -90,53 +161,11 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
         >
             <View style={styles.bottomSheetContainer}>
                 <Text style={styles.bottomSheetTitle}>{UI_TEXT.EDIT_PRICE}</Text>
-                <FormSelectField
-                    name="category"
-                    control={control}
-                    label={UI_TEXT.CATEGORY}
-                    options={CATEGORY_LIST}
-                    required
-                    rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
-                />
-                <FormButtonGroupField
-                    name="unit"
-                    control={control}
-                    label={UI_TEXT.UNIT_SELECTION}
-                    buttons={UNIT_LIST}
-                    required
-                    rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
-                />
-                <FormInputField
-                    name="price"
-                    control={control}
-                    label={UI_TEXT.PRICE}
-                    placeholder={FORM_CONFIG.PRICE_PLACEHOLDER}
-                    keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
-                    required
-                    rules={{
-                        required: VALIDATION_MESSAGES.PRICE_REQUIRED,
-                        pattern: {
-                            value: PRICE_PATTERN,
-                            message: VALIDATION_MESSAGES.PRICE_INVALID,
-                        },
-                    }}
-                />
-                <FormCheckboxField
-                    name="isAvailable"
-                    control={control}
-                    label={UI_TEXT.AVAILABLE}
-                />
-                <PrimaryButton
-                    title={UI_TEXT.UPDATE}
-                    disabled={formState.isSubmitting}
-                    loading={formState.isSubmitting}
-                    onPress={handleSubmit(handleUpdate)}
-                    containerStyle={styles.updateButtonContainerStyle}
-                />
-                <SecondaryButton
-                    title={UI_TEXT.CANCEL}
-                    onPress={onClose}
-                    containerStyle={styles.updateButtonContainerStyle}
+                <EditPriceFields control={control} />
+                <EditPriceActions
+                    saving={formState.isSubmitting}
+                    onSubmit={handleSubmit(handleUpdate)}
+                    onCancel={onClose}
                 />
             </View>
         </BottomSheet>
