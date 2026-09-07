@@ -153,6 +153,52 @@ function LoadMoreSkeleton() {
   );
 }
 
+function PurchaseActions({
+  canExport,
+  onExport,
+  searchVisible,
+  onToggleSearch,
+}: {
+  canExport: boolean;
+  onExport: () => void;
+  searchVisible: boolean;
+  onToggleSearch: () => void;
+}) {
+  const styles = useStyles();
+  return (
+    <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
+      <SecondaryButton
+        title={UI_TEXT.EXPORT_CSV}
+        disabled={!canExport}
+        onPress={onExport}
+        buttonStyle={styles.exportButton}
+      />
+      <SearchIconButton active={searchVisible} onPress={onToggleSearch} />
+    </View>
+  );
+}
+
+function PurchaseSearch({
+  visible,
+  query,
+  onChangeText,
+}: {
+  visible: boolean;
+  query: string;
+  onChangeText: (query: string) => void;
+}) {
+  if (!visible) {
+    return null;
+  }
+  return (
+    <SearchBar
+      placeholder={UI_TEXT.SEARCH_PURCHASES_PLACEHOLDER}
+      value={query}
+      onChangeText={onChangeText}
+    />
+  );
+}
+
 export default function PurchaseDetails() {
   const styles = useStyles();
   const { theme } = useTheme();
@@ -282,26 +328,18 @@ export default function PurchaseDetails() {
           <PurchaseSummaryCard count={visiblePurchases.length} total={grandTotal} />
         )}
 
-        <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
-          <SecondaryButton
-            title={UI_TEXT.EXPORT_CSV}
-            disabled={purchases.length === 0}
-            onPress={handleExport}
-            buttonStyle={styles.exportButton}
-          />
-          <SearchIconButton
-            active={searchVisible}
-            onPress={handleToggleSearch}
-          />
-        </View>
+        <PurchaseActions
+          canExport={purchases.length > 0}
+          onExport={handleExport}
+          searchVisible={searchVisible}
+          onToggleSearch={handleToggleSearch}
+        />
 
-        {searchVisible && (
-          <SearchBar
-            placeholder={UI_TEXT.SEARCH_PURCHASES_PLACEHOLDER}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        )}
+        <PurchaseSearch
+          visible={searchVisible}
+          query={searchQuery}
+          onChangeText={setSearchQuery}
+        />
 
         {isInitialLoading ? (
           <PurchaseListSkeleton />
