@@ -35,6 +35,69 @@ function StatCell({ label, value, icon }: { label: string; value: string; icon: 
     )
 }
 
+function SellerBackRow({ onBack }: { onBack: () => void }) {
+    const styles = useStyles()
+    const { theme } = useTheme()
+    return (
+        <View style={styles.sellerDetailsBackRow}>
+            <IconButton
+                icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
+                variant="ghost"
+                onPress={onBack}
+                accessibilityLabel={A11Y_LABELS.GO_BACK}
+            />
+            <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
+        </View>
+    )
+}
+
+function SellerProfileHeader({
+    seller,
+    description,
+    onDelete,
+}: {
+    seller: ISeller
+    description: React.ReactNode | undefined
+    onDelete: () => void
+}) {
+    const styles = useStyles()
+    const { theme } = useTheme()
+    return (
+        <SectionHeader
+            icon="person-outline"
+            title={seller.name}
+            description={description}
+            action={
+                <Pressable
+                    onPress={onDelete}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
+                    style={({ pressed }) => [
+                        styles.sellerDeleteButton,
+                        pressed && styles.sellerDeleteButtonPressed,
+                    ]}
+                >
+                    <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
+                </Pressable>
+            }
+        />
+    )
+}
+
+function SellerStatsSection({ count, total, average }: { count: number; total: number; average: number }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.sellerStatsRow}>
+            <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(count)} icon="receipt-outline" />
+            <View style={styles.sellerStatDivider} />
+            <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
+            <View style={styles.sellerStatDivider} />
+            <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
+        </View>
+    )
+}
+
 function SellerDetailsSkeleton() {
     const styles = useStyles()
     return (
@@ -172,15 +235,7 @@ export default function SellerDetails() {
         return (
             <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
                 <View style={styles.priceListContainer}>
-                    <View style={styles.sellerDetailsBackRow}>
-                        <IconButton
-                            icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                            variant="ghost"
-                            onPress={() => navigation.goBack()}
-                            accessibilityLabel={A11Y_LABELS.GO_BACK}
-                        />
-                        <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
-                    </View>
+                    <SellerBackRow onBack={() => navigation.goBack()} />
                     <EmptyState
                         icon="people-outline"
                         title={UI_TEXT.EMPTY_SELLER_LIST}
@@ -194,45 +249,17 @@ export default function SellerDetails() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={[styles.priceListContainer, styles.fillContainer]}>
-                <View style={styles.sellerDetailsBackRow}>
-                    <IconButton
-                        icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                        variant="ghost"
-                        onPress={() => navigation.goBack()}
-                        accessibilityLabel={A11Y_LABELS.GO_BACK}
-                    />
-                    <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
-                </View>
+                <SellerBackRow onBack={() => navigation.goBack()} />
 
                 {seller ? (
                     <>
-                        <SectionHeader
-                            icon="person-outline"
-                            title={seller.name}
+                        <SellerProfileHeader
+                            seller={seller}
                             description={headerDescription}
-                            action={
-                                <Pressable
-                                    onPress={() => seller && confirmDelete(seller.id)}
-                                    hitSlop={8}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={A11Y_LABELS.DELETE_SELLER}
-                                    style={({ pressed }) => [
-                                        styles.sellerDeleteButton,
-                                        pressed && styles.sellerDeleteButtonPressed,
-                                    ]}
-                                >
-                                    <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
-                                </Pressable>
-                            }
+                            onDelete={() => confirmDelete(seller.id)}
                         />
 
-                        <View style={styles.sellerStatsRow}>
-                            <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(purchases.length)} icon="receipt-outline" />
-                            <View style={styles.sellerStatDivider} />
-                            <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
-                            <View style={styles.sellerStatDivider} />
-                            <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
-                        </View>
+                        <SellerStatsSection count={purchases.length} total={total} average={average} />
 
                         <View style={styles.sellerSectionSpacer}>
                             <SectionHeader
