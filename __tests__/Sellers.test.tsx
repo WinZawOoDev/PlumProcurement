@@ -5,6 +5,7 @@ import { ThemeProvider } from '@rneui/themed'
 import Sellers from '../screens/seller/Sellers'
 import { sellerService } from '../services/sellerService'
 import { purchaseService } from '../services/purchaseService'
+import { paymentService } from '../services/paymentService'
 import { A11Y_LABELS, ROUTES } from '../constants'
 import { ISeller, ISellerStat } from '../types/database'
 import { makeAppTheme } from '../theme'
@@ -28,6 +29,11 @@ jest.mock('../services/purchaseService', () => ({
     purchaseService: {
         getSellerStats: jest.fn(),
         getPurchasesBySeller: jest.fn(),
+    },
+}))
+jest.mock('../services/paymentService', () => ({
+    paymentService: {
+        getPaymentSummaries: jest.fn(),
     },
 }))
 
@@ -87,6 +93,7 @@ beforeEach(() => {
     mockNavigate.mockClear()
     ;(sellerService.getSellers as jest.Mock).mockResolvedValue(mockSellers)
     ;(purchaseService.getSellerStats as jest.Mock).mockResolvedValue(mockStats)
+    ;(paymentService.getPaymentSummaries as jest.Mock).mockResolvedValue([])
     ;(sellerService.removeSeller as jest.Mock).mockResolvedValue(undefined)
     ;(purchaseService.getPurchasesBySeller as jest.Mock).mockResolvedValue([])
 })
@@ -118,5 +125,15 @@ describe('Sellers screen', () => {
             row.props.onPress()
         })
         expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS, { sellerId: 1 })
+    })
+
+    test('shows outstanding balance on seller rows', async () => {
+        ;(paymentService.getPaymentSummaries as jest.Mock).mockResolvedValue([
+            { seller_id: 1, seller_name: 'U Ba', total_owed: 15, total_paid: 5, balance: 10 },
+        ])
+
+        const root = await renderScreen()
+
+        expect(textContent(root)).toContain('Balance: 10.00$')
     })
 })

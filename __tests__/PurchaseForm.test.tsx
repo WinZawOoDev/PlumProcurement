@@ -165,13 +165,16 @@ describe('PurchaseForm', () => {
         })
 
         expect(purchaseService.recordPurchase).toHaveBeenCalledWith({
-            price_id: 1,
             seller_id: 1,
-            category: 'grains',
-            unit: 'PER KG',
-            unit_price: 100,
-            quantity: 1,
-            total: 100,
+            items: [
+                {
+                    price_id: 1,
+                    category: 'grains',
+                    unit: 'PER KG',
+                    unit_price: 100,
+                    quantity: 1,
+                },
+            ],
         })
         expect(onRecorded).toHaveBeenCalledTimes(1)
     })

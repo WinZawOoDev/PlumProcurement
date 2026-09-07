@@ -17,10 +17,10 @@ beforeEach(() => {
 
 describe('deleteSeller referential guard', () => {
     test('blocks deletion when purchases reference the seller (rolls back)', async () => {
-        // Call order: BEGIN, SELECT count, ROLLBACK
+        // Call order: BEGIN, SELECT purchases count, ROLLBACK
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
-            .mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT
+            .mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT purchases
             .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(deleteSeller(5)).rejects.toThrow(
@@ -32,28 +32,47 @@ describe('deleteSeller referential guard', () => {
         expect(open).toHaveBeenCalledTimes(1)
     })
 
-    test('deletes the seller when it has no purchases (commits)', async () => {
-        // Call order: BEGIN, SELECT count, DELETE, COMMIT
+    test('blocks deletion when payments reference the seller (rolls back)', async () => {
+        // Call order: BEGIN, SELECT purchases count (0), SELECT payments count (2), ROLLBACK
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
-            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT
+            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
+            .mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT payments
+            .mockResolvedValueOnce({}) // ROLLBACK
+
+        await expect(deleteSeller(5)).rejects.toThrow(
+            'Cannot delete this seller because payments reference it.'
+        )
+        expect(executeAsync).toHaveBeenCalledTimes(4)
+        expect(executeAsync).toHaveBeenNthCalledWith(1, 'BEGIN IMMEDIATE')
+        expect(executeAsync).toHaveBeenNthCalledWith(4, 'ROLLBACK')
+        expect(open).toHaveBeenCalledTimes(1)
+    })
+
+    test('deletes the seller when it has no purchases or payments (commits)', async () => {
+        // Call order: BEGIN, SELECT purchases (0), SELECT payments (0), DELETE, COMMIT
+        executeAsync
+            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
+            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
+            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT payments
             .mockResolvedValueOnce({}) // DELETE
             .mockResolvedValueOnce({}) // COMMIT
 
         await expect(deleteSeller(5)).resolves.toBeUndefined()
-        expect(executeAsync).toHaveBeenCalledTimes(4)
-        expect(executeAsync).toHaveBeenNthCalledWith(4, 'COMMIT')
+        expect(executeAsync).toHaveBeenCalledTimes(5)
+        expect(executeAsync).toHaveBeenNthCalledWith(5, 'COMMIT')
         expect(open).toHaveBeenCalledTimes(1)
     })
 
     test('rolls back when the delete fails', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
-            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT
+            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
+            .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT payments
             .mockRejectedValueOnce(new Error('disk error')) // DELETE
             .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(deleteSeller(5)).rejects.toThrow('Failed to delete seller')
-        expect(executeAsync).toHaveBeenNthCalledWith(4, 'ROLLBACK')
+        expect(executeAsync).toHaveBeenNthCalledWith(5, 'ROLLBACK')
     })
 })

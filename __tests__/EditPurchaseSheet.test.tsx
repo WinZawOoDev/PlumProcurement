@@ -6,23 +6,30 @@ import { QuantityStepper } from '../components/QuantityStepper'
 import { PrimaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
 import { A11Y_LABELS, UI_TEXT } from '../constants'
-import { IPurchaseWithSeller } from '../types/database'
+import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 
 jest.mock('../services/purchaseService', () => ({
     purchaseService: { editPurchase: jest.fn() },
 }))
 
-const mockPurchase: IPurchaseWithSeller = {
+const mockPurchase: IPurchaseDetail = {
     id: 3,
-    price_id: 1,
     seller_id: 2,
-    category: 'fruit',
-    unit: 'CUP',
-    unit_price: 5,
-    quantity: 2,
     total: 10,
     seller_name: 'U Ba',
+    items: [
+        {
+            id: 31,
+            purchase_id: 3,
+            price_id: 1,
+            category: 'fruit',
+            unit: 'CUP',
+            unit_price: 5,
+            quantity: 2,
+            line_total: 10,
+        },
+    ],
 }
 
 const onClose = jest.fn()
@@ -77,7 +84,7 @@ describe('EditPurchaseSheet', () => {
         expect(textContent(root)).toContain('15.00$')
     })
 
-    test('saves quantity only (seller untouched) and closes', async () => {
+    test('saves updated item quantities and closes', async () => {
         const root = await renderSheet()
         const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
         await act(async () => {
@@ -87,7 +94,17 @@ describe('EditPurchaseSheet', () => {
             root.root.findByType(PrimaryButton).props.onPress()
         })
 
-        expect(purchaseService.editPurchase).toHaveBeenCalledWith(3, { quantity: 3 })
+        expect(purchaseService.editPurchase).toHaveBeenCalledWith(3, {
+            items: [
+                {
+                    price_id: 1,
+                    category: 'fruit',
+                    unit: 'CUP',
+                    unit_price: 5,
+                    quantity: 3,
+                },
+            ],
+        })
         expect(onSaved).toHaveBeenCalledTimes(1)
         expect(onClose).toHaveBeenCalledTimes(1)
     })

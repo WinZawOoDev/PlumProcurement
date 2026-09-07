@@ -10,7 +10,7 @@ import {
     updatePurchase,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
-import { IPurchaseWithSeller } from '../types/database'
+import { IPurchaseDetail } from '../types/database'
 
 jest.mock('../database/purchases', () => ({
     initializePurchases: jest.fn(),
@@ -27,17 +27,24 @@ jest.mock('../database/sellers', () => ({
     initializeSellers: jest.fn(),
 }))
 
-const mockPurchases: IPurchaseWithSeller[] = [
+const mockPurchases: IPurchaseDetail[] = [
     {
         id: 1,
-        price_id: 10,
         seller_id: null,
-        category: 'fruits',
-        unit: 'PER KG',
-        unit_price: 3000,
-        quantity: 2,
         total: 6000,
         seller_name: null,
+        items: [
+            {
+                id: 11,
+                purchase_id: 1,
+                price_id: 10,
+                category: 'fruits',
+                unit: 'PER KG',
+                unit_price: 3000,
+                quantity: 2,
+                line_total: 6000,
+            },
+        ],
     },
 ]
 
@@ -88,16 +95,15 @@ describe('PurchaseService.editPurchase', () => {
     test('delegates to updatePurchase', async () => {
         ;(updatePurchase as jest.Mock).mockResolvedValue(undefined)
 
-        await expect(
-            purchaseService.editPurchase(3, { quantity: 4, seller_id: null })
-        ).resolves.toBeUndefined()
+        const items = [{ price_id: 10, category: 'fruits', unit: 'PER KG', unit_price: 3000, quantity: 4 }]
+        await expect(purchaseService.editPurchase(3, { items })).resolves.toBeUndefined()
 
-        expect(updatePurchase).toHaveBeenCalledWith(3, { quantity: 4, seller_id: null })
+        expect(updatePurchase).toHaveBeenCalledWith(3, { items })
     })
 
     test('propagates validation errors from updatePurchase', async () => {
         ;(updatePurchase as jest.Mock).mockRejectedValue(new Error('bad quantity'))
-        await expect(purchaseService.editPurchase(3, { quantity: 0 })).rejects.toThrow('bad quantity')
+        await expect(purchaseService.editPurchase(3, { items: [] })).rejects.toThrow('bad quantity')
     })
 })
 
@@ -136,13 +142,8 @@ describe('PurchaseService.recordPurchase', () => {
         ;(createPurchase as jest.Mock).mockResolvedValue(7)
 
         const data = {
-            price_id: 10,
             seller_id: null,
-            category: 'fruits',
-            unit: 'PER KG',
-            unit_price: 3000,
-            quantity: 2,
-            total: 6000,
+            items: [{ price_id: 10, category: 'fruits', unit: 'PER KG', unit_price: 3000, quantity: 2 }],
         }
         const id = await purchaseService.recordPurchase(data)
 
@@ -156,15 +157,7 @@ describe('PurchaseService.recordPurchase', () => {
         )
 
         await expect(
-            purchaseService.recordPurchase({
-                price_id: 10,
-                seller_id: null,
-                category: 'fruits',
-                unit: 'PER KG',
-                unit_price: 3000,
-                quantity: 0,
-                total: 0,
-            })
+            purchaseService.recordPurchase({ seller_id: null, items: [] })
         ).rejects.toThrow('Invalid input. Please check your data.')
     })
 })

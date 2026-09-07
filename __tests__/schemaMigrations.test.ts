@@ -47,7 +47,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 2 }] }
+                return { results: [{ user_version: 3 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -84,6 +84,42 @@ describe('initializeSchema', () => {
 
         await expect(initializeSchema()).resolves.toBeUndefined()
         expect(queries().some((q) => q.includes('ALTER TABLE purchases ADD COLUMN seller_id'))).toBe(true)
+    })
+
+    test('v3 normalizes legacy flat purchases into header + items', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA table_info(purchases)') {
+                return { results: [{ name: 'id' }, { name: 'price_id' }, { name: 'quantity' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('CREATE TABLE IF NOT EXISTS purchase_items'))).toBe(true)
+        expect(sql.some((q) => q.includes('CREATE TABLE IF NOT EXISTS payments'))).toBe(true)
+        expect(sql.some((q) => q.includes('CREATE TABLE purchases_new'))).toBe(true)
+        expect(sql.some((q) => q.includes('INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)'))).toBe(true)
+        expect(sql.some((q) => q.includes('DROP TABLE purchases'))).toBe(true)
+        expect(sql.some((q) => q.includes('ALTER TABLE purchases_new RENAME TO purchases'))).toBe(true)
+        expect(sql.some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_payments_seller_id'))).toBe(true)
+    })
+
+    test('v3 skips the table swap when purchases is already normalized', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA table_info(purchases)') {
+                return { results: [{ name: 'id' }, { name: 'seller_id' }, { name: 'total' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('CREATE TABLE IF NOT EXISTS purchase_items'))).toBe(true)
+        expect(sql.some((q) => q.includes('DROP TABLE purchases'))).toBe(false)
+        expect(sql.some((q) => q.includes('ALTER TABLE purchases_new RENAME TO purchases'))).toBe(false)
     })
 
     test('resets and retries after a failed bootstrap', async () => {

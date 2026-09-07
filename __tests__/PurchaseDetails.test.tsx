@@ -6,7 +6,7 @@ import PurchaseDetails from '../screens/purchasing/PurchaseDetails'
 import { SecondaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
 import { PAGINATION_CONFIG, UI_TEXT } from '../constants'
-import { IPurchaseWithSeller } from '../types/database'
+import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 import { shareOrSaveCsv } from '../utils/csvExport'
 
@@ -20,11 +20,45 @@ jest.mock('../utils/csvExport', () => ({
     shareOrSaveCsv: jest.fn(),
 }))
 
-const page1: IPurchaseWithSeller[] = [
-    { id: 20, price_id: 1, seller_id: 2, category: 'fruit', unit: 'CUP', unit_price: 5, quantity: 2, total: 10, seller_name: 'U Ba' },
+const page1: IPurchaseDetail[] = [
+    {
+        id: 20,
+        seller_id: 2,
+        total: 10,
+        seller_name: 'U Ba',
+        items: [
+            {
+                id: 201,
+                purchase_id: 20,
+                price_id: 1,
+                category: 'fruit',
+                unit: 'CUP',
+                unit_price: 5,
+                quantity: 2,
+                line_total: 10,
+            },
+        ],
+    },
 ]
-const page2: IPurchaseWithSeller[] = [
-    { id: 10, price_id: 1, seller_id: null, category: 'seed', unit: 'CUP', unit_price: 2, quantity: 1, total: 2, seller_name: null },
+const page2: IPurchaseDetail[] = [
+    {
+        id: 10,
+        seller_id: null,
+        total: 2,
+        seller_name: null,
+        items: [
+            {
+                id: 101,
+                purchase_id: 10,
+                price_id: 1,
+                category: 'seed',
+                unit: 'CUP',
+                unit_price: 2,
+                quantity: 1,
+                line_total: 2,
+            },
+        ],
+    },
 ]
 
 const flush = async () => {
@@ -74,7 +108,7 @@ describe('PurchaseDetails screen', () => {
         expect(text).toContain(UI_TEXT.PURCHASE_HISTORY_TITLE)
         expect(text).toContain('fruit (CUP)')
         expect(text).toContain('10.00$')
-        expect(text).toContain(`${UI_TEXT.SOLD_BY}: U Ba`)
+        expect(text).toContain('U Ba')
     })
 
     test('load-more continues from the previous page cursor', async () => {
