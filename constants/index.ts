@@ -125,6 +125,8 @@ export const UI_TEXT = {
   RECORD_PURCHASE: 'Record Purchase',
   PURCHASE_DESCRIPTION: 'Select a price item and record purchased quantities.',
   SELECT_PRICE_ITEM: 'Price Item',
+  PRICE_ITEMS: 'Price Items',
+  PRICE_ITEMS_HINT: 'Swipe to browse',
   SELECT_SELLER: 'Seller',
   SELECT_SELLER_PLACEHOLDER: 'Select seller',
   SELECT_SELLER_AND_PRICE_FIRST: 'Select a seller and a price item to set the quantity',

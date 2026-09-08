@@ -42,11 +42,6 @@ function PriceItemCard({
     return (
         <View style={[styles.priceItemCard, { width }]}>
             <View style={styles.priceItemCardHeader}>
-                <View style={styles.priceItemCardAvatar}>
-                    <RNText style={styles.priceItemCardAvatarText}>
-                        {price.category.charAt(0).toUpperCase()}
-                    </RNText>
-                </View>
                 <View style={styles.priceItemCardHeaderText}>
                     <RNText style={styles.priceItemCardTitle}>{price.category}</RNText>
                     <RNText style={styles.priceItemCardUnit}>{price.unit}</RNText>
@@ -210,7 +205,12 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
             {available.length === 0 ? (
                 <EmptyState compact icon="pricetag-outline" title={MESSAGES.EMPTY_PRICE_LIST} description={UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST} />
             ) : (
-                <ScrollView
+                <>
+                    <View style={styles.priceItemListHeader}>
+                        <RNText style={styles.priceItemListTitle}>{UI_TEXT.PRICE_ITEMS}</RNText>
+                        <RNText style={styles.priceItemCount}>{available.length}</RNText>
+                    </View>
+                    <ScrollView
                     horizontal
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
@@ -231,7 +231,8 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                             />
                         )
                     })}
-                </ScrollView>
+                    </ScrollView>
+                </>
             )}
             {!allValid && (
                 <RNText style={styles.quantityStepperHint}>{UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST}</RNText>
