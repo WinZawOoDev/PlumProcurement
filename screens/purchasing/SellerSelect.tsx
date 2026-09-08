@@ -68,7 +68,9 @@ export default function SellerSelect() {
         (seller: ISeller) => {
             lightHaptic()
             Keyboard.dismiss()
-            navigation.navigate(ROUTES.PURCHASE, {
+            // popTo removes this screen from the stack while returning, so
+            // native back from Purchase never lands back on SellerSelect.
+            navigation.popTo(ROUTES.PURCHASE, {
                 selectedSellerId: seller.id,
                 selectedSellerName: seller.name,
             })
