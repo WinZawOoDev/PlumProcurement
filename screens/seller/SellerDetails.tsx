@@ -1,4 +1,4 @@
-import { RefreshControl, ScrollView, Pressable, Text as RNText, View } from 'react-native'
+import { Pressable, RefreshControl, ScrollView, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -6,36 +6,21 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
+import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
-import { IPurchaseDetail, IPayment, ISeller, ISellerPaymentStat } from '../../types/database'
-import { formatDate } from '../../utils'
+import { ISeller, ISellerPaymentStat } from '../../types/database'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
-import { IconButton, PrimaryButton } from '../../components/buttons/Button'
+import { IconButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-import { CardSkeleton, Skeleton } from '../../components/Skeleton'
-import PaymentFormSheet from './PaymentFormSheet'
+import { Skeleton } from '../../components/Skeleton'
+import { StatCell } from '../../components/StatCell'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
-
-function StatCell({ label, value, icon }: { label: string; value: string; icon: string }) {
-    const styles = useStyles()
-    const { theme } = useTheme()
-    return (
-        <View style={styles.sellerStatCell}>
-            <View style={styles.sellerStatIconCircle}>
-                <Ionicons name={icon as any} size={16} color={theme.colors.primary} />
-            </View>
-            <RNText style={styles.sellerStatValue}>{value}</RNText>
-            <RNText style={styles.sellerStatLabel}>{label}</RNText>
-        </View>
-    )
-}
 
 function SellerBackRow({ onBack }: { onBack: () => void }) {
     const styles = useStyles()
@@ -87,88 +72,97 @@ function SellerProfileHeader({
     )
 }
 
-function SellerStatsSection({ count, total, average }: { count: number; total: number; average: number }) {
-    const styles = useStyles()
-    return (
-        <View style={styles.sellerStatsRow}>
-            <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(count)} icon="receipt-outline" />
-            <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
-            <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
-        </View>
-    )
-}
-
-function PaymentStatsSection({ stat }: { stat: ISellerPaymentStat }) {
-    const styles = useStyles()
-    return (
-        <View style={styles.sellerStatsRow}>
-            <StatCell label={UI_TEXT.OWED} value={`${stat.total_owed.toFixed(2)}$`} icon="cart-outline" />
-            <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.PAID} value={`${stat.total_paid.toFixed(2)}$`} icon="checkmark-circle-outline" />
-            <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.BALANCE} value={`${stat.balance.toFixed(2)}$`} icon="wallet-outline" />
-        </View>
-    )
-}
-
-function methodLabel(method: string | null): string {
-    if (!method) return ''
-    return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? method
-}
-
-function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }) {
+function ViewAllLink({ onPress }: { onPress: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
     return (
-        <View style={styles.purchaseItemRow}>
-            <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>{item.amount.toFixed(2)}$</RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                    {formatDate(item.paid_at)}
-                    {item.method ? ` · ${methodLabel(item.method)}` : ''}
-                    {item.note ? ` · ${item.note}` : ''}
-                </RNText>
-            </View>
-            <IconButton
-                icon={<Ionicons name="trash-outline" size={18} color={theme.colors.error} />}
-                variant="ghost"
-                onPress={onDelete}
-                accessibilityLabel={A11Y_LABELS.DELETE_PAYMENT}
+        <Pressable
+            onPress={onPress}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={UI_TEXT.VIEW_ALL}
+            style={({ pressed }) => [
+                styles.sellerSectionAction,
+                pressed && styles.sellerDeleteButtonPressed,
+            ]}
+        >
+            <RNText style={styles.sellerSummaryCardFooterText}>{UI_TEXT.VIEW_ALL}</RNText>
+            <Ionicons name="chevron-forward" size={14} color={theme.colors.grey3} />
+        </Pressable>
+    )
+}
+
+function PurchasesSection({
+    count,
+    total,
+    onPress,
+}: {
+    count: number
+    total: number
+    onPress: () => void
+}) {
+    const styles = useStyles()
+    const average = count > 0 ? total / count : 0
+    return (
+        <View style={styles.sellerSectionSpacer}>
+            <SectionHeader
+                icon="receipt-outline"
+                title={UI_TEXT.PURCHASE_HISTORY_TITLE}
+                action={<ViewAllLink onPress={onPress} />}
             />
+            <Pressable
+                onPress={onPress}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${UI_TEXT.PURCHASE_HISTORY_TITLE}: ${UI_TEXT.VIEW_ALL}`}
+            >
+                <View style={styles.sellerStatsRow}>
+                    <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(count)} icon="receipt-outline" />
+                    <View style={styles.sellerStatDivider} />
+                    <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}$`} icon="wallet-outline" />
+                    <View style={styles.sellerStatDivider} />
+                    <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}$`} icon="analytics-outline" />
+                </View>
+            </Pressable>
         </View>
     )
 }
 
-function SellerPurchaseRow({ item }: { item: IPurchaseDetail }) {
+function PaymentsSection({
+    stat,
+    onPress,
+}: {
+    stat: ISellerPaymentStat | null
+    onPress: () => void
+}) {
     const styles = useStyles()
-    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
-        <Pressable
-            style={styles.purchaseItemRow}
-            onPress={() =>
-                navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })
-            }
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
-        >
-            <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>
-                    {item.seller_name ?? UI_TEXT.NO_SELLER}
-                </RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                    {formatDate(item.created_at)}
-                </RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                    {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
-                </RNText>
-            </View>
-            <View style={styles.purchaseItemActions}>
-                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
-            </View>
-        </Pressable>
+        <View style={styles.sellerSectionSpacer}>
+            <SectionHeader
+                icon="wallet-outline"
+                title={UI_TEXT.PAYMENT_HISTORY}
+                description={
+                    stat && stat.balance > 0
+                        ? `${UI_TEXT.BALANCE}: ${stat.balance.toFixed(2)}$`
+                        : undefined
+                }
+                action={<ViewAllLink onPress={onPress} />}
+            />
+            <Pressable
+                onPress={onPress}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${UI_TEXT.PAYMENT_HISTORY}: ${UI_TEXT.VIEW_ALL}`}
+            >
+                <View style={styles.sellerStatsRow}>
+                    <StatCell label={UI_TEXT.OWED} value={`${(stat?.total_owed ?? 0).toFixed(2)}$`} icon="cart-outline" />
+                    <View style={styles.sellerStatDivider} />
+                    <StatCell label={UI_TEXT.PAID} value={`${(stat?.total_paid ?? 0).toFixed(2)}$`} icon="checkmark-circle-outline" />
+                    <View style={styles.sellerStatDivider} />
+                    <StatCell label={UI_TEXT.BALANCE} value={`${(stat?.balance ?? 0).toFixed(2)}$`} icon="wallet-outline" />
+                </View>
+            </Pressable>
+        </View>
     )
 }
 
@@ -183,28 +177,8 @@ function SellerDetailsSkeleton() {
                     <Skeleton width="40%" height={12} />
                 </View>
             </View>
-            <View style={styles.sellerStatsRow}>
-                <View style={styles.sellerStatCell}>
-                    <Skeleton width={32} height={32} radius={16} />
-                    <Skeleton width="70%" height={14} />
-                    <Skeleton width="50%" height={10} />
-                </View>
-                <View style={styles.sellerStatDivider} />
-                <View style={styles.sellerStatCell}>
-                    <Skeleton width={32} height={32} radius={16} />
-                    <Skeleton width="70%" height={14} />
-                    <Skeleton width="50%" height={10} />
-                </View>
-                <View style={styles.sellerStatDivider} />
-                <View style={styles.sellerStatCell}>
-                    <Skeleton width={32} height={32} radius={16} />
-                    <Skeleton width="70%" height={14} />
-                    <Skeleton width="50%" height={10} />
-                </View>
-            </View>
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
+            <Skeleton height={120} radius={14} />
+            <Skeleton height={120} radius={14} />
         </>
     )
 }
@@ -217,11 +191,9 @@ export default function SellerDetails() {
     const sellerId = route.params?.sellerId
 
     const [seller, setSeller] = useState<ISeller | null>(null)
-    const [purchases, setPurchases] = useState<IPurchaseDetail[]>([])
+    const [purchaseStats, setPurchaseStats] = useState<{ count: number; total: number } | null>(null)
     const [paymentStat, setPaymentStat] = useState<ISellerPaymentStat | null>(null)
-    const [payments, setPayments] = useState<IPayment[]>([])
     const [notFound, setNotFound] = useState(false)
-    const [paymentSheetVisible, setPaymentSheetVisible] = useState(false)
     const { loading, withLoading } = useLoading(false)
 
     const confirmDelete = useConfirmDelete<[number]>({
@@ -238,11 +210,10 @@ export default function SellerDetails() {
         }
         await withLoading(async () => {
             try {
-                const [found, history, stat, paid] = await Promise.all([
+                const [found, stats, stat] = await Promise.all([
                     sellerService.getSellerById(sellerId),
-                    purchaseService.getPurchasesBySeller(sellerId).catch(() => [] as IPurchaseDetail[]),
+                    purchaseService.getSellerStats().catch(() => [] as { seller_id: number; purchase_count: number; total_spent: number }[]),
                     paymentService.getSellerPaymentStat(sellerId).catch(() => null),
-                    paymentService.getPaymentsBySeller(sellerId).catch(() => [] as IPayment[]),
                 ])
                 if (!found) {
                     setNotFound(true)
@@ -250,28 +221,23 @@ export default function SellerDetails() {
                 }
                 setNotFound(false)
                 setSeller(found)
-                setPurchases(history)
+                const sellerStat = stats.find((s) => s.seller_id === sellerId)
+                setPurchaseStats(
+                    sellerStat
+                        ? { count: sellerStat.purchase_count, total: sellerStat.total_spent }
+                        : { count: 0, total: 0 },
+                )
                 setPaymentStat(stat)
-                setPayments(paid)
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
         })
     }, [sellerId, withLoading])
 
-    const confirmDeletePayment = useConfirmDelete<[number]>({
-        remove: (id) => paymentService.removePayment(id),
-        confirmMessage: 'Delete this payment? This cannot be undone.',
-        successMessage: MESSAGES.PAYMENT_DELETE_SUCCESS,
-        onDeleted: loadDetails,
-    })
-
     useEffect(() => {
         loadDetails()
     }, [loadDetails])
 
-    const total = purchases.reduce((sum, p) => sum + p.total, 0)
-    const average = purchases.length > 0 ? total / purchases.length : 0
     const headerDescription: React.ReactNode | undefined = seller
         ? (() => {
               const hasPhone = !!seller.phone?.trim()
@@ -332,82 +298,23 @@ export default function SellerDetails() {
                             onDelete={() => confirmDelete(seller.id)}
                         />
 
-                        <SellerStatsSection count={purchases.length} total={total} average={average} />
-
-                        <View style={styles.sellerSectionSpacer}>
-                            <SectionHeader
-                                icon="wallet-outline"
-                                title={UI_TEXT.PAYMENT_HISTORY}
-                                description={
-                                    paymentStat && paymentStat.balance > 0
-                                        ? `${UI_TEXT.BALANCE}: ${paymentStat.balance.toFixed(2)}$`
-                                        : undefined
-                                }
+                        {purchaseStats && (
+                            <PurchasesSection
+                                count={purchaseStats.count}
+                                total={purchaseStats.total}
+                                onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
                             />
-                        </View>
+                        )}
 
-                        {paymentStat && <PaymentStatsSection stat={paymentStat} />}
-
-                        <PrimaryButton
-                            title={UI_TEXT.RECORD_PAYMENT}
-                            onPress={() => setPaymentSheetVisible(true)}
-                            containerStyle={styles.recordPaymentButton}
+                        <PaymentsSection
+                            stat={paymentStat}
+                            onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
                         />
-
-                        {payments.length === 0 ? (
-                            <EmptyState
-                                icon="cash-outline"
-                                title={UI_TEXT.EMPTY_PAYMENT_LIST}
-                                description="Record a payment to settle this seller's balance"
-                            />
-                        ) : (
-                            payments.map((payment) => (
-                                <PaymentRow
-                                    key={payment.id}
-                                    item={payment}
-                                    onDelete={() => confirmDeletePayment(payment.id)}
-                                />
-                            ))
-                        )}
-
-                        <View style={styles.sellerSectionSpacer}>
-                            <SectionHeader
-                                icon="time-outline"
-                                title={UI_TEXT.RECENT_PURCHASES}
-                                description={
-                                    purchases.length > 0
-                                        ? `Last ${Math.min(purchases.length, 20)} transactions`
-                                        : undefined
-                                }
-                            />
-                        </View>
-
-                        {purchases.length === 0 ? (
-                            <EmptyState
-                                icon="receipt-outline"
-                                title={UI_TEXT.EMPTY_PURCHASE_LIST}
-                                description={`No purchases recorded for ${seller.name} yet`}
-                            />
-                        ) : (
-                            purchases.slice(0, 20).map((purchase) => (
-                                <SellerPurchaseRow key={purchase.id} item={purchase} />
-                            ))
-                        )}
                     </ScrollView>
                 ) : (
                     <SellerDetailsSkeleton />
                 )}
             </View>
-
-            {seller && (
-                <PaymentFormSheet
-                    visible={paymentSheetVisible}
-                    sellerId={seller.id}
-                    balance={paymentStat?.balance ?? 0}
-                    onClose={() => setPaymentSheetVisible(false)}
-                    onSaved={loadDetails}
-                />
-            )}
         </SafeAreaView>
     )
 }

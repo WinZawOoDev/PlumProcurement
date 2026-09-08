@@ -562,6 +562,23 @@ export const useStyles = makeStyles((theme) => ({
     sellerSelectRow: {
         borderBottomWidth: 0,
     },
+    sellerSummaryCardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 4,
+        paddingTop: 10,
+    },
+    sellerSummaryCardFooterText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    sellerSectionAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+    },
     sellerSelectSeparator: {
         height: 1,
         backgroundColor: theme.colors.grey1,

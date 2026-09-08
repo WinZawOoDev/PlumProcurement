@@ -47,6 +47,8 @@ export const ROUTES = {
   SELECT_SELLER: 'SellerSelect',
   SELLERS: 'Sellers',
   SELLER_DETAILS: 'SellerDetails',
+  SELLER_PURCHASES: 'SellerPurchases',
+  SELLER_PAYMENTS: 'SellerPayments',
   SETTINGS: 'Settings',
 } as const;
 
@@ -151,6 +153,7 @@ export const UI_TEXT = {
   PURCHASE_DATE: 'Date',
   EDIT_PURCHASE: 'Edit Purchase',
   VIEW_HISTORY: 'View History',
+  VIEW_ALL: 'View all',
   EXPORT_CSV: 'Export CSV',
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
   TOTAL_VALUE: 'Total Value',
