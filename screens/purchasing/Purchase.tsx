@@ -1,84 +1,102 @@
-import { FlatList, Text as RNText, View } from 'react-native'
+import { FlatList, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { Text } from '@rneui/base'
-import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { PrimaryButton, SecondaryButton, IconButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, QUANTITY_PATTERN } from '../../constants'
+import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
+import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { sellerService } from '../../services/sellerService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
 import { SelectPicker } from '../../components/SelectPicker'
-import { QuantityStepper } from '../../components/QuantityStepper'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-
-interface DraftItem {
-    key: string
-    priceId: string
-    quantity: string
-}
-
-const newDraftItem = (): DraftItem => ({ key: String(Date.now()) + Math.random().toString(36).slice(2), priceId: '', quantity: '1' })
+import { lightHaptic } from '../../utils/haptics'
 
 interface PurchaseFormProps {
     sellers: { id: number; name: string }[]
     onRecorded: () => void
 }
 
-function PurchaseItemEditor({
-    item,
-    prices,
-    onChange,
-    onRemove,
-    canRemove,
+function PriceItemCard({
+    price,
+    quantity,
+    width,
+    onIncrease,
+    onDecrease,
 }: {
-    item: DraftItem
-    prices: IPrice[]
-    onChange: (next: DraftItem) => void
-    onRemove: () => void
-    canRemove: boolean
+    price: IPrice
+    quantity: number
+    width: number
+    onIncrease: () => void
+    onDecrease: () => void
 }) {
     const styles = useStyles()
-    const { theme } = useTheme()
-    const available = prices.filter((p) => Boolean(p.is_available))
-    const selectedPrice = available.find((p) => p.id.toString() === item.priceId)
-
+    const selected = quantity > 0
+    const lineTotal = price.price * quantity
     return (
-        <View style={styles.purchaseItemEditor}>
-            <SelectPicker
-                label={UI_TEXT.SELECT_PRICE_ITEM}
-                selectedValue={item.priceId}
-                onValueChange={(priceId) => onChange({ ...item, priceId })}
-                items={[
-                    { label: UI_TEXT.SELECT_PRICE_ITEM, value: '' },
-                    ...available.map((p) => ({
-                        label: `${p.category} - ${p.price.toFixed(2)}$ / ${p.unit}`,
-                        value: p.id.toString(),
-                    })),
-                ]}
-            />
-            <QuantityStepper
-                value={item.quantity}
-                onChange={(quantity) => onChange({ ...item, quantity })}
-                disabled={!selectedPrice}
-            />
-            <View style={styles.purchaseItemEditorFooter}>
-                <IconButton
-                    icon={<Ionicons name="trash-outline" size={18} color={theme.colors.error} />}
-                    variant="ghost"
-                    onPress={onRemove}
-                    disabled={!canRemove}
-                    accessibilityLabel={`${UI_TEXT.REMOVE_ITEM} ${item.key}`}
-                />
+        <View style={[styles.priceItemCard, { width }]}>
+            <View style={styles.priceItemCardHeader}>
+                <View style={[styles.priceItemCardAvatar, selected && styles.priceItemCardAvatarActive]}>
+                    <RNText style={[styles.priceItemCardAvatarText, selected && styles.priceItemCardAvatarTextActive]}>
+                        {price.category.charAt(0).toUpperCase()}
+                    </RNText>
+                </View>
+                <View style={styles.priceItemCardHeaderText}>
+                    <RNText style={styles.priceItemCardTitle}>{price.category}</RNText>
+                    <RNText style={styles.priceItemCardUnit}>{price.unit}</RNText>
+                </View>
+                <View style={styles.priceItemCardPriceBlock}>
+                    <RNText style={styles.priceItemCardPrice}>{price.price.toFixed(2)}</RNText>
+                    <RNText style={styles.priceItemCardCurrency}>$</RNText>
+                </View>
             </View>
+            <View style={[styles.priceItemCardCounter, selected && styles.priceItemCardCounterActive]}>
+                <TouchableOpacity
+                    style={[styles.priceItemCardStepperButton, !selected && styles.priceItemCardStepperButtonDisabled]}
+                    onPress={() => {
+                        lightHaptic()
+                        onDecrease()
+                    }}
+                    disabled={!selected}
+                    activeOpacity={0.6}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={`${A11Y_LABELS.DECREASE_QUANTITY} ${price.category}`}
+                    accessibilityState={{ disabled: !selected }}
+                >
+                    <RNText style={styles.priceItemCardStepperButtonText}>−</RNText>
+                </TouchableOpacity>
+                <View style={styles.priceItemCardValueBubble}>
+                    <RNText style={[styles.priceItemCardValue, selected && styles.priceItemCardValueActive]}>{quantity}</RNText>
+                </View>
+                <TouchableOpacity
+                    style={[styles.priceItemCardStepperButton, styles.priceItemCardStepperButtonPlus]}
+                    onPress={() => {
+                        lightHaptic()
+                        onIncrease()
+                    }}
+                    activeOpacity={0.6}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={`${A11Y_LABELS.INCREASE_QUANTITY} ${price.category}`}
+                >
+                    <RNText style={styles.priceItemCardStepperButtonTextPlus}>+</RNText>
+                </TouchableOpacity>
+            </View>
+            {selected && (
+                <View style={styles.priceItemCardFooter}>
+                    <RNText style={styles.priceItemCardFooterCalc}>
+                        {quantity} × {price.price.toFixed(2)}$
+                    </RNText>
+                    <RNText style={styles.priceItemCardFooterTotal}>{lineTotal.toFixed(2)}$</RNText>
+                </View>
+            )}
         </View>
     )
 }
@@ -123,28 +141,35 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()
+    const { width } = useWindowDimensions()
+    const cardWidth = width - 78
 
     const [selectedSellerId, setSelectedSellerId] = useState<string>('')
-    const [items, setItems] = useState<DraftItem[]>([newDraftItem()])
+    const [quantities, setQuantities] = useState<Record<string, number>>({})
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const available = prices.filter((p) => Boolean(p.is_available))
-    const resolvedItems = items.map((item) => {
-        const price = available.find((p) => p.id.toString() === item.priceId)
-        const quantityValue = parseInt(item.quantity, 10)
-        const valid = Boolean(price) && QUANTITY_PATTERN.test(item.quantity) && quantityValue > 0
-        return { item, price, quantityValue, valid }
-    })
-    const allValid = selectedSellerId !== '' && resolvedItems.length > 0 && resolvedItems.every((r) => r.valid)
-    const total = resolvedItems.reduce((sum, r) => (r.valid ? sum + r.price!.price * r.quantityValue : sum), 0)
+
+    const getQuantity = (priceId: string) => quantities[priceId] ?? 0
+    const increment = (priceId: string) => {
+        setQuantities((prev) => ({ ...prev, [priceId]: (prev[priceId] ?? 0) + 1 }))
+    }
+    const decrement = (priceId: string) => {
+        setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, (prev[priceId] ?? 0) - 1) }))
+    }
+
+    const selectedItems = available
+        .map((price) => ({ price, quantity: getQuantity(price.id.toString()) }))
+        .filter((r) => r.quantity > 0)
+    const allValid = selectedSellerId !== '' && selectedItems.length > 0
+    const total = selectedItems.reduce((sum, r) => sum + r.price.price * r.quantity, 0)
 
     const handleRecord = async () => {
         if (!selectedSellerId) {
             showError(MESSAGES.ERROR_SELECT_SELLER)
             return
         }
-        const validItems = resolvedItems.filter((r) => r.valid)
-        if (validItems.length === 0) {
+        if (selectedItems.length === 0) {
             showError(MESSAGES.ERROR_NO_ITEMS)
             return
         }
@@ -152,30 +177,23 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
             try {
                 await purchaseService.recordPurchase({
                     seller_id: parseInt(selectedSellerId, 10),
-                    items: validItems.map(({ price, quantityValue }) => ({
-                        price_id: price!.id,
-                        category: price!.category,
-                        unit: price!.unit,
-                        unit_price: price!.price,
-                        quantity: quantityValue,
+                    items: selectedItems.map(({ price, quantity }) => ({
+                        price_id: price.id,
+                        category: price.category,
+                        unit: price.unit,
+                        unit_price: price.price,
+                        quantity,
                     })),
                 })
                 showSuccess(MESSAGES.PURCHASE_RECORDED_SUCCESS)
                 onRecorded()
                 setSelectedSellerId('')
-                setItems([newDraftItem()])
+                setQuantities({})
             } catch (error) {
                 const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
                 showError(message)
             }
         })
-    }
-
-    const updateItem = (key: string, next: DraftItem) => {
-        setItems((prev) => prev.map((it) => (it.key === key ? next : it)))
-    }
-    const removeItem = (key: string) => {
-        setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.key !== key) : prev))
     }
 
     return (
@@ -189,28 +207,36 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                     ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
                 ]}
             />
-            {resolvedItems.map(({ item }) => (
-                <PurchaseItemEditor
-                    key={item.key}
-                    item={item}
-                    prices={available}
-                    onChange={(next) => updateItem(item.key, next)}
-                    onRemove={() => removeItem(item.key)}
-                    canRemove={items.length > 1}
-                />
-            ))}
-            <View style={styles.purchaseItemEditorFooter}>
-                <SecondaryButton
-                    title={UI_TEXT.ADD_ITEM}
-                    onPress={() => setItems((prev) => [...prev, newDraftItem()])}
-                    buttonStyle={styles.addItemButton}
-                    titleStyle={styles.addItemButtonTitle}
-                />
-            </View>
+            {available.length === 0 ? (
+                <EmptyState compact icon="pricetag-outline" title={MESSAGES.EMPTY_PRICE_LIST} description={UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST} />
+            ) : (
+                <ScrollView
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.priceItemCardScroll}
+                    contentContainerStyle={styles.priceItemCardList}
+                >
+                    {available.map((price) => {
+                        const priceId = price.id.toString()
+                        const quantity = getQuantity(priceId)
+                        return (
+                            <PriceItemCard
+                                key={price.id}
+                                price={price}
+                                quantity={quantity}
+                                width={cardWidth}
+                                onIncrease={() => increment(priceId)}
+                                onDecrease={() => decrement(priceId)}
+                            />
+                        )
+                    })}
+                </ScrollView>
+            )}
             {!allValid && (
                 <RNText style={styles.quantityStepperHint}>{UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST}</RNText>
             )}
-            <PurchaseSummary itemCount={resolvedItems.filter((r) => r.valid).length} total={total} />
+            <PurchaseSummary itemCount={selectedItems.length} total={total} />
             <PurchaseFormActions
                 recording={recording}
                 canRecord={allValid}

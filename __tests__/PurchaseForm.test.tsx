@@ -61,19 +61,19 @@ const renderForm = async () => {
 
 const onRecorded = jest.fn()
 
-const findPickerByLabel = (root: ReactTestRenderer.ReactTestRenderer, label: string) => {
+const findSellerPicker = (root: ReactTestRenderer.ReactTestRenderer) => {
     const select = root.root
         .findAllByType(SelectPicker)
-        .find((p) => p.props.label === label)!
+        .find((p) => p.props.label === UI_TEXT.SELECT_SELLER)!
     return select.findAllByType(Picker)[0]
 }
 
-const findPricePicker = (root: ReactTestRenderer.ReactTestRenderer) => {
-    return findPickerByLabel(root, UI_TEXT.SELECT_PRICE_ITEM)
+const findIncreaseButton = (root: ReactTestRenderer.ReactTestRenderer) => {
+    return root.root.findAllByProps({ accessibilityLabel: `${A11Y_LABELS.INCREASE_QUANTITY} ${mockPrices[0].category}` })[0]
 }
 
-const findSellerPicker = (root: ReactTestRenderer.ReactTestRenderer) => {
-    return findPickerByLabel(root, UI_TEXT.SELECT_SELLER)
+const findDecreaseButton = (root: ReactTestRenderer.ReactTestRenderer) => {
+    return root.root.findAllByProps({ accessibilityLabel: `${A11Y_LABELS.DECREASE_QUANTITY} ${mockPrices[0].category}` })[0]
 }
 
 const findRecordButton = (root: ReactTestRenderer.ReactTestRenderer) => {
@@ -94,38 +94,24 @@ beforeEach(() => {
 })
 
 describe('PurchaseForm', () => {
-    const selectSellerAndPrice = async (root: ReactTestRenderer.ReactTestRenderer) => {
-        await act(async () => {
-            findSellerPicker(root).props.onValueChange('1')
-            findPricePicker(root).props.onValueChange('1')
-            await flush()
-        })
-    }
-
-    test('shows em dash total when no price is selected', async () => {
+    test('shows em dash total when no quantity is set', async () => {
         const root = await renderForm()
         expect(textContent(root)).toContain('—')
     })
 
-    test('stepper is disabled until seller and price are selected', async () => {
+    test('decrease button is disabled until a quantity is set', async () => {
         const root = await renderForm()
-        const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
-        expect(plus.props.disabled).toBe(true)
+        expect(findDecreaseButton(root).props.disabled).toBe(true)
 
-        // + must not count without selections
         await act(async () => {
-            plus.props.onPress()
+            findIncreaseButton(root).props.onPress()
             await flush()
         })
-        expect(textContent(root)).not.toContain('200.00$')
 
-        await selectSellerAndPrice(root)
-
-        const enabledPlus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
-        expect(enabledPlus.props.disabled).toBe(false)
+        expect(findDecreaseButton(root).props.disabled).toBe(false)
     })
 
-    test('record button is disabled until seller and price are selected', async () => {
+    test('record button is disabled until seller is selected and a quantity is set', async () => {
         const root = await renderForm()
         expect(findRecordButton(root).props.disabled).toBe(true)
 
@@ -136,7 +122,7 @@ describe('PurchaseForm', () => {
         expect(findRecordButton(root).props.disabled).toBe(true)
 
         await act(async () => {
-            findPricePicker(root).props.onValueChange('1')
+            findIncreaseButton(root).props.onPress()
             await flush()
         })
         expect(findRecordButton(root).props.disabled).toBe(false)
@@ -145,10 +131,10 @@ describe('PurchaseForm', () => {
     test('computes total from unit price and quantity', async () => {
         const root = await renderForm()
 
-        await selectSellerAndPrice(root)
-        const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
         await act(async () => {
-            plus.props.onPress()
+            findSellerPicker(root).props.onValueChange('1')
+            findIncreaseButton(root).props.onPress()
+            findIncreaseButton(root).props.onPress()
             await flush()
         })
 
@@ -158,7 +144,11 @@ describe('PurchaseForm', () => {
     test('records purchase with correct payload and refreshes recents', async () => {
         const root = await renderForm()
 
-        await selectSellerAndPrice(root)
+        await act(async () => {
+            findSellerPicker(root).props.onValueChange('1')
+            findIncreaseButton(root).props.onPress()
+            await flush()
+        })
         await act(async () => {
             findRecordButton(root).props.onPress()
             await flush()
@@ -179,10 +169,11 @@ describe('PurchaseForm', () => {
         expect(onRecorded).toHaveBeenCalledTimes(1)
     })
 
-    test('does not record without a selected price', async () => {
+    test('does not record without a selected seller', async () => {
         const root = await renderForm()
 
         await act(async () => {
+            findIncreaseButton(root).props.onPress()
             findRecordButton(root).props.onPress()
             await flush()
         })
