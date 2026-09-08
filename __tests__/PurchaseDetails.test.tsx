@@ -111,7 +111,7 @@ describe('PurchaseDetails screen', () => {
         })
         const text = textContent(root)
         expect(text).toContain(UI_TEXT.PURCHASE_HISTORY_TITLE)
-        expect(text).toContain('fruit (CUP)')
+        expect(text).toContain(`1 ${UI_TEXT.ITEMS.toLowerCase()}`)
         expect(text).toContain('10.00$')
         expect(text).toContain('U Ba')
     })
@@ -122,7 +122,7 @@ describe('PurchaseDetails screen', () => {
             .mockResolvedValueOnce({ items: page2, nextCursor: null })
 
         const root = await renderScreen()
-        expect(textContent(root)).not.toContain('seed (CUP)')
+        expect(textContent(root)).not.toContain('2.00$')
 
         const list = root.root.findAllByType(FlatList)[0]
         await act(async () => {
@@ -135,7 +135,7 @@ describe('PurchaseDetails screen', () => {
             cursor: 20,
             query: undefined,
         })
-        expect(textContent(root)).toContain('seed (CUP)')
+        expect(textContent(root)).toContain('2.00$')
     })
 
     test('exports the loaded purchases as CSV', async () => {

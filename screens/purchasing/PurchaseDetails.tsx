@@ -117,11 +117,9 @@ function PurchaseRow({
         <RNText style={styles.purchaseItemSubtitle}>
           {formatDate(item.created_at)}
         </RNText>
-        {item.items.map((line) => (
-          <RNText key={line.id} style={styles.purchaseItemSubtitle}>
-            {line.category} ({line.unit}) × {line.quantity} @ {line.unit_price.toFixed(2)}$
-          </RNText>
-        ))}
+        <RNText style={styles.purchaseItemSubtitle}>
+          {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+        </RNText>
       </View>
       <View style={styles.purchaseItemActions}>
         <RNText style={styles.purchaseItemTotal}>

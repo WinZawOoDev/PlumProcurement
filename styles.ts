@@ -727,25 +727,26 @@ export const useStyles = makeStyles((theme) => ({
         backgroundColor: theme.colors.grey1,
         marginVertical: 6,
     },
+    purchaseDetailList: {
+        paddingBottom: 8,
+    },
     purchaseDetailItemRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: 14,
         paddingHorizontal: 4,
         borderBottomWidth: 0.5,
         borderColor: theme.colors.grey1,
         gap: 12,
     },
-    purchaseItemQtyBadge: {
-        width: 34,
-        height: 34,
-        borderRadius: 12,
-        backgroundColor: theme.colors.primary + '14',
+    purchaseDetailItemTitleRow: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 4,
     },
-    purchaseItemQtyBadgeText: {
-        fontSize: 14,
+    purchaseDetailItemQty: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        fontSize: 15,
         fontWeight: '700',
         color: theme.colors.primary,
         fontVariant: ['tabular-nums'],

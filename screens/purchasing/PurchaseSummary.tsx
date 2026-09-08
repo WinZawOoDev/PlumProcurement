@@ -2,6 +2,8 @@ import { FlatList, Text as RNText, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { RouteProp, useRoute } from '@react-navigation/native'
+import { useTheme } from '@rneui/themed'
+import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
 import { IPurchaseDetail } from '../../types/database'
@@ -16,13 +18,19 @@ type PurchaseSummaryRouteProp = RouteProp<
 
 function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
     const styles = useStyles()
+    const { theme } = useTheme()
     return (
         <View style={styles.purchaseDetailItemRow}>
-            <View style={styles.purchaseItemQtyBadge}>
-                <RNText style={styles.purchaseItemQtyBadgeText}>{item.quantity}</RNText>
-            </View>
             <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>{item.category}</RNText>
+                <View style={styles.purchaseDetailItemTitleRow}>
+                    <RNText style={styles.purchaseDetailItemQty}>{item.quantity}</RNText>
+                    <Ionicons
+                        name="close"
+                        size={12}
+                        color={theme.colors.grey4}
+                    />
+                    <RNText style={styles.purchaseItemTitle}>{item.category}</RNText>
+                </View>
                 <RNText style={styles.purchaseItemSubtitle}>
                     {item.unit_price.toFixed(2)}$ / {item.unit}
                 </RNText>
@@ -92,7 +100,7 @@ export default function PurchaseSummary() {
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>
                 <FlatList
                     style={styles.purchaseHistoryItems}
-                    contentContainerStyle={purchase.items.length === 0 ? styles.recentPurchasesEmpty : undefined}
+                    contentContainerStyle={purchase.items.length === 0 ? styles.recentPurchasesEmpty : styles.purchaseDetailList}
                     data={purchase.items}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => <ItemDetailRow item={item} />}
