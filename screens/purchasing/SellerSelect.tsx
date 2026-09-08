@@ -1,4 +1,4 @@
-import { FlatList, Pressable, Text as RNText, View } from 'react-native'
+import { FlatList, Keyboard, Pressable, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -67,6 +67,7 @@ export default function SellerSelect() {
     const handleSelect = useCallback(
         (seller: ISeller) => {
             lightHaptic()
+            Keyboard.dismiss()
             navigation.navigate(ROUTES.PURCHASE, {
                 selectedSellerId: seller.id,
                 selectedSellerName: seller.name,

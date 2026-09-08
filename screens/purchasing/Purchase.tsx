@@ -148,7 +148,7 @@ function PurchaseFormActions({
     )
 }
 
-export function PurchaseForm({ selectedSeller, onOpenSellerSelect, onRecorded }: PurchaseFormProps) {
+export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, onOpenSellerSelect, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
     const { theme } = useTheme()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
@@ -293,7 +293,7 @@ export function PurchaseForm({ selectedSeller, onOpenSellerSelect, onRecorded }:
             />
         </View>
     )
-}
+})
 
 interface RecentPurchasesListProps {
     recent: IPurchaseDetail[]
@@ -316,7 +316,7 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
     )
 }
 
-function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
+const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
     const styles = useStyles()
     return (
         <>
@@ -335,7 +335,7 @@ function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
             />
         </>
     )
-}
+})
 
 export default function Purchase() {
     const styles = useStyles()
@@ -348,13 +348,16 @@ export default function Purchase() {
     const [selectedSeller, setSelectedSeller] = useState<SelectedSeller | null>(null)
     const [recent, setRecent] = useState<IPurchaseDetail[]>([])
 
-    // Consume seller selection returned from the SellerSelect screen
+    // Consume seller selection returned from the SellerSelect screen.
+    // Committed immediately (re-render is memoized, so it stays cheap) —
+    // waiting for the transition to finish made the round-trip feel slow.
     useEffect(() => {
         const { selectedSellerId, selectedSellerName } = route.params ?? {}
-        if (selectedSellerId !== undefined && selectedSellerName !== undefined) {
-            setSelectedSeller({ id: selectedSellerId, name: selectedSellerName })
-            navigation.setParams({ selectedSellerId: undefined, selectedSellerName: undefined })
+        if (selectedSellerId === undefined || selectedSellerName === undefined) {
+            return
         }
+        setSelectedSeller({ id: selectedSellerId, name: selectedSellerName })
+        navigation.setParams({ selectedSellerId: undefined, selectedSellerName: undefined })
     }, [route.params, navigation])
 
     const loadRecent = useCallback(async () => {
@@ -373,6 +376,17 @@ export default function Purchase() {
         }, [loadRecent, refreshPrices])
     )
 
+    // Stable callbacks so memoized children skip re-renders when only the
+    // seller selection (or nothing) changes.
+    const handleOpenSellerSelect = useCallback(() => {
+        navigation.navigate(ROUTES.SELECT_SELLER, { currentSellerId: selectedSeller?.id })
+    }, [navigation, selectedSeller])
+
+    const handleRecorded = useCallback(() => {
+        loadRecent()
+        setSelectedSeller(null)
+    }, [loadRecent])
+
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={[styles.priceListContainer, styles.fillContainer]}>
@@ -380,13 +394,8 @@ export default function Purchase() {
 
                 <PurchaseForm
                     selectedSeller={selectedSeller}
-                    onOpenSellerSelect={() =>
-                        navigation.navigate(ROUTES.SELECT_SELLER, { currentSellerId: selectedSeller?.id })
-                    }
-                    onRecorded={() => {
-                        loadRecent()
-                        setSelectedSeller(null)
-                    }}
+                    onOpenSellerSelect={handleOpenSellerSelect}
+                    onRecorded={handleRecorded}
                 />
 
                 <RecentPurchasesList recent={recent} />

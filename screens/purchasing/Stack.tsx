@@ -25,7 +25,11 @@ const PurchaseStack = createNativeStackNavigator({
     },
     [ROUTES.SELECT_SELLER]: {
       screen: SellerSelect,
-      options: { title: UI_TEXT.SELECT_SELLER }
+      options: {
+        title: UI_TEXT.SELECT_SELLER,
+        animation: 'fade',
+        animationDuration: 200,
+      }
     }
   }
 })
