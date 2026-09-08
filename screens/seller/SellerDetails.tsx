@@ -143,21 +143,35 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
 
 function SellerPurchaseRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
-    const lines = item.items.length > 0 ? item.items : []
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
-        <View style={styles.purchaseItemRow}>
+        <Pressable
+            style={styles.purchaseItemRow}
+            onPress={() =>
+                navigation.navigate(ROUTES.PURCHASE_TAB, {
+                    screen: ROUTES.PURCHASE_SUMMARY,
+                    params: { purchase: item },
+                })
+            }
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
+        >
             <View style={styles.sellerInfo}>
                 <RNText style={styles.purchaseItemTitle}>
+                    {item.seller_name ?? UI_TEXT.NO_SELLER}
+                </RNText>
+                <RNText style={styles.purchaseItemSubtitle}>
                     {formatDate(item.created_at)}
                 </RNText>
-                {lines.map((line) => (
-                    <RNText key={line.id} style={styles.purchaseItemSubtitle}>
-                        {line.category} × {line.quantity} ({line.unit}) @ {line.unit_price.toFixed(2)}$
-                    </RNText>
-                ))}
+                <RNText style={styles.purchaseItemSubtitle}>
+                    {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+                </RNText>
             </View>
-            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
-        </View>
+            <View style={styles.purchaseItemActions}>
+                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+            </View>
+        </Pressable>
     )
 }
 
