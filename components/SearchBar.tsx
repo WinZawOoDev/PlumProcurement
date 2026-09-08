@@ -43,18 +43,28 @@ export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }
             onChangeText={handleChange}
             accessibilityLabel={placeholder}
             accessibilityRole="search"
-            inputContainerStyle={styles.formInputContainer}
-            inputStyle={styles.formInput}
-            containerStyle={styles.searchBarContainer}
-            rightIcon={
+            leftIcon={
                 <Ionicons
-                    name="close-circle-outline"
-                    size={22}
-                    color={theme.colors.tertiary}
-                    onPress={handleClear}
-                    accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
+                    name="search"
+                    size={17}
+                    color={theme.colors.grey4}
+                    style={styles.searchBarIcon}
                 />
             }
+            rightIcon={
+                localValue.length > 0 ? (
+                    <Ionicons
+                        name="close-circle-outline"
+                        size={20}
+                        color={theme.colors.tertiary}
+                        onPress={handleClear}
+                        accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
+                    />
+                ) : undefined
+            }
+            inputContainerStyle={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+            containerStyle={styles.searchBarContainer}
         />
     )
 }

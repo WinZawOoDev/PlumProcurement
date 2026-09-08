@@ -44,6 +44,7 @@ export const ROUTES = {
   CREATE_PRICE: 'CreatePrice',
   PURCHASE_DETAILS: 'PurchaseDetails',
   PURCHASE_SUMMARY: 'PurchaseSummary',
+  SELECT_SELLER: 'SellerSelect',
   SELLERS: 'Sellers',
   SELLER_DETAILS: 'SellerDetails',
   SETTINGS: 'Settings',
@@ -111,6 +112,7 @@ export const UI_TEXT = {
   STATUS: 'Status',
   PLUM_COUNT_TITLE: "Let's count the Plums",
   SELLERS: 'Sellers',
+  CURRENT_SELECTION: 'Current selection',
 
   // Availability
   AVAILABLE_STATUS: 'Available',

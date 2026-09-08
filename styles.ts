@@ -545,6 +545,29 @@ export const useStyles = makeStyles((theme) => ({
     searchBarContainer: {
         marginBottom: 10,
     },
+    searchInputContainer: {
+        borderBottomWidth: 0,
+        borderRadius: 14,
+        backgroundColor: theme.colors.secondary,
+        paddingHorizontal: 10,
+        paddingVertical: 2,
+    },
+    searchInput: {
+        fontSize: 15,
+        paddingVertical: 8,
+    },
+    searchBarIcon: {
+        marginRight: 8,
+    },
+    sellerSelectRow: {
+        borderBottomWidth: 0,
+    },
+    sellerSelectSeparator: {
+        height: 1,
+        backgroundColor: theme.colors.grey1,
+        marginLeft: 4,
+        marginRight: 4,
+    },
     priceListContainer: {
         paddingHorizontal: 12,
         paddingBlock: 15

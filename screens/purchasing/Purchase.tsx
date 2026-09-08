@@ -1,25 +1,31 @@
-import { FlatList, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import { FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Text } from '@rneui/base'
+import { useTheme } from '@rneui/themed'
+import Ionicons from '@react-native-vector-icons/ionicons'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
+import { ParamListBase, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
-import { sellerService } from '../../services/sellerService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
-import { SelectPicker } from '../../components/SelectPicker'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { lightHaptic } from '../../utils/haptics'
 
+interface SelectedSeller {
+    id: number
+    name: string
+}
+
 interface PurchaseFormProps {
-    sellers: { id: number; name: string }[]
+    selectedSeller: SelectedSeller | null
+    onOpenSellerSelect: () => void
     onRecorded: () => void
 }
 
@@ -142,14 +148,14 @@ function PurchaseFormActions({
     )
 }
 
-export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
+export function PurchaseForm({ selectedSeller, onOpenSellerSelect, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
+    const { theme } = useTheme()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()
     const { width } = useWindowDimensions()
     const cardWidth = width - 78
 
-    const [selectedSellerId, setSelectedSellerId] = useState<string>('')
     const [quantities, setQuantities] = useState<Record<string, number>>({})
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
@@ -166,14 +172,14 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     const selectedItems = available
         .map((price) => ({ price, quantity: getQuantity(price.id.toString()) }))
         .filter((r) => r.quantity > 0)
-    const allValid = selectedSellerId !== '' && selectedItems.length > 0
+    const allValid = selectedSeller !== null && selectedItems.length > 0
     const total = selectedItems.reduce((sum, r) => sum + r.price.price * r.quantity, 0)
 
     const summaryPurchase: IPurchaseDetail = {
         id: 0,
-        seller_id: selectedSellerId ? parseInt(selectedSellerId, 10) : null,
+        seller_id: selectedSeller?.id ?? null,
         total,
-        seller_name: sellers.find((s) => s.id.toString() === selectedSellerId)?.name ?? null,
+        seller_name: selectedSeller?.name ?? null,
         items: selectedItems.map(({ price, quantity }) => ({
             id: price.id,
             purchase_id: 0,
@@ -187,7 +193,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
     }
 
     const handleRecord = async () => {
-        if (!selectedSellerId) {
+        if (!selectedSeller) {
             showError(MESSAGES.ERROR_SELECT_SELLER)
             return
         }
@@ -198,7 +204,7 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
         await withRecording(async () => {
             try {
                 await purchaseService.recordPurchase({
-                    seller_id: parseInt(selectedSellerId, 10),
+                    seller_id: selectedSeller.id,
                     items: selectedItems.map(({ price, quantity }) => ({
                         price_id: price.id,
                         category: price.category,
@@ -209,7 +215,6 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
                 })
                 showSuccess(MESSAGES.PURCHASE_RECORDED_SUCCESS)
                 onRecorded()
-                setSelectedSellerId('')
                 setQuantities({})
             } catch (error) {
                 const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
@@ -220,15 +225,26 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
 
     return (
         <View style={styles.formCard}>
-            <SelectPicker
-                label={UI_TEXT.SELECT_SELLER}
-                selectedValue={selectedSellerId}
-                onValueChange={setSelectedSellerId}
-                items={[
-                    { label: UI_TEXT.SELECT_SELLER_PLACEHOLDER, value: '' },
-                    ...sellers.map((s) => ({ label: s.name, value: s.id.toString() })),
-                ]}
-            />
+            <Pressable
+                style={styles.purchaseItemRow}
+                onPress={onOpenSellerSelect}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${UI_TEXT.SELECT_SELLER}: ${selectedSeller?.name ?? UI_TEXT.SELECT_SELLER_PLACEHOLDER}`}
+            >
+                <View style={styles.sellerInfo}>
+                    <RNText style={styles.purchaseItemSubtitle}>{UI_TEXT.SELECT_SELLER}</RNText>
+                    <RNText
+                        style={[
+                            styles.purchaseItemTitle,
+                            !selectedSeller && styles.purchaseSummaryValueMuted,
+                        ]}
+                    >
+                        {selectedSeller?.name ?? UI_TEXT.SELECT_SELLER_PLACEHOLDER}
+                    </RNText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.grey4} />
+            </Pressable>
             {available.length === 0 ? (
                 <EmptyState compact icon="pricetag-outline" title={MESSAGES.EMPTY_PRICE_LIST} description={UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST} />
             ) : (
@@ -323,10 +339,23 @@ function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
 
 export default function Purchase() {
     const styles = useStyles()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { refresh: refreshPrices } = usePrices()
+    const route = useRoute<
+        RouteProp<Record<string, { selectedSellerId?: number; selectedSellerName?: string }>, string>
+    >()
 
-    const [sellers, setSellers] = useState<{ id: number; name: string }[]>([])
+    const [selectedSeller, setSelectedSeller] = useState<SelectedSeller | null>(null)
     const [recent, setRecent] = useState<IPurchaseDetail[]>([])
+
+    // Consume seller selection returned from the SellerSelect screen
+    useEffect(() => {
+        const { selectedSellerId, selectedSellerName } = route.params ?? {}
+        if (selectedSellerId !== undefined && selectedSellerName !== undefined) {
+            setSelectedSeller({ id: selectedSellerId, name: selectedSellerName })
+            navigation.setParams({ selectedSellerId: undefined, selectedSellerName: undefined })
+        }
+    }, [route.params, navigation])
 
     const loadRecent = useCallback(async () => {
         try {
@@ -336,21 +365,12 @@ export default function Purchase() {
         }
     }, [])
 
-    const loadSellers = useCallback(async () => {
-        try {
-            setSellers(await sellerService.getSellers())
-        } catch (error) {
-            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
-        }
-    }, [])
-
     // Reload on every focus so returning from history/detail screens shows fresh data
     useFocusEffect(
         useCallback(() => {
             loadRecent()
-            loadSellers()
             refreshPrices()
-        }, [loadRecent, loadSellers, refreshPrices])
+        }, [loadRecent, refreshPrices])
     )
 
     return (
@@ -358,7 +378,16 @@ export default function Purchase() {
             <View style={[styles.priceListContainer, styles.fillContainer]}>
                 <SectionHeader icon="cart-outline" title={UI_TEXT.RECORD_PURCHASE} description={UI_TEXT.PURCHASE_DESCRIPTION} />
 
-                <PurchaseForm sellers={sellers} onRecorded={loadRecent} />
+                <PurchaseForm
+                    selectedSeller={selectedSeller}
+                    onOpenSellerSelect={() =>
+                        navigation.navigate(ROUTES.SELECT_SELLER, { currentSellerId: selectedSeller?.id })
+                    }
+                    onRecorded={() => {
+                        loadRecent()
+                        setSelectedSeller(null)
+                    }}
+                />
 
                 <RecentPurchasesList recent={recent} />
             </View>
