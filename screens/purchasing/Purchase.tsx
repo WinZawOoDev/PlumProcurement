@@ -42,8 +42,8 @@ function PriceItemCard({
     return (
         <View style={[styles.priceItemCard, { width }]}>
             <View style={styles.priceItemCardHeader}>
-                <View style={[styles.priceItemCardAvatar, selected && styles.priceItemCardAvatarActive]}>
-                    <RNText style={[styles.priceItemCardAvatarText, selected && styles.priceItemCardAvatarTextActive]}>
+                <View style={styles.priceItemCardAvatar}>
+                    <RNText style={styles.priceItemCardAvatarText}>
                         {price.category.charAt(0).toUpperCase()}
                     </RNText>
                 </View>

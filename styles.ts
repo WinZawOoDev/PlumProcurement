@@ -800,23 +800,14 @@ export const useStyles = makeStyles((theme) => ({
         height: 38,
         borderRadius: 12,
         backgroundColor: theme.colors.grey0,
-        borderWidth: 1,
-        borderColor: theme.colors.grey1,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    priceItemCardAvatarActive: {
-        backgroundColor: theme.colors.primary,
-        borderColor: theme.colors.primary,
     },
     priceItemCardAvatarText: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
         fontSize: 16,
         fontWeight: '700',
-        color: theme.colors.grey3,
-    },
-    priceItemCardAvatarTextActive: {
-        color: theme.colors.white,
+        color: theme.colors.primary,
     },
     priceItemCardHeaderText: {
         flex: 1,
