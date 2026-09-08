@@ -148,10 +148,7 @@ function SellerPurchaseRow({ item }: { item: IPurchaseDetail }) {
         <Pressable
             style={styles.purchaseItemRow}
             onPress={() =>
-                navigation.navigate(ROUTES.PURCHASE_TAB, {
-                    screen: ROUTES.PURCHASE_SUMMARY,
-                    params: { purchase: item },
-                })
+                navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })
             }
             accessible
             accessibilityRole="button"

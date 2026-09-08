@@ -1,7 +1,8 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Sellers from "./Sellers";
 import SellerDetails from "./SellerDetails";
-import { ROUTES } from "../../constants";
+import PurchaseSummary from "../purchasing/PurchaseSummary";
+import { ROUTES, UI_TEXT } from "../../constants";
 
 
 const SellerStack = createNativeStackNavigator({
@@ -16,6 +17,10 @@ const SellerStack = createNativeStackNavigator({
     [ROUTES.SELLER_DETAILS]: {
       screen: SellerDetails,
       options: { title: 'Seller Details' }
+    },
+    [ROUTES.PURCHASE_SUMMARY]: {
+      screen: PurchaseSummary,
+      options: { title: UI_TEXT.PURCHASE_SUMMARY_TITLE }
     }
   }
 })
