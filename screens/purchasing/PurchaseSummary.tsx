@@ -17,24 +17,29 @@ type PurchaseSummaryRouteProp = RouteProp<
 function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
     const styles = useStyles()
     return (
-        <View style={styles.purchaseItemRow}>
+        <View style={styles.purchaseDetailItemRow}>
+            <View style={styles.purchaseItemQtyBadge}>
+                <RNText style={styles.purchaseItemQtyBadgeText}>{item.quantity}</RNText>
+            </View>
             <View style={styles.sellerInfo}>
                 <RNText style={styles.purchaseItemTitle}>{item.category}</RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {item.quantity} × {item.unit_price.toFixed(2)}$ / {item.unit}
+                    {item.unit_price.toFixed(2)}$ / {item.unit}
                 </RNText>
             </View>
-            <RNText style={styles.purchaseItemTotal}>{item.line_total.toFixed(2)}$</RNText>
+            <RNText style={styles.purchaseDetailItemTotal}>{item.line_total.toFixed(2)}$</RNText>
         </View>
     )
 }
 
-function SummaryMetaRow({ label, value }: { label: string; value: string }) {
+function StatCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
     const styles = useStyles()
     return (
-        <View style={styles.purchaseSummaryRow}>
-            <RNText style={styles.purchaseSummaryLabel}>{label}</RNText>
-            <RNText style={styles.purchaseSummaryValue}>{value}</RNText>
+        <View style={styles.purchaseSummaryStatCell}>
+            <RNText style={styles.purchaseSummaryStatValue}>{value}</RNText>
+            <RNText style={[styles.purchaseSummaryStatLabel, highlight && styles.purchaseSummaryStatLabelHighlight]}>
+                {label}
+            </RNText>
         </View>
     )
 }
@@ -65,19 +70,29 @@ export default function PurchaseSummary() {
                     description={UI_TEXT.PURCHASE_SUMMARY_DESCRIPTION}
                 />
                 <View style={styles.purchaseSummaryCard}>
-                    <SummaryMetaRow
-                        label={UI_TEXT.SELECT_SELLER}
-                        value={purchase.seller_name ?? UI_TEXT.NO_SELLER}
-                    />
-                    <SummaryMetaRow label={UI_TEXT.PURCHASE_DATE} value={formatDate(purchase.created_at)} />
-                    <SummaryMetaRow label={UI_TEXT.ITEMS} value={purchase.items.length.toString()} />
-                    <View style={[styles.purchaseSummaryRow, styles.purchaseDetailsSummaryDivider]}>
-                        <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
-                        <RNText style={styles.purchaseTotalText}>{purchase.total.toFixed(2)}$</RNText>
+                    <View style={styles.purchaseSummaryHeroRow}>
+                        <View style={styles.purchaseSummaryAvatar}>
+                            <RNText style={styles.purchaseSummaryAvatarText}>
+                                {(purchase.seller_name ?? UI_TEXT.NO_SELLER).charAt(0).toUpperCase()}
+                            </RNText>
+                        </View>
+                        <View style={styles.purchaseSummaryHeroText}>
+                            <RNText style={styles.purchaseSummarySellerName}>
+                                {purchase.seller_name ?? UI_TEXT.NO_SELLER}
+                            </RNText>
+                            <RNText style={styles.purchaseSummaryDateText}>{formatDate(purchase.created_at)}</RNText>
+                        </View>
+                    </View>
+                    <View style={styles.purchaseSummaryStatsRow}>
+                        <StatCell label={UI_TEXT.ITEMS} value={purchase.items.length.toString()} />
+                        <View style={styles.purchaseSummaryStatDivider} />
+                        <StatCell label={UI_TEXT.TOTAL} value={`${purchase.total.toFixed(2)}$`} highlight />
                     </View>
                 </View>
+                <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>
                 <FlatList
                     style={styles.purchaseHistoryItems}
+                    contentContainerStyle={purchase.items.length === 0 ? styles.recentPurchasesEmpty : undefined}
                     data={purchase.items}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => <ItemDetailRow item={item} />}
