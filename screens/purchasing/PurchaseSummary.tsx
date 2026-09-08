@@ -84,9 +84,9 @@ export default function PurchaseSummary() {
                         </View>
                     </View>
                     <View style={styles.purchaseSummaryStatsRow}>
-                        <StatCell label={UI_TEXT.ITEMS} value={purchase.items.length.toString()} />
+                        <StatCell label={UI_TEXT.TOTAL_ITEMS} value={purchase.items.length.toString()} />
                         <View style={styles.purchaseSummaryStatDivider} />
-                        <StatCell label={UI_TEXT.TOTAL} value={`${purchase.total.toFixed(2)}$`} highlight />
+                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${purchase.total.toFixed(2)}$`} highlight />
                     </View>
                 </View>
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>

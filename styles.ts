@@ -615,9 +615,13 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 14,
     },
     purchaseSummaryValue: {
-        fontWeight: '600',
+        fontWeight: '700',
         fontSize: 16,
-        color: theme.colors.black,
+        color: theme.colors.primary,
+        fontVariant: ['tabular-nums'],
+    },
+    purchaseSummaryValueMuted: {
+        color: theme.colors.secondary,
     },
     purchaseTotalText: {
         fontWeight: '700',

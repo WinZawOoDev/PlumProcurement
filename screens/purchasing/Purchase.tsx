@@ -98,6 +98,7 @@ function PriceItemCard({
 
 function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; total: number; onPress: () => void }) {
     const styles = useStyles()
+    const hasItems = itemCount > 0
     return (
         <TouchableOpacity
             style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}
@@ -108,12 +109,14 @@ function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; tot
             accessibilityLabel={UI_TEXT.PURCHASE_SUMMARY_TITLE}
         >
             <View style={styles.purchaseSummaryRow}>
-                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.ITEMS}</Text>
-                <Text style={styles.purchaseSummaryValue}>{itemCount}</Text>
+                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_ITEMS}</Text>
+                <Text style={[styles.purchaseSummaryValue, !hasItems && styles.purchaseSummaryValueMuted]}>{itemCount}</Text>
             </View>
             <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
-                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
-                <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
+                <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_AMOUNT}</Text>
+                <Text style={[styles.purchaseTotalText, total <= 0 && styles.purchaseSummaryValueMuted]}>
+                    {total > 0 ? `${total.toFixed(2)}$` : '—'}
+                </Text>
             </View>
         </TouchableOpacity>
     )

@@ -136,6 +136,8 @@ export const UI_TEXT = {
   QUANTITY: 'Quantity',
   UNIT_PRICE: 'Unit Price',
   TOTAL: 'Total',
+  TOTAL_ITEMS: 'Total Items',
+  TOTAL_AMOUNT: 'Total Amount',
   ITEMS: 'Items',
   ADD_ITEM: 'Add Item',
   REMOVE_ITEM: 'Remove',
