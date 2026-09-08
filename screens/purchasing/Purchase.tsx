@@ -96,10 +96,17 @@ function PriceItemCard({
     )
 }
 
-function PurchaseSummary({ itemCount, total }: { itemCount: number; total: number }) {
+function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; total: number; onPress: () => void }) {
     const styles = useStyles()
     return (
-        <View style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}>
+        <TouchableOpacity
+            style={[styles.purchaseSummaryCard, styles.purchaseSummaryCardInline]}
+            onPress={onPress}
+            activeOpacity={0.7}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={UI_TEXT.PURCHASE_SUMMARY_TITLE}
+        >
             <View style={styles.purchaseSummaryRow}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.ITEMS}</Text>
                 <Text style={styles.purchaseSummaryValue}>{itemCount}</Text>
@@ -108,7 +115,7 @@ function PurchaseSummary({ itemCount, total }: { itemCount: number; total: numbe
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</Text>
                 <Text style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</Text>
             </View>
-        </View>
+        </TouchableOpacity>
     )
 }
 
@@ -158,6 +165,23 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
         .filter((r) => r.quantity > 0)
     const allValid = selectedSellerId !== '' && selectedItems.length > 0
     const total = selectedItems.reduce((sum, r) => sum + r.price.price * r.quantity, 0)
+
+    const summaryPurchase: IPurchaseDetail = {
+        id: 0,
+        seller_id: selectedSellerId ? parseInt(selectedSellerId, 10) : null,
+        total,
+        seller_name: sellers.find((s) => s.id.toString() === selectedSellerId)?.name ?? null,
+        items: selectedItems.map(({ price, quantity }) => ({
+            id: price.id,
+            purchase_id: 0,
+            price_id: price.id,
+            category: price.category,
+            unit: price.unit,
+            unit_price: price.price,
+            quantity,
+            line_total: price.price * quantity,
+        })),
+    }
 
     const handleRecord = async () => {
         if (!selectedSellerId) {
@@ -237,7 +261,11 @@ export function PurchaseForm({ sellers, onRecorded }: PurchaseFormProps) {
             {!allValid && (
                 <RNText style={styles.quantityStepperHint}>{UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST}</RNText>
             )}
-            <PurchaseSummary itemCount={selectedItems.length} total={total} />
+            <PurchaseSummary
+                itemCount={selectedItems.length}
+                total={total}
+                onPress={() => navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: summaryPurchase })}
+            />
             <PurchaseFormActions
                 recording={recording}
                 canRecord={allValid}

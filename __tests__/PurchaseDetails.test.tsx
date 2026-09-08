@@ -19,6 +19,11 @@ jest.mock('../services/purchaseService', () => ({
 jest.mock('../utils/csvExport', () => ({
     shareOrSaveCsv: jest.fn(),
 }))
+const mockNavigate = jest.fn()
+jest.mock('@react-navigation/native', () => ({
+    ...jest.requireActual('@react-navigation/native'),
+    useNavigation: () => ({ navigate: mockNavigate }),
+}))
 
 const page1: IPurchaseDetail[] = [
     {

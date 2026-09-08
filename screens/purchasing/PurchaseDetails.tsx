@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, Text as RNText, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native';
 import React, {
   useCallback,
   useEffect,
@@ -7,12 +7,15 @@ import React, {
   useState,
 } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '@rneui/themed';
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid';
 import { useStyles } from '../../styles';
 import {
   UI_TEXT,
   MESSAGES,
+  ROUTES,
   SAFE_AREA,
   DIMENSIONS,
   A11Y_LABELS,
@@ -96,8 +99,17 @@ function PurchaseRow({
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   return (
-    <View style={styles.purchaseItemRow}>
+    <Pressable
+      style={styles.purchaseItemRow}
+      onPress={() =>
+        navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })
+      }
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
+    >
       <View style={styles.sellerInfo}>
         <RNText style={styles.purchaseItemTitle}>
           {item.seller_name ?? UI_TEXT.NO_SELLER}
@@ -130,7 +142,7 @@ function PurchaseRow({
           />
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
