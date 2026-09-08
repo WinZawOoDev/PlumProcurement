@@ -129,14 +129,26 @@ export default function SellerSelect() {
                                     accessibilityLabel={item.name}
                                     accessibilityState={{ selected }}
                                 >
-                                    <View style={styles.sellerInfo}>
-                                        <RNText style={styles.purchaseItemTitle}>
-                                            {item.name}
+                                    <View style={styles.avatarCircle}>
+                                        <RNText style={styles.avatarText}>
+                                            {item.name.trim().charAt(0).toUpperCase() || '?'}
                                         </RNText>
+                                    </View>
+                                    <View style={styles.sellerInfo}>
+                                        <RNText style={styles.sellerNameText}>{item.name}</RNText>
                                         {!!item.phone && (
-                                            <RNText style={styles.purchaseItemSubtitle}>
-                                                {item.phone}
-                                            </RNText>
+                                            <View style={styles.sellerRowContactRow}>
+                                                <Ionicons name="call-outline" size={12} color={theme.colors.tertiary} />
+                                                <RNText style={styles.sellerRowContactText}>{item.phone}</RNText>
+                                            </View>
+                                        )}
+                                        {!!item.address && (
+                                            <View style={styles.sellerRowContactRow}>
+                                                <Ionicons name="location-outline" size={12} color={theme.colors.tertiary} />
+                                                <RNText style={styles.sellerRowContactText} numberOfLines={1}>
+                                                    {item.address}
+                                                </RNText>
+                                            </View>
                                         )}
                                     </View>
                                     {selected && (
