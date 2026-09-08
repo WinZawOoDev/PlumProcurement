@@ -175,6 +175,14 @@ export const useStyles = makeStyles((theme) => ({
         letterSpacing: 0.2,
         lineHeight: 26,
     },
+    sectionHeaderTitleCompact: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        fontSize: 15,
+        fontWeight: '700',
+        color: theme.colors.primary,
+        letterSpacing: 0.2,
+        lineHeight: 20,
+    },
     sectionHeaderDescription: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
         fontSize: 13,
@@ -561,6 +569,25 @@ export const useStyles = makeStyles((theme) => ({
     },
     sellerSelectRow: {
         borderBottomWidth: 0,
+    },
+    sellerRecentRow: {
+        paddingVertical: 8,
+        gap: 10,
+    },
+    sellerRecentTitle: {
+        fontWeight: '600',
+        fontSize: 14,
+        color: theme.colors.black,
+    },
+    sellerRecentSubtitle: {
+        fontSize: 12,
+        color: theme.colors.tertiary,
+        marginTop: 2,
+    },
+    sellerRecentTotal: {
+        fontWeight: '700',
+        fontSize: 14,
+        color: theme.colors.black,
     },
     sellerSummaryCardFooter: {
         flexDirection: 'row',
@@ -1388,6 +1415,12 @@ export const useStyles = makeStyles((theme) => ({
     },
     sellerSectionSpacer: {
         marginTop: 4,
+    },
+    sellerHistoryDivider: {
+        height: 2,
+        backgroundColor: theme.colors.grey2,
+        marginTop: 24,
+        marginBottom: 8,
     },
     recordPaymentButton: {
         shadowColor: 'transparent',

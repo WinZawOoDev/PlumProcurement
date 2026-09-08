@@ -6,19 +6,21 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
+import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
-import { ISeller, ISellerPaymentStat } from '../../types/database'
+import { ISeller, ISellerPaymentStat, IPayment, IPurchaseDetail } from '../../types/database'
+import { formatDate } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
-import { IconButton } from '../../components/buttons/Button'
+import { IconButton, PrimaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
 import { StatCell } from '../../components/StatCell'
+import PaymentFormSheet from './PaymentFormSheet'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -108,7 +110,6 @@ function PurchasesSection({
             <SectionHeader
                 icon="receipt-outline"
                 title={UI_TEXT.PURCHASE_HISTORY_TITLE}
-                action={<ViewAllLink onPress={onPress} />}
             />
             <Pressable
                 onPress={onPress}
@@ -146,7 +147,6 @@ function PaymentsSection({
                         ? `${UI_TEXT.BALANCE}: ${stat.balance.toFixed(2)}$`
                         : undefined
                 }
-                action={<ViewAllLink onPress={onPress} />}
             />
             <Pressable
                 onPress={onPress}
@@ -163,6 +163,50 @@ function PaymentsSection({
                 </View>
             </Pressable>
         </View>
+    )
+}
+
+function methodLabel(method: string | null): string {
+    if (!method) return ''
+    return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? method
+}
+
+function RecentPaymentRow({ item }: { item: IPayment }) {
+    const styles = useStyles()
+    return (
+        <View style={[styles.purchaseItemRow, styles.sellerRecentRow]}>
+            <View style={styles.sellerInfo}>
+                <RNText style={styles.sellerRecentTitle}>{item.amount.toFixed(2)}$</RNText>
+                <RNText style={styles.sellerRecentSubtitle}>
+                    {formatDate(item.paid_at)}
+                    {item.method ? ` · ${methodLabel(item.method)}` : ''}
+                </RNText>
+            </View>
+        </View>
+    )
+}
+
+function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
+    const styles = useStyles()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
+    return (
+        <Pressable
+            style={[styles.purchaseItemRow, styles.sellerRecentRow]}
+            onPress={() => navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${formatDate(item.created_at)}`}
+        >
+            <View style={styles.sellerInfo}>
+                <RNText style={styles.sellerRecentTitle}>{formatDate(item.created_at)}</RNText>
+                <RNText style={styles.sellerRecentSubtitle}>
+                    {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+                </RNText>
+            </View>
+            <View style={styles.purchaseItemActions}>
+                <RNText style={styles.sellerRecentTotal}>{item.total.toFixed(2)}$</RNText>
+            </View>
+        </Pressable>
     )
 }
 
@@ -193,6 +237,9 @@ export default function SellerDetails() {
     const [seller, setSeller] = useState<ISeller | null>(null)
     const [purchaseStats, setPurchaseStats] = useState<{ count: number; total: number } | null>(null)
     const [paymentStat, setPaymentStat] = useState<ISellerPaymentStat | null>(null)
+    const [recentPurchases, setRecentPurchases] = useState<IPurchaseDetail[]>([])
+    const [recentPayments, setRecentPayments] = useState<IPayment[]>([])
+    const [paymentSheetVisible, setPaymentSheetVisible] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const { loading, withLoading } = useLoading(false)
 
@@ -210,10 +257,12 @@ export default function SellerDetails() {
         }
         await withLoading(async () => {
             try {
-                const [found, stats, stat] = await Promise.all([
+                const [found, stats, stat, history, paid] = await Promise.all([
                     sellerService.getSellerById(sellerId),
                     purchaseService.getSellerStats().catch(() => [] as { seller_id: number; purchase_count: number; total_spent: number }[]),
                     paymentService.getSellerPaymentStat(sellerId).catch(() => null),
+                    purchaseService.getPurchasesBySeller(sellerId).catch(() => [] as IPurchaseDetail[]),
+                    paymentService.getPaymentsBySeller(sellerId).catch(() => [] as IPayment[]),
                 ])
                 if (!found) {
                     setNotFound(true)
@@ -228,6 +277,8 @@ export default function SellerDetails() {
                         : { count: 0, total: 0 },
                 )
                 setPaymentStat(stat)
+                setRecentPurchases(history.slice(0, 3))
+                setRecentPayments(paid.slice(0, 3))
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
@@ -306,15 +357,87 @@ export default function SellerDetails() {
                             />
                         )}
 
+                        {purchaseStats && (
+                            <View style={styles.sellerSectionSpacer}>
+                                <SectionHeader
+                                    compact
+                                    icon="time-outline"
+                                    title={UI_TEXT.RECENT_PURCHASES}
+                                    action={
+                                        <ViewAllLink
+                                            onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
+                                        />
+                                    }
+                                />
+                                {recentPurchases.length === 0 ? (
+                                    <EmptyState
+                                        compact
+                                        icon="receipt-outline"
+                                        title={UI_TEXT.EMPTY_PURCHASE_LIST}
+                                        description={`No purchases recorded for ${seller.name} yet`}
+                                    />
+                                ) : (
+                                    recentPurchases.map((purchase) => (
+                                        <RecentPurchaseRow key={purchase.id} item={purchase} />
+                                    ))
+                                )}
+                            </View>
+                        )}
+
+                        <View style={styles.sellerHistoryDivider} />
+
                         <PaymentsSection
                             stat={paymentStat}
                             onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
                         />
+
+                        <PrimaryButton
+                            title={UI_TEXT.PAYMENT}
+                            onPress={() => setPaymentSheetVisible(true)}
+                            containerStyle={styles.recordPaymentButton}
+                        />
+
+                        {paymentStat && (
+                            <View style={styles.sellerSectionSpacer}>
+                                <SectionHeader
+                                    compact
+                                    icon="cash-outline"
+                                    title={UI_TEXT.RECENT_PAYMENTS}
+                                    action={
+                                        <ViewAllLink
+                                            onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
+                                        />
+                                    }
+                                />
+                                {recentPayments.length === 0 ? (
+                                    <EmptyState
+                                        compact
+                                        icon="cash-outline"
+                                        title={UI_TEXT.EMPTY_PAYMENT_LIST}
+                                        description="Record a payment to settle this seller's balance"
+                                    />
+                                ) : (
+                                    recentPayments.map((payment) => (
+                                        <RecentPaymentRow key={payment.id} item={payment} />
+                                    ))
+                                )}
+                            </View>
+                        )}
                     </ScrollView>
                 ) : (
                     <SellerDetailsSkeleton />
                 )}
             </View>
+
+            {seller && (
+                <PaymentFormSheet
+                    visible={paymentSheetVisible}
+                    sellerId={seller.id}
+                    balance={paymentStat?.balance ?? 0}
+                    onClose={() => setPaymentSheetVisible(false)}
+                    onSaved={loadDetails}
+                />
+            )}
         </SafeAreaView>
     )
 }

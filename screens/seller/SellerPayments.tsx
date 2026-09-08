@@ -15,9 +15,8 @@ import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { CardSkeleton } from '../../components/Skeleton'
 import { EmptyState } from '../../components/EmptyState'
-import { IconButton, PrimaryButton } from '../../components/buttons/Button'
+import { IconButton } from '../../components/buttons/Button'
 import { StatCell } from '../../components/StatCell'
-import PaymentFormSheet from './PaymentFormSheet'
 
 type SellerPaymentsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -71,7 +70,6 @@ export default function SellerPayments() {
 
     const [paymentStat, setPaymentStat] = useState<ISellerPaymentStat | null>(null)
     const [payments, setPayments] = useState<IPayment[]>([])
-    const [paymentSheetVisible, setPaymentSheetVisible] = useState(false)
     const { loading, withLoading } = useLoading(false)
 
     const loadPayments = useCallback(async () => {
@@ -135,12 +133,6 @@ export default function SellerPayments() {
                         <>
                             {paymentStat && <PaymentStatsSection stat={paymentStat} />}
 
-                            <PrimaryButton
-                                title={UI_TEXT.RECORD_PAYMENT}
-                                onPress={() => setPaymentSheetVisible(true)}
-                                containerStyle={styles.recordPaymentButton}
-                            />
-
                             {payments.length === 0 ? (
                                 <EmptyState
                                     icon="cash-outline"
@@ -159,16 +151,6 @@ export default function SellerPayments() {
                         </>
                     )}
                 </ScrollView>
-
-                {sellerId !== undefined && sellerId !== null && (
-                    <PaymentFormSheet
-                        visible={paymentSheetVisible}
-                        sellerId={sellerId}
-                        balance={paymentStat?.balance ?? 0}
-                        onClose={() => setPaymentSheetVisible(false)}
-                        onSaved={loadPayments}
-                    />
-                )}
             </View>
         </SafeAreaView>
     )
