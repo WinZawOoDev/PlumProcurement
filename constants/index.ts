@@ -102,7 +102,6 @@ export const UI_TEXT = {
   CATEGORY: 'Category',
   UNIT_SELECTION: 'Unit',
   PRICE: 'Price',
-  AVAILABLE: 'Available',
 
   // Sections
   PRICE_MANAGEMENT: 'Price Management',
@@ -115,10 +114,6 @@ export const UI_TEXT = {
   PLUM_COUNT_TITLE: "Let's count the Plums",
   SELLERS: 'Sellers',
   CURRENT_SELECTION: 'Current selection',
-
-  // Availability
-  AVAILABLE_STATUS: 'Available',
-  UNAVAILABLE_STATUS: 'Unavailable',
 
   // Search & sort
   SEARCH_PRICES_PLACEHOLDER: 'Search by category or unit',
@@ -255,7 +250,6 @@ export const FORM_CONFIG = {
   PRICE_KEYTYPE: 'decimal-pad' as const,
   UNIT_DEFAULT: 0,
   CATEGORY_DEFAULT: PRODUCT_CATEGORIES.FRUIT,
-  AVAILABLE_DEFAULT: false,
 } as const;
 
 // ===== UI DIMENSIONS =====

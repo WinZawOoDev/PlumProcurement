@@ -159,7 +159,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     const [quantities, setQuantities] = useState<Record<string, number>>({})
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
-    const available = prices.filter((p) => Boolean(p.is_available))
+    const selectablePrices = prices
 
     const getQuantity = (priceId: string) => quantities[priceId] ?? 0
     const increment = (priceId: string) => {
@@ -169,7 +169,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
         setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, (prev[priceId] ?? 0) - 1) }))
     }
 
-    const selectedItems = available
+    const selectedItems = selectablePrices
         .map((price) => ({ price, quantity: getQuantity(price.id.toString()) }))
         .filter((r) => r.quantity > 0)
     const allValid = selectedSeller !== null && selectedItems.length > 0
@@ -245,13 +245,13 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.grey4} />
             </Pressable>
-            {available.length === 0 ? (
+            {selectablePrices.length === 0 ? (
                 <EmptyState compact icon="pricetag-outline" title={MESSAGES.EMPTY_PRICE_LIST} description={UI_TEXT.SELECT_SELLER_AND_PRICE_FIRST} />
             ) : (
                 <>
                     <View style={styles.priceItemListHeader}>
                         <RNText style={styles.priceItemListTitle}>{UI_TEXT.PRICE_ITEMS}</RNText>
-                        <RNText style={styles.priceItemCount}>{available.length}</RNText>
+                        <RNText style={styles.priceItemCount}>{selectablePrices.length}</RNText>
                     </View>
                     <ScrollView
                     horizontal
@@ -260,7 +260,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                     style={styles.priceItemCardScroll}
                     contentContainerStyle={styles.priceItemCardList}
                 >
-                    {available.map((price) => {
+                    {selectablePrices.map((price) => {
                         const priceId = price.id.toString()
                         const quantity = getQuantity(priceId)
                         return (

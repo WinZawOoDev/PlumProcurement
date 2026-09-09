@@ -12,7 +12,6 @@ const TABLE_STATEMENTS = [
         price REAL NOT NULL,
         unit TEXT NOT NULL,
         category TEXT,
-        is_available BOOLEAN,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,

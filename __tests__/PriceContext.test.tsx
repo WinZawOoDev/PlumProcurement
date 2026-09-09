@@ -14,7 +14,7 @@ jest.mock('../services/priceService', () => ({
 }))
 
 const mockPrices: IPrice[] = [
-    { id: 1, price: 3000, unit: 'PER KG', category: 'fruits', is_available: true },
+    { id: 1, price: 3000, unit: 'PER KG', category: 'fruits' },
 ]
 
 type PriceState = ReturnType<typeof usePrices>
@@ -62,7 +62,7 @@ test('addPrice delegates to service then refreshes the list', async () => {
     ;(priceService.addPrice as jest.Mock).mockResolvedValue(2)
     ;(priceService.getPrices as jest.Mock).mockResolvedValue([
         ...mockPrices,
-        { id: 2, price: 100, unit: 'PER UNIT', category: 'dairy', is_available: false },
+        { id: 2, price: 100, unit: 'PER UNIT', category: 'dairy' },
     ])
 
     const states: PriceState[] = []
@@ -73,7 +73,6 @@ test('addPrice delegates to service then refreshes the list', async () => {
             price: 100,
             unit: 'PER UNIT',
             category: 'dairy',
-            is_available: false,
         })
     })
 
@@ -81,7 +80,6 @@ test('addPrice delegates to service then refreshes the list', async () => {
         price: 100,
         unit: 'PER UNIT',
         category: 'dairy',
-        is_available: false,
     })
     expect(states[states.length - 1].prices).toHaveLength(2)
 })

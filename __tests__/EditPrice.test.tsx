@@ -23,7 +23,6 @@ const mockPrice: IPrice = {
     price: 10,
     unit: 'CUP',
     category: 'fruit',
-    is_available: true,
 }
 
 const flush = async () => {
@@ -89,7 +88,6 @@ describe('EditPrice sheet', () => {
             price: 15,
             category: 'fruit',
             unit: 'CUP',
-            is_available: true,
         })
         expect(onClose).toHaveBeenCalledTimes(1)
     })

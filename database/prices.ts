@@ -18,11 +18,7 @@ export async function fetchPrices(): Promise<IPrice[]> {
         const { results } = await db.executeAsync(`
             SELECT * FROM prices ORDER BY id DESC
         `);
-        // SQLite has no native BOOLEAN — is_available comes back as 0/1.
-        // Normalize to a real boolean so UI truthiness is consistent.
-        return (results as unknown as Array<Omit<IPrice, 'is_available'> & { is_available: unknown }>).map(
-            (row) => ({ ...row, is_available: !!row.is_available } as IPrice)
-        )
+        return results as unknown as IPrice[]
     } catch (error) {
         throw new DatabaseError('Failed to fetch prices', error)
     }
@@ -31,7 +27,7 @@ export async function fetchPrices(): Promise<IPrice[]> {
 export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number> {
     let db;
     try {
-        const { price, unit, category, is_available } = priceData;
+        const { price, unit, category } = priceData;
 
         // Validate input
         if (!price || price <= 0) {
@@ -43,9 +39,9 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
 
         db = initDb()
         const { insertId } = await db.executeAsync(`
-            INSERT INTO prices (price, unit, category, is_available)
-            VALUES (?, ?, ?, ?)
-        `, [price, unit, category, is_available ? 1 : 0]);
+            INSERT INTO prices (price, unit, category)
+            VALUES (?, ?, ?)
+        `, [price, unit, category]);
 
         return insertId as number;
     } catch (error) {
@@ -74,10 +70,6 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         if (priceData.category !== undefined) {
             updates.push('category = ?')
             values.push(priceData.category)
-        }
-        if (priceData.is_available !== undefined) {
-            updates.push('is_available = ?')
-            values.push(priceData.is_available ? 1 : 0)
         }
 
         if (updates.length === 0) {

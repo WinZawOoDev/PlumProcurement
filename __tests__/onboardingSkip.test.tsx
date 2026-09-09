@@ -23,7 +23,7 @@ jest.mock('../services/settingsService', () => ({
     settingsService: { isOnboarded: jest.fn(), setOnboarded: jest.fn(), getThemeMode: jest.fn(), setThemeMode: jest.fn() },
 }))
 
-const mockPrice: IPrice = { id: 1, price: 100, unit: 'PER KG', category: 'grains', is_available: true }
+const mockPrice: IPrice = { id: 1, price: 100, unit: 'PER KG', category: 'grains' }
 const mockSeller: ISeller = { id: 1, name: 'U Ba', phone: null, address: null }
 
 const flush = async () => {

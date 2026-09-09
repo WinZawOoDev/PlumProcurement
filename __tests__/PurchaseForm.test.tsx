@@ -22,7 +22,7 @@ jest.mock('@react-navigation/native', () => ({
 }))
 
 const mockPrices: IPrice[] = [
-    { id: 1, price: 100, unit: 'PER KG', category: 'grains', is_available: true },
+    { id: 1, price: 100, unit: 'PER KG', category: 'grains' },
 ]
 
 const flush = async () => {

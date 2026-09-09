@@ -474,11 +474,11 @@ export const useStyles = makeStyles((theme) => ({
     priceCardMinimal: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 6,
+        paddingVertical: 14,
+        paddingHorizontal: 8,
         borderBottomWidth: 0.5,
         borderColor: theme.colors.grey1,
-        gap: 16,
+        gap: 14,
     },
     priceCardAccent: {
         width: 3,
@@ -497,7 +497,8 @@ export const useStyles = makeStyles((theme) => ({
     },
     priceCardDateText: {
         fontSize: 12,
-        color: theme.colors.tertiary,
+        color: theme.colors.grey4,
+        textAlign: 'right',
     },
     priceCardActionsRow: {
         display: 'flex',
@@ -535,11 +536,8 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 13,
         letterSpacing: 0,
     },
-    priceCardStatusDot: {
-        width: 5,
-        height: 5,
-        borderRadius: 2.5,
-        opacity: 0.9,
+    priceCardHeaderSpacer: {
+        flex: 1,
     },
     priceCardDateTextSmall: {
         fontSize: 11,

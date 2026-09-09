@@ -7,7 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { DatabaseError } from '../../database/connection'
 import { usePrices } from '../../context/PriceContext'
-import { FormSelectField, FormInputField, FormCheckboxField, FormButtonGroupField } from '../../components/forms/FormFields'
+import { FormSelectField, FormInputField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -17,7 +17,6 @@ type FormData = {
     price: string
     unit: number
     category: string
-    isAvailable: boolean
 }
 
 function PriceFields({ control }: { control: Control<FormData> }) {
@@ -55,12 +54,6 @@ function PriceFields({ control }: { control: Control<FormData> }) {
                         message: VALIDATION_MESSAGES.PRICE_INVALID,
                     },
                 }}
-            />
-
-            <FormCheckboxField
-                name="isAvailable"
-                control={control}
-                label={UI_TEXT.AVAILABLE}
             />
         </>
     )
@@ -104,7 +97,6 @@ export default function CreatePrice() {
             price: FORM_CONFIG.PRICE_DEFAULT,
             unit: FORM_CONFIG.UNIT_DEFAULT,
             category: FORM_CONFIG.CATEGORY_DEFAULT,
-            isAvailable: FORM_CONFIG.AVAILABLE_DEFAULT,
         },
         mode: 'onBlur',
     })
@@ -116,7 +108,6 @@ export default function CreatePrice() {
                     category: data.category,
                     price: parseFloat(data.price),
                     unit: UNIT_LIST[data.unit],
-                    is_available: data.isAvailable,
                 })
                 showSuccess(MESSAGES.PRICE_SAVED_SUCCESS)
                 navigation.popTo(ROUTES.PURCHASE_PRICE)

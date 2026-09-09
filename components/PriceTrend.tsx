@@ -42,8 +42,7 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
                             onPress={() => onSelect?.(p)}
                             style={[
                                 styles.priceTrendBar,
-                                // eslint-disable-next-line react-native/no-inline-styles
-                                { height: h, backgroundColor: theme.colors.primary, opacity: p.is_available ? 1 : 0.4 },
+                                { height: h, backgroundColor: theme.colors.primary },
                             ]}
                             accessible
                             accessibilityLabel={`${p.category} ${p.price} dollars`}

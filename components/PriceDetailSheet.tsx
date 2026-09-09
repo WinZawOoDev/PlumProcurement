@@ -14,7 +14,7 @@ export function PriceDetailSheet({ visible, price, onClose }: { visible: boolean
             <Text style={styles.bottomSheetTitle}>Price Detail</Text>
             <View style={styles.detailSheetBody}>
                 <RNText style={styles.purchaseItemTitle}>#{price.category} — {price.price.toFixed(2)}$ / {price.unit}</RNText>
-                <RNText style={styles.purchaseItemSubtitle}>{price.is_available ? 'Available' : 'Unavailable'} · {formatDate(price.created_at)}</RNText>
+                <RNText style={styles.purchaseItemSubtitle}>{formatDate(price.created_at)}</RNText>
             </View>
         </DetailSheet>
     )

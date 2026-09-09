@@ -99,7 +99,6 @@ describe('CreatePrice screen', () => {
             category: 'fruit',
             price: 12.5,
             unit: 'CUP',
-            is_available: false,
         })
         expect(mockPopTo).toHaveBeenCalledTimes(1)
     })

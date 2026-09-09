@@ -166,16 +166,15 @@ export function buildPricesCsv(
         category: string
         unit: string
         price: number
-        is_available: boolean | number | null
         created_at?: string | null
     }>
 ): string {
-    const header = ['id', 'date', 'category', 'unit', 'price', 'available']
+    const header = ['id', 'date', 'category', 'unit', 'price']
     if (prices.length === 0) {
         return header.join(',')
     }
     const rows = prices.map((p) =>
-        [p.id, formatDate(p.created_at), p.category, p.unit, p.price, p.is_available ? 1 : 0]
+        [p.id, formatDate(p.created_at), p.category, p.unit, p.price]
             .map(csvEscape)
             .join(',')
     )

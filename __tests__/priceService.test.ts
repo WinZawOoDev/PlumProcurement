@@ -17,7 +17,7 @@ jest.mock('../database/prices', () => ({
 }))
 
 const mockPrices: IPrice[] = [
-    { id: 1, price: 3000, unit: 'PER KG', category: 'fruits', is_available: true },
+    { id: 1, price: 3000, unit: 'PER KG', category: 'fruits' },
 ]
 
 beforeEach(() => {
@@ -41,7 +41,7 @@ describe('PriceService.addPrice', () => {
     test('delegates to createPrice and returns insert id', async () => {
         ;(createPrice as jest.Mock).mockResolvedValue(42)
 
-        const data = { price: 100, unit: 'PER KG', category: 'grains', is_available: false }
+        const data = { price: 100, unit: 'PER KG', category: 'grains' }
         const id = await priceService.addPrice(data)
 
         expect(createPrice).toHaveBeenCalledWith(data)
@@ -52,7 +52,7 @@ describe('PriceService.addPrice', () => {
         ;(createPrice as jest.Mock).mockRejectedValue(new Error('Failed to create price'))
 
         await expect(
-            priceService.addPrice({ price: 0, unit: 'PER KG', category: 'grains', is_available: false })
+            priceService.addPrice({ price: 0, unit: 'PER KG', category: 'grains' })
         ).rejects.toThrow('Failed to create price')
     })
 })

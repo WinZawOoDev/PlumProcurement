@@ -3,7 +3,6 @@ export interface IPrice {
     price: number
     unit: string
     category: string
-    is_available: boolean
     created_at?: string
     updated_at?: string
 }

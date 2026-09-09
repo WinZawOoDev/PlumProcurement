@@ -6,7 +6,6 @@ import { useStyles } from '../../styles'
 import {
     FormInputField,
     FormSelectField,
-    FormCheckboxField,
     FormButtonGroupField,
 } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
@@ -28,7 +27,6 @@ type FormData = {
     price: string
     unit: number
     category: string
-    isAvailable: boolean
 }
 
 interface EditPriceProps {
@@ -70,11 +68,6 @@ function EditPriceFields({ control }: { control: Control<FormData> }) {
                         message: VALIDATION_MESSAGES.PRICE_INVALID,
                     },
                 }}
-            />
-            <FormCheckboxField
-                name="isAvailable"
-                control={control}
-                label={UI_TEXT.AVAILABLE}
             />
         </>
     )
@@ -118,7 +111,6 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
             price: FORM_CONFIG.PRICE_DEFAULT,
             unit: FORM_CONFIG.UNIT_DEFAULT,
             category: FORM_CONFIG.CATEGORY_DEFAULT,
-            isAvailable: FORM_CONFIG.AVAILABLE_DEFAULT,
         },
         mode: 'onBlur',
     })
@@ -133,7 +125,6 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
                 category: CATEGORY_LIST.some((c) => c.value === price.category)
                     ? price.category
                     : FORM_CONFIG.CATEGORY_DEFAULT,
-                isAvailable: !!price.is_available,
             })
         }
     }, [visible, price, reset])
@@ -144,7 +135,6 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
                 price: parseFloat(data.price),
                 category: data.category,
                 unit: UNIT_LIST[data.unit],
-                is_available: data.isAvailable,
             })
             showSuccess(MESSAGES.PRICE_UPDATE_SUCCESS)
             onClose()
