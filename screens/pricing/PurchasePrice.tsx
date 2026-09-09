@@ -1,4 +1,4 @@
-import { RefreshControl, View, FlatList } from 'react-native'
+import { RefreshControl, SectionList, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
@@ -7,7 +7,7 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode } from '../../constants'
+import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode, CATEGORY_LIST } from '../../constants'
 import { IPrice } from '../../types/database'
 import { SearchBar } from '../../components/SearchBar'
 import { PriceTrend } from '../../components/PriceTrend'
@@ -17,6 +17,26 @@ import { CardSkeleton } from '../../components/Skeleton'
 import { PriceDetailSheet } from '../../components/PriceDetailSheet'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
+
+interface PriceSection {
+    category: string
+    data: IPrice[]
+}
+
+function groupByCategory(prices: IPrice[]): PriceSection[] {
+    const order = new Map<string, number>()
+    CATEGORY_LIST.forEach((c, i) => order.set(c.value, i))
+    const sections = new Map<string, IPrice[]>()
+    for (const price of prices) {
+        const key = price.category
+        if (!order.has(key)) order.set(key, order.size)
+        if (!sections.has(key)) sections.set(key, [])
+        sections.get(key)!.push(price)
+    }
+    return [...sections.entries()]
+        .sort((a, b) => (order.get(a[0]) ?? Infinity) - (order.get(b[0]) ?? Infinity))
+        .map(([category, data]) => ({ category, data }))
+}
 
 function PriceListSkeleton() {
     return (
@@ -33,32 +53,38 @@ function PriceList({
     loading,
     hasQuery,
     searchQuery,
-    onEdit,
-    onDelete,
+    onSelect,
     onRefresh,
 }: {
     prices: IPrice[]
     loading: boolean
     hasQuery: boolean
     searchQuery: string
-    onEdit: (price: IPrice) => void
-    onDelete: (id: number) => void
+    onSelect: (price: IPrice) => void
     onRefresh: () => void
 }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const sections = React.useMemo(() => groupByCategory(prices), [prices])
     return (
-        <FlatList
-            data={prices}
+        <SectionList
+            sections={sections}
             keyExtractor={(item) => item.id.toString()}
             refreshing={loading}
-            initialScrollIndex={0}
+            stickySectionHeadersEnabled
             renderItem={({ item }) => (
                 <PriceCard
                     {...item}
-                    onEdit={() => onEdit(item)}
-                    onDelete={() => onDelete(item.id)}
+                    onPress={() => onSelect(item)}
                 />
+            )}
+            renderSectionHeader={({ section }) => (
+                <View style={[styles.priceListSectionHeader, styles.priceListSectionHeaderSticky]}>
+                    <RNText style={styles.priceListSectionTitle} numberOfLines={1}>
+                        {section.category}
+                    </RNText>
+                    <RNText style={styles.priceListSectionCount}>{section.data.length}</RNText>
+                </View>
             )}
             ListEmptyComponent={
                 <EmptyState
@@ -165,8 +191,7 @@ export default function PurchasePrices() {
                         loading={loading}
                         hasQuery={hasQuery}
                         searchQuery={searchQuery}
-                        onEdit={setEditing}
-                        onDelete={confirmDelete}
+                        onSelect={setDetailPrice}
                         onRefresh={refresh}
                     />
                 )}
@@ -175,7 +200,19 @@ export default function PurchasePrices() {
                     price={editing}
                     onClose={() => setEditing(null)}
                 />
-                <PriceDetailSheet visible={!!detailPrice} price={detailPrice} onClose={() => setDetailPrice(null)} />
+                <PriceDetailSheet
+                    visible={!!detailPrice}
+                    price={detailPrice}
+                    onClose={() => setDetailPrice(null)}
+                    onEdit={(price) => {
+                        setDetailPrice(null)
+                        setEditing(price)
+                    }}
+                    onDelete={(id) => {
+                        setDetailPrice(null)
+                        confirmDelete(id)
+                    }}
+                />
             </View>
         </SafeAreaView>
     )

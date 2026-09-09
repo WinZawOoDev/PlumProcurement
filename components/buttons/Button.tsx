@@ -10,9 +10,11 @@ interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containe
     disabled?: boolean
     containerStyle?: ViewStyle
     compact?: boolean
+    buttonStyle?: ViewStyle
+    titleStyle?: any
 }
 
-export function PrimaryButton({ title, onPress, disabled, containerStyle, compact = false, ...props }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, disabled, containerStyle, compact = false, buttonStyle, titleStyle, ...props }: PrimaryButtonProps) {
     const styles = useStyles()
     const handlePress = () => {
         if (!disabled) lightHaptic()
@@ -31,8 +33,14 @@ export function PrimaryButton({ title, onPress, disabled, containerStyle, compac
                 ...(compact ? styles.raisedButtonContainerCompact : null),
                 ...containerStyle,
             }}
-            buttonStyle={compact ? styles.primaryButtonCompact : styles.primaryButton}
-            titleStyle={compact ? styles.primaryButtonTitleCompact : styles.primaryButtonTitle}
+            buttonStyle={{
+                ...(compact ? styles.primaryButtonCompact : styles.primaryButton),
+                ...buttonStyle,
+            }}
+            titleStyle={{
+                ...(compact ? styles.primaryButtonTitleCompact : styles.primaryButtonTitle),
+                ...titleStyle,
+            }}
         />
     )
 }

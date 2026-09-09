@@ -1,56 +1,29 @@
-import { View, Text } from 'react-native'
+import { Pressable, Text } from 'react-native'
 import React from 'react'
-import { useTheme } from '@rneui/themed'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { IPrice } from '../../types/database'
 import { useStyles } from '../../styles'
-import { formatDate } from '../../utils'
-import { PriceCardActions } from './PriceCardActions'
 
 interface PriceCardProps extends Omit<IPrice, 'id'> {
-    onEdit?: () => void
-    onDelete?: () => void
+    onPress?: () => void
 }
 
-const CATEGORY_ACCENT: Record<string, string> = {
-    fruit: '#E76F51',
-    seed: '#E9C46A',
-}
-const CATEGORY_ICON: Record<string, string> = {
-    fruit: 'nutrition-outline',
-    seed: 'leaf-outline',
-}
-
-function PriceCardInner({ price, unit, category, created_at, onEdit, onDelete }: PriceCardProps) {
+function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
 
     const styles = useStyles()
-    const { theme } = useTheme()
-    const accent = CATEGORY_ACCENT[category] ?? theme.colors.primary
-
-    const accentBarStyle = { backgroundColor: accent, opacity: 0.9 } as const
-    const iconCircleStyle = { backgroundColor: accent + '12' } as const
 
     return (
-        <View style={styles.priceCardMinimal}>
-            <View style={[styles.priceCardAccent, accentBarStyle]} />
-            <View style={[styles.priceCardIconCircle, iconCircleStyle]}>
-                <Ionicons name={(CATEGORY_ICON[category] ?? 'pricetag-outline') as any} size={15} color={accent} />
-            </View>
-            <View style={styles.priceCardInfo}>
-                <View style={styles.priceCardHeaderRow}>
-                    <Text style={[styles.priceCardTitle, styles.priceCardTitleSmall]}>#{category}</Text>
-                    <View style={styles.priceCardHeaderSpacer} />
-                    <Text style={[styles.priceCardDateText, styles.priceCardDateTextSmall]}>
-                        {created_at ? formatDate(created_at) : ''}
-                    </Text>
-                </View>
-                <Text style={[styles.priceCardValue, styles.priceCardValueLarge]}>
-                    {price.toFixed(2)}<Text style={[styles.priceCardCurrencySymbol, styles.priceCardCurrencySymbolLarge]}> $</Text>
-                    <Text style={styles.priceCardUnitText}>   ·   {unit}</Text>
-                </Text>
-            </View>
-            <PriceCardActions onEdit={onEdit} onDelete={onDelete} />
-        </View>
+        <Pressable
+            style={({ pressed }) => [styles.priceCardMinimal, pressed && styles.priceCardPressed]}
+            onPress={onPress}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`${unit}, ${price.toFixed(2)} dollars`}
+        >
+            <Text style={styles.priceCardUnitText} numberOfLines={1}>{unit}</Text>
+            <Text style={styles.priceCardPriceValue}>
+                {price.toFixed(2)}<Text style={styles.priceCardCurrencySymbol}> $</Text>
+            </Text>
+        </Pressable>
     )
 }
 export default React.memo(PriceCardInner)
