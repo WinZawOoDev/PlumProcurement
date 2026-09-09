@@ -152,7 +152,7 @@ export const UI_TEXT = {
   VIEW_ALL: 'View all',
   EXPORT_CSV: 'Export CSV',
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
-  TOTAL_VALUE: 'Total Value',
+  TOTAL_VALUE: 'Total',
   PURCHASES_COUNT: 'Purchases',
   AVERAGE_VALUE: 'Average',
 

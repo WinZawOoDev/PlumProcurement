@@ -1261,13 +1261,17 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.tertiary,
         marginTop: 2,
     },
-    sellerPurchaseStats: {
-        color: theme.colors.success,
-        fontWeight: '600',
+    sellerRowDotLegend: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        marginTop: 4,
     },
-    sellerBalanceText: {
-        color: theme.colors.warning,
+    sellerRowDotText: {
+        fontSize: 12,
         fontWeight: '600',
+        color: theme.colors.black,
+        fontVariant: ['tabular-nums'],
     },
     rowIconButton: {
         backgroundColor: theme.colors.neutral,

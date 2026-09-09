@@ -39,15 +39,29 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                         <RNText style={styles.sellerRowContactText}>{seller.address}</RNText>
                     </View>
                 )}
-                {(purchaseCount ?? 0) > 0 && (
-                    <RNText style={[styles.sellerPhoneText, styles.sellerPurchaseStats]}>
-                        {purchaseCount} purchases · {(purchaseTotal ?? 0).toFixed(2)}$
-                    </RNText>
-                )}
-                {(balance ?? 0) > 0 && (
-                    <RNText style={[styles.sellerPhoneText, styles.sellerBalanceText]}>
-                        {UI_TEXT.BALANCE}: {(balance ?? 0).toFixed(2)}$
-                    </RNText>
+                {((purchaseCount ?? 0) > 0 || (balance ?? 0) > 0) && (
+                    <View
+                        style={styles.sellerRowDotLegend}
+                        accessible
+                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${(purchaseTotal ?? 0).toFixed(2)}$ ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${(balance ?? 0).toFixed(2)}$ ${UI_TEXT.BALANCE.toLowerCase()}`}
+                    >
+                        {(purchaseCount ?? 0) > 0 && (
+                            <>
+                                <Ionicons name="receipt-outline" size={12} color={theme.colors.primary} />
+                                <RNText style={styles.sellerRowDotText}>
+                                    {purchaseCount} · {(purchaseTotal ?? 0).toFixed(2)}$
+                                </RNText>
+                            </>
+                        )}
+                        {(balance ?? 0) > 0 && (
+                            <>
+                                <Ionicons name="wallet-outline" size={12} color={theme.colors.warning} />
+                                <RNText style={styles.sellerRowDotText}>
+                                    {(balance ?? 0).toFixed(2)}$
+                                </RNText>
+                            </>
+                        )}
+                    </View>
                 )}
             </View>
             <Pressable
