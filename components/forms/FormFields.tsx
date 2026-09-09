@@ -156,6 +156,11 @@ export function FormButtonGroupField<T extends FieldValues>({
     rules,
 }: FormButtonGroupFieldProps<T>) {
     const styles = useStyles()
+    const renderedButtons = buttons.map((buttonLabel) => (
+        <Text key={buttonLabel} style={styles.formButtonGroupButtonText}>
+            {buttonLabel}
+        </Text>
+    ))
 
     return (
         <Controller
@@ -168,7 +173,7 @@ export function FormButtonGroupField<T extends FieldValues>({
                         {label} {required && '*'}
                     </Text>
                     <ButtonGroup
-                        buttons={buttons}
+                        buttons={renderedButtons}
                         selectedIndex={value}
                         onPress={(index) => onChange(index)}
                         containerStyle={styles.buttonGroupContainer}

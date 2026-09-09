@@ -173,6 +173,11 @@ export const useStyles = makeStyles((theme) => ({
         color: theme.colors.black,
         fontSize: 14,
     },
+    formButtonGroupButtonText: {
+        fontWeight: '600',
+        fontSize: 14,
+        color: theme.colors.primary,
+    },
     formButtonGroupInnerBorder: {
         color: theme.colors.secondary,
     },
@@ -443,7 +448,8 @@ export const useStyles = makeStyles((theme) => ({
         backgroundColor: theme.colors.white,
         borderTopLeftRadius: DIMENSIONS.BORDER_RADIUS_LARGE,
         borderTopRightRadius: DIMENSIONS.BORDER_RADIUS_LARGE,
-        paddingVertical: 20,
+        paddingTop: 20,
+        paddingBottom: 28,
         paddingHorizontal: 25
     },
     bottomSheetTitle: {
