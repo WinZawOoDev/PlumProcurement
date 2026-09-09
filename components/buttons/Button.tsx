@@ -9,9 +9,10 @@ interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containe
     onPress?: () => void
     disabled?: boolean
     containerStyle?: ViewStyle
+    compact?: boolean
 }
 
-export function PrimaryButton({ title, onPress, disabled, containerStyle, ...props }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, disabled, containerStyle, compact = false, ...props }: PrimaryButtonProps) {
     const styles = useStyles()
     const handlePress = () => {
         if (!disabled) lightHaptic()
@@ -27,10 +28,11 @@ export function PrimaryButton({ title, onPress, disabled, containerStyle, ...pro
             accessibilityLabel={title}
             containerStyle={{
                 ...styles.raisedButtonContainer,
+                ...(compact ? styles.raisedButtonContainerCompact : null),
                 ...containerStyle,
             }}
-            buttonStyle={styles.primaryButton}
-            titleStyle={styles.primaryButtonTitle}
+            buttonStyle={compact ? styles.primaryButtonCompact : styles.primaryButton}
+            titleStyle={compact ? styles.primaryButtonTitleCompact : styles.primaryButtonTitle}
         />
     )
 }
@@ -97,13 +99,25 @@ export function IconButton({ title, icon, onPress, variant = 'primary', small = 
             accessibilityLabel={title ?? (props as any).accessibilityLabel}
             containerStyle={styles.raisedButtonContainer}
             buttonStyle={[
-                hasTitle ? styles.primaryButton : styles.iconButtonBase,
+                hasTitle
+                    ? isSmall
+                        ? styles.primaryButtonCompact
+                        : styles.primaryButton
+                    : styles.iconButtonBase,
                 !hasTitle && (isSmall ? styles.iconButtonSmall : styles.iconButtonCompact),
                 hasTitle && isPrimary ? styles.iconButtonPrimary : null,
                 !hasTitle && isGhost ? styles.iconButtonGhost : !hasTitle && !isPrimary ? styles.iconButtonSecondary : null,
                 !hasTitle && isPrimary ? styles.iconButtonPrimary : null,
             ].filter(Boolean)}
-            titleStyle={hasTitle ? styles.iconButtonTitlePrimary : isPrimary ? styles.iconButtonTitlePrimary : styles.iconButtonTitleSecondary}
+            titleStyle={
+                hasTitle
+                    ? isSmall
+                        ? styles.primaryButtonTitleCompact
+                        : styles.iconButtonTitlePrimary
+                    : isPrimary
+                        ? styles.iconButtonTitlePrimary
+                        : styles.iconButtonTitleSecondary
+            }
         />
     )
 }

@@ -47,7 +47,7 @@ function SellerActions({
 
     return (
         <View style={styles.sellerActionsRow}>
-            <PrimaryButton title={UI_TEXT.ADD_SELLER} onPress={onAddSeller} />
+            <PrimaryButton compact title={UI_TEXT.ADD_SELLER} onPress={onAddSeller} />
             <SearchIconButton
                 active={searchVisible}
                 onPress={onToggleSearch}

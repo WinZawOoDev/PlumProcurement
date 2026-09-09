@@ -30,6 +30,7 @@ export default function ActionButtons({
     return (
         <View style={styles.actionButtonsRow}>
             <IconButton
+                small
                 title={UI_TEXT.ADD_NEW_PRICE}
                 icon={<Ionicons name="add-sharp" size={DIMENSIONS.ICON_SIZE_SMALL} color="white" />}
                 variant="primary"

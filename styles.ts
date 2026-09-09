@@ -8,6 +8,10 @@ export const useStyles = makeStyles((theme) => ({
         elevation: 0,
         shadowOpacity: 0,
     },
+    raisedButtonContainerCompact: {
+        alignSelf: 'flex-start',
+        width: 'auto',
+    },
     primaryButton: {
         backgroundColor: theme.colors.primary,
         borderRadius: 10,
@@ -26,6 +30,26 @@ export const useStyles = makeStyles((theme) => ({
         fontSize: 14,
         letterSpacing: 0.3,
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+    },
+    primaryButtonCompact: {
+        backgroundColor: theme.colors.primary,
+        borderRadius: 10,
+        paddingVertical: 0,
+        paddingHorizontal: 14,
+        height: 40,
+        minHeight: 40,
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    primaryButtonTitleCompact: {
+        color: theme.colors.white,
+        fontWeight: '700',
+        fontSize: 13,
+        letterSpacing: 0.3,
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
     },
     secondaryButton: {
         backgroundColor: theme.colors.white,
