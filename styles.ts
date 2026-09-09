@@ -466,7 +466,8 @@ export const useStyles = makeStyles((theme) => ({
     actionButtonsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: "center"
+        alignItems: "center",
+        marginBottom: 14,
     },
 
     // ===== PRICING - PRICE CARD =====
