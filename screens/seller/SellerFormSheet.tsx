@@ -40,6 +40,8 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 label={UI_TEXT.PHONE}
                 placeholder="e.g. 09-123-456-789"
                 keyboardType="default"
+                required
+                rules={{ required: VALIDATION_MESSAGES.PHONE_REQUIRED }}
             />
             <FormInputField
                 name="address"
@@ -47,6 +49,8 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 label={UI_TEXT.ADDRESS}
                 placeholder="e.g. No. 123, Main Road"
                 keyboardType="default"
+                required
+                rules={{ required: VALIDATION_MESSAGES.ADDRESS_REQUIRED }}
             />
         </>
     )
@@ -105,8 +109,8 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
         try {
             const payload: NewSeller = {
                 name: data.name.trim(),
-                phone: data.phone.trim() || null,
-                address: data.address.trim() || null,
+                phone: data.phone.trim(),
+                address: data.address.trim(),
             }
             if (editing) {
                 await sellerService.editSeller(seller.id, payload)

@@ -105,7 +105,7 @@ describe('Sellers screen', () => {
         expect(text).toContain('U Ba')
         expect(text).toContain('09-123')
         expect(text).toContain('Main Road')
-        expect(text).toContain('2 purchases · 15.00$')
+        expect(text).toContain('2 · 15.00$')
         expect(sellerService.getSellers).toHaveBeenCalledTimes(1)
         expect(purchaseService.getSellerStats).toHaveBeenCalledTimes(1)
     })
@@ -134,6 +134,6 @@ describe('Sellers screen', () => {
 
         const root = await renderScreen()
 
-        expect(textContent(root)).toContain('Balance: 10.00$')
+        expect(textContent(root)).toContain('10.00$')
     })
 })

@@ -282,6 +282,8 @@ export const VALIDATION_MESSAGES = {
   PRICE_REQUIRED: 'Price is required',
   PRICE_INVALID: 'Enter a valid price (e.g. 12.50)',
   NAME_REQUIRED: 'Name is required',
+  PHONE_REQUIRED: 'Phone number is required',
+  ADDRESS_REQUIRED: 'Address is required',
   AMOUNT_REQUIRED: 'Amount is required',
 } as const;
 

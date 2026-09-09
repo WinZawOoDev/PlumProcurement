@@ -1,15 +1,16 @@
 # PlumProcurement
 
-A React Native app for plum procurement: manage market prices, record purchases against those prices, and maintain your seller directory. Data is stored locally on-device with SQLite.
+A React Native app for plum procurement: manage market prices in a grouped, tappable price list, record multi-line purchases against those prices, and track seller payments with live balances. Data is stored locally on-device with SQLite.
 
 ## Features
 
-- **Prices** — create, edit (bottom sheet), delete and browse price entries per category (fruit/seed) and unit (cup/gallon/bushels); search by category or unit; sort by newest or price
+- **Prices** — create and edit (bottom sheet) price entries per category (fruit/seed) and unit (cup/gallon/bushels); list grouped by category with sticky headers and per-group counts; tap a row for a detail sheet with edit/delete actions; search by category or unit; sort by newest or price; sparkline trend of the last 12 prices
 - **Purchasing** — record purchases with multiple line items per transaction; each line is a price item with its own quantity stepper; live grand-total preview; full purchase history with count and grand total; per-line edit; CSV export
-- **Sellers** — add, edit and delete sellers with name, optional phone number and optional address; per-seller purchase stats aggregated in SQL
-- **Payments** — record payments against each seller's sold total; per-seller Owed/Paid/Balance summary; outstanding balance shown on seller rows; payment history with delete; overpayment guard (cannot pay more than the balance)
+- **Sellers** — add, edit and delete sellers with name, phone number and address (all mandatory); per-seller purchase stats aggregated in SQL; compact icon-led stat line per row (receipt = count · total, wallet = outstanding balance)
+- **Payments** — record payments against each seller's sold total; per-seller Owed/Paid/Balance summary; payment history with delete; overpayment guard (cannot pay more than the balance)
 - **Settings** — theme preference (system/light/dark), persisted on-device
 - **Notifications** — native toast on Android, in-app toast (react-native-toast-message) on iOS
+- **Loading states** — layout-accurate skeletons for price and seller screens
 - Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions)
 
 ## Tech Stack
@@ -120,7 +121,7 @@ npm run ios
 | `npm run android` | Run on Android |
 | `npm run ios` | Run on iOS |
 | `npm run lint` | ESLint (e2e ignored) |
-| `npm test` | Jest unit tests (85 tests, 16 suites) |
+| `npm test` | Jest unit tests (129 tests, 26 suites) |
 | `npm run e2e:ios` | Detox iOS (ios.sim.debug) |
 | `npm run e2e:android` | Detox Android (android.emu.debug) |
 | `npm run maestro:test` | Maestro flows (`.maestro/`) |
@@ -130,7 +131,7 @@ npm run ios
 Unit tests cover utilities (incl. all CSV builders/BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`, purchase edit/delete, seller stats), the schema/migration runner (bootstrap memoization, legacy `seller_id` migration, `sellers.address` migration, retry on failure), `useAsync`/`useLoading`, notification helpers, price context flows, the purchase record form (seller+price gating, stepper validation), the transaction-guarded price and seller delete guards, and error boundary. SQLite is mocked via `__mocks__/`. E2E via Detox + Maestro.
 
 ```sh
-npm test              # 85 tests, 16 suites
+npm test              # 129 tests, 26 suites
 npm run e2e:ios        # Detox
 maestro test .maestro/ # Maestro
 ```
@@ -138,6 +139,20 @@ maestro test .maestro/ # Maestro
 ## Changelog
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### 2026-09-10
+
+**Features**
+- Price list grouped by category (`SectionList`) with sticky section headers and per-group counts; flat rows show unit · price with right-aligned tabular numbers
+- Rows are tappable: tap opens a redesigned price detail sheet (category chip, large price hero, created date, edit/delete actions) — per-row edit/delete icons removed
+- Availability (`is_available`) removed entirely from prices: type, schema, forms, CSV export, and the purchase picker (all prices selectable)
+- Seller rows: icon-led stat line (receipt = purchases · total, wallet = balance) with screen-reader label replacing text badges
+- Seller details: fixed profile header with scrollable purchase/payment sections and a layout-mirroring loading skeleton
+- Seller phone number and address are now mandatory (form-validated); unit selection button groups render labels in a single primary color; form fields share one width/height rhythm
+
+**Refactor**
+- `SectionHeader` gained a `compact` variant; `PrimaryButton`/`SecondaryButton` support `compact` size and style overrides; `PriceCardActions` removed
+- README description/features refreshed
 
 ### 2026-09-07
 
