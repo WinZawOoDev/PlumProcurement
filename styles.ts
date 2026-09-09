@@ -1512,6 +1512,15 @@ export const useStyles = makeStyles((theme) => ({
         flex: 1,
         gap: 8,
     },
+    sellerSkeletonSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 12,
+    },
+    sellerSkeletonSectionAction: {
+        marginLeft: 'auto',
+    },
     sellerHistoryEmptyContent: {
         flexGrow: 1,
     },

@@ -210,20 +210,94 @@ function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: b
     )
 }
 
+function SkeletonSectionHeader({ compact = false }: { compact?: boolean }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.sellerSkeletonSectionHeader}>
+            <Skeleton width={compact ? 16 : 22} height={compact ? 16 : 22} radius={compact ? 8 : 11} />
+            <Skeleton width={compact ? '35%' : '45%'} height={compact ? 14 : 18} />
+            {compact && <Skeleton width={64} height={14} radius={7} style={styles.sellerSkeletonSectionAction} />}
+        </View>
+    )
+}
+
+function SkeletonStatsRow() {
+    const styles = useStyles()
+    return (
+        <View style={styles.sellerStatsRow}>
+            {[0, 1, 2].map((index) => (
+                <React.Fragment key={index}>
+                    {index > 0 && <View style={styles.sellerStatDivider} />}
+                    <View style={styles.sellerStatCell}>
+                        <View style={styles.sellerStatIconCircle}>
+                            <Skeleton width={16} height={16} radius={4} />
+                        </View>
+                        <Skeleton width={56} height={15} radius={4} />
+                        <Skeleton width={44} height={10} radius={5} />
+                    </View>
+                </React.Fragment>
+            ))}
+        </View>
+    )
+}
+
+function SkeletonRecentRow({ isLast = false }: { isLast?: boolean }) {
+    const styles = useStyles()
+    return (
+        <View style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}>
+            <View style={styles.sellerInfo}>
+                <Skeleton width="55%" height={14} />
+                <Skeleton width="35%" height={12} />
+            </View>
+            <Skeleton width={52} height={14} />
+        </View>
+    )
+}
+
 function SellerDetailsSkeleton() {
     const styles = useStyles()
     return (
-        <>
+        <ScrollView
+            style={styles.fillContainer}
+            contentContainerStyle={styles.sellerScrollContent}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.sellerProfileCard}>
                 <Skeleton width={56} height={56} radius={28} />
                 <View style={styles.sellerProfileSkeletonText}>
-                    <Skeleton width="60%" height={16} />
-                    <Skeleton width="40%" height={12} />
+                    <Skeleton width="55%" height={18} />
+                    <View style={styles.sellerProfileMetaRow}>
+                        <Skeleton width={12} height={12} radius={6} />
+                        <Skeleton width="40%" height={12} radius={6} />
+                    </View>
                 </View>
             </View>
-            <Skeleton height={120} radius={14} />
-            <Skeleton height={120} radius={14} />
-        </>
+
+            <SkeletonSectionHeader />
+            <SkeletonStatsRow />
+
+            <View style={styles.sellerSectionSpacer}>
+                <SkeletonSectionHeader compact />
+                <SkeletonRecentRow />
+                <SkeletonRecentRow />
+                <SkeletonRecentRow isLast />
+            </View>
+
+            <View style={styles.sellerHistoryDivider} />
+
+            <SkeletonSectionHeader />
+            <SkeletonStatsRow />
+
+            <View style={styles.recordPaymentButton}>
+                <Skeleton height={50} radius={10} />
+            </View>
+
+            <View style={styles.sellerSectionSpacer}>
+                <SkeletonSectionHeader compact />
+                <SkeletonRecentRow />
+                <SkeletonRecentRow isLast />
+            </View>
+        </ScrollView>
     )
 }
 
