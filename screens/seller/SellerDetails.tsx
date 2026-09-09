@@ -171,10 +171,10 @@ function methodLabel(method: string | null): string {
     return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? method
 }
 
-function RecentPaymentRow({ item }: { item: IPayment }) {
+function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }) {
     const styles = useStyles()
     return (
-        <View style={[styles.purchaseItemRow, styles.sellerRecentRow]}>
+        <View style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}>
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerRecentTitle}>{item.amount.toFixed(2)}$</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
@@ -186,12 +186,12 @@ function RecentPaymentRow({ item }: { item: IPayment }) {
     )
 }
 
-function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
+function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: boolean }) {
     const styles = useStyles()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
-            style={[styles.purchaseItemRow, styles.sellerRecentRow]}
+            style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}
             onPress={() => navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })}
             accessible
             accessibilityRole="button"
@@ -336,19 +336,23 @@ export default function SellerDetails() {
             <View style={[styles.priceListContainer, styles.fillContainer]}>
                 <SellerBackRow onBack={() => navigation.goBack()} />
 
+                {seller && (
+                    <SellerProfileHeader
+                        seller={seller}
+                        description={headerDescription}
+                        onDelete={() => confirmDelete(seller.id)}
+                    />
+                )}
+
                 {seller ? (
                     <ScrollView
+                        style={styles.fillContainer}
+                        contentContainerStyle={styles.sellerScrollContent}
                         showsVerticalScrollIndicator={false}
                         refreshControl={
                             <RefreshControl refreshing={loading} onRefresh={loadDetails} colors={[theme.colors.primary]} />
                         }
                     >
-                        <SellerProfileHeader
-                            seller={seller}
-                            description={headerDescription}
-                            onDelete={() => confirmDelete(seller.id)}
-                        />
-
                         {purchaseStats && (
                             <PurchasesSection
                                 count={purchaseStats.count}
@@ -377,8 +381,12 @@ export default function SellerDetails() {
                                         description={`No purchases recorded for ${seller.name} yet`}
                                     />
                                 ) : (
-                                    recentPurchases.map((purchase) => (
-                                        <RecentPurchaseRow key={purchase.id} item={purchase} />
+                                    recentPurchases.map((purchase, index) => (
+                                        <RecentPurchaseRow
+                                            key={purchase.id}
+                                            item={purchase}
+                                            isLast={index === recentPurchases.length - 1}
+                                        />
                                     ))
                                 )}
                             </View>
@@ -417,8 +425,12 @@ export default function SellerDetails() {
                                         description="Record a payment to settle this seller's balance"
                                     />
                                 ) : (
-                                    recentPayments.map((payment) => (
-                                        <RecentPaymentRow key={payment.id} item={payment} />
+                                    recentPayments.map((payment, index) => (
+                                        <RecentPaymentRow
+                                            key={payment.id}
+                                            item={payment}
+                                            isLast={index === recentPayments.length - 1}
+                                        />
                                     ))
                                 )}
                             </View>

@@ -574,6 +574,9 @@ export const useStyles = makeStyles((theme) => ({
         paddingVertical: 8,
         gap: 10,
     },
+    sellerRecentRowLast: {
+        borderBottomWidth: 0,
+    },
     sellerRecentTitle: {
         fontWeight: '600',
         fontSize: 14,
@@ -1415,6 +1418,9 @@ export const useStyles = makeStyles((theme) => ({
     },
     sellerSectionSpacer: {
         marginTop: 4,
+    },
+    sellerScrollContent: {
+        paddingBottom: 24,
     },
     sellerHistoryDivider: {
         height: 2,
