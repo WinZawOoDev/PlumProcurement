@@ -19,7 +19,7 @@ jest.mock('../services/purchaseService', () => ({
 }))
 jest.mock('../services/paymentService', () => ({
     paymentService: {
-        getPaidSellerIds: jest.fn(),
+        getSettledSellerIds: jest.fn(),
     },
 }))
 jest.mock('../utils/csvExport', () => ({
@@ -107,7 +107,7 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 beforeEach(() => {
     jest.clearAllMocks()
     ;(shareOrSaveCsv as jest.Mock).mockResolvedValue('shared')
-    ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([])
+    ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([])
 })
 
 describe('PurchaseDetails screen', () => {
@@ -175,9 +175,9 @@ describe('PurchaseDetails screen', () => {
         expect(textContent(root)).toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
     })
 
-    test('locks purchases whose seller has recorded payments', async () => {
+    test('locks purchases whose seller has no outstanding balance', async () => {
         ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
-        ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([2])
+        ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([2])
 
         const root = await renderScreen()
 
@@ -185,9 +185,9 @@ describe('PurchaseDetails screen', () => {
         expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_PURCHASE })).toHaveLength(0)
     })
 
-    test('keeps the edit action when the seller has no payments', async () => {
+    test('keeps the edit action while the seller still owes a balance', async () => {
         ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
-        ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([])
+        ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([])
 
         const root = await renderScreen()
 
