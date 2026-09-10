@@ -141,6 +141,16 @@ maestro test .maestro/ # Maestro
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
 
+### 2026-09-10 (III)
+
+**Fixes**
+- Seller purchases and payments screens now keyset-paginate instead of silently truncating at 100 rows; seller detail loads a bounded recent slice (`RECENT_SELLER_ITEMS_LIMIT`)
+- Seller purchase history header count/total come from the SQL aggregate, so they stay correct as the list paginates
+
+**Tests**
+- Added fresh-install schema assertions for the normalized `purchases`/`purchase_items`/`payments` shape (and that the legacy v3 table swap is skipped)
+- Added DB-level coverage for the purchases `sellerId` page filter and `fetchPaymentsPage` keyset behavior
+
 ### 2026-09-10 (II)
 
 **Fixes**
