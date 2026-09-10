@@ -1,5 +1,5 @@
 import { open } from 'react-native-nitro-sqlite'
-import { fetchPurchasesPage } from '../database/purchases'
+import { fetchPurchasesPage, fetchRecentPurchases } from '../database/purchases'
 import { __resetDbForTests } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
@@ -109,5 +109,26 @@ describe('fetchPurchasesPage (keyset pagination over normalized purchases)', () 
 
         expect(items).toEqual([])
         expect(nextCursor).toBeNull()
+    })
+})
+
+describe('fetchRecentPurchases', () => {
+    test('runs a single bounded page query instead of paging the whole table', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query.includes('SELECT * FROM purchase_items')) {
+                return { results: [itemRow(1, 30)] }
+            }
+            return { results: [headerRow(30), headerRow(20), headerRow(10)] }
+        })
+
+        const items = await fetchRecentPurchases(2)
+
+        // One header query + one item query — no cursor loop.
+        expect(executeAsync).toHaveBeenCalledTimes(2)
+        const [headerSql, headerParams] = executeAsync.mock.calls[0]
+        expect(headerSql).toContain('ORDER BY p.id DESC LIMIT ?')
+        expect(headerParams).toEqual([3])
+        expect(items.map((i) => i.id)).toEqual([30, 20])
+        expect(items[0].items).toHaveLength(1)
     })
 })

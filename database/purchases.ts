@@ -66,8 +66,13 @@ async function attachItems(db: ReturnType<typeof initDb>, purchases: IPurchaseWi
     return purchases.map((p) => ({ ...p, items: byPurchase.get(p.id) ?? [] }))
 }
 
-export async function fetchPurchases(): Promise<IPurchaseDetail[]> {
-    const { items } = await fetchPurchasesPage({ limit: 100 })
+/**
+ * Loads the most recent purchases (header + line items) in a single bounded
+ * page. Callers that need the overall total should pair this with
+ * `countPurchases()` instead of loading every row.
+ */
+export async function fetchRecentPurchases(limit = 4): Promise<IPurchaseDetail[]> {
+    const { items } = await fetchPurchasesPage({ limit })
     return items
 }
 

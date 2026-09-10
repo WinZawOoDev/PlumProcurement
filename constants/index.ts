@@ -241,6 +241,7 @@ export const DATABASE_CONFIG = {
 export const PAGINATION_CONFIG = {
   PURCHASE_PAGE_SIZE: 20,
   INITIAL_PAGE_SIZE: 20,
+  RECENT_PURCHASES_LIMIT: 4,
 } as const;
 
 // ===== FORM CONFIGURATION =====

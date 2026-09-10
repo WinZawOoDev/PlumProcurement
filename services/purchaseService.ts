@@ -1,9 +1,10 @@
 import {
+    countPurchases,
     createPurchase,
     deletePurchase,
-    fetchPurchases,
     fetchPurchasesBySeller,
     fetchPurchasesPage,
+    fetchRecentPurchases,
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
@@ -22,10 +23,20 @@ export type { NewPurchase, NewPurchaseItem, PurchaseUpdates, PurchasesPage }
  * Components depend on this service instead of importing database.ts directly.
  */
 export class PurchaseService {
-    async getPurchases(): Promise<IPurchaseDetail[]> {
+    /**
+     * Most recent purchases (header + line items). Bounded by `limit`; use
+     * `getPurchaseCount()` for the overall total instead of loading all rows.
+     */
+    async getRecentPurchases(limit = 4): Promise<IPurchaseDetail[]> {
         await initializeSellers()
         await initializePurchases()
-        return fetchPurchases()
+        return fetchRecentPurchases(limit)
+    }
+
+    async getPurchaseCount(query?: string): Promise<number> {
+        await initializeSellers()
+        await initializePurchases()
+        return countPurchases(query)
     }
 
     /**

@@ -8,7 +8,7 @@ import { ParamListBase, RouteProp, useFocusEffect, useNavigation, useRoute } fro
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS } from '../../constants'
+import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS, PAGINATION_CONFIG } from '../../constants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
@@ -297,6 +297,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
 
 interface RecentPurchasesListProps {
     recent: IPurchaseDetail[]
+    count: number
 }
 
 function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
@@ -316,19 +317,19 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
     )
 }
 
-const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent }: RecentPurchasesListProps) {
+const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent, count }: RecentPurchasesListProps) {
     const styles = useStyles()
     return (
         <>
             <View style={styles.recentPurchasesHeader}>
                 <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
-                <RNText style={styles.recentPurchasesCount}>{recent.length > 0 ? `${recent.length} total` : ''}</RNText>
+                <RNText style={styles.recentPurchasesCount}>{count > 0 ? `${count} total` : ''}</RNText>
             </View>
             <FlatList
                 style={styles.recentPurchasesList}
                 contentContainerStyle={recent.length === 0 ? styles.recentPurchasesEmpty : undefined}
                 scrollEnabled={recent.length > 0}
-                data={recent.slice(0, 4)}
+                data={recent}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => <RecentPurchaseRow item={item} />}
                 ListEmptyComponent={<EmptyState compact icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description="Record your first purchase to see it here" />}
@@ -347,6 +348,7 @@ export default function Purchase() {
 
     const [selectedSeller, setSelectedSeller] = useState<SelectedSeller | null>(null)
     const [recent, setRecent] = useState<IPurchaseDetail[]>([])
+    const [purchaseCount, setPurchaseCount] = useState(0)
 
     // Consume seller selection returned from the SellerSelect screen.
     // Committed immediately (re-render is memoized, so it stays cheap) —
@@ -362,7 +364,12 @@ export default function Purchase() {
 
     const loadRecent = useCallback(async () => {
         try {
-            setRecent(await purchaseService.getPurchases())
+            const [items, count] = await Promise.all([
+                purchaseService.getRecentPurchases(PAGINATION_CONFIG.RECENT_PURCHASES_LIMIT),
+                purchaseService.getPurchaseCount(),
+            ])
+            setRecent(items)
+            setPurchaseCount(count)
         } catch (error) {
             showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
         }
@@ -398,7 +405,7 @@ export default function Purchase() {
                     onRecorded={handleRecorded}
                 />
 
-                <RecentPurchasesList recent={recent} />
+                <RecentPurchasesList recent={recent} count={purchaseCount} />
             </View>
         </SafeAreaView>
     )

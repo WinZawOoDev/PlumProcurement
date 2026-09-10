@@ -1,10 +1,11 @@
 import { purchaseService } from '../services/purchaseService'
 import {
+    countPurchases,
     createPurchase,
     deletePurchase,
-    fetchPurchases,
     fetchPurchasesBySeller,
     fetchPurchasesPage,
+    fetchRecentPurchases,
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
@@ -14,8 +15,9 @@ import { IPurchaseDetail } from '../types/database'
 
 jest.mock('../database/purchases', () => ({
     initializePurchases: jest.fn(),
-    fetchPurchases: jest.fn(),
+    fetchRecentPurchases: jest.fn(),
     fetchPurchasesPage: jest.fn(),
+    countPurchases: jest.fn(),
     createPurchase: jest.fn(),
     updatePurchase: jest.fn(),
     deletePurchase: jest.fn(),
@@ -52,18 +54,29 @@ beforeEach(() => {
     jest.clearAllMocks()
 })
 
-describe('PurchaseService.getPurchases', () => {
-    test('initializes tables then fetches purchases', async () => {
+describe('PurchaseService.getRecentPurchases', () => {
+    test('initializes tables then fetches a bounded recent page', async () => {
         ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
         ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
-        ;(fetchPurchases as jest.Mock).mockResolvedValue(mockPurchases)
+        ;(fetchRecentPurchases as jest.Mock).mockResolvedValue(mockPurchases)
 
-        const result = await purchaseService.getPurchases()
+        const result = await purchaseService.getRecentPurchases(4)
 
         expect(initializePurchases).toHaveBeenCalledTimes(1)
         expect(initializeSellers).toHaveBeenCalledTimes(1)
-        expect(fetchPurchases).toHaveBeenCalledTimes(1)
+        expect(fetchRecentPurchases).toHaveBeenCalledWith(4)
         expect(result).toEqual(mockPurchases)
+    })
+})
+
+describe('PurchaseService.getPurchaseCount', () => {
+    test('initializes tables then returns the total count', async () => {
+        ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
+        ;(countPurchases as jest.Mock).mockResolvedValue(12)
+
+        await expect(purchaseService.getPurchaseCount()).resolves.toBe(12)
+        expect(countPurchases).toHaveBeenCalledWith(undefined)
     })
 })
 
