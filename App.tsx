@@ -22,7 +22,7 @@ import { PriceProvider } from './context/PriceContext';
 import { ThemeModeContext } from './context/ThemeModeContext';
 import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
-import { ROUTES, ThemeMode } from './constants';
+import { ROUTES, TAB_LABELS, ThemeMode } from './constants';
 import Toast from 'react-native-toast-message';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
@@ -80,28 +80,28 @@ const RootStack = createBottomTabNavigator({
       screen: PriceStack,
       options: {
         tabBarIcon: PriceTabIcon,
-        tabBarLabel: "Prices"
+        tabBarLabel: TAB_LABELS.PRICES
       }
     },
     [ROUTES.PURCHASE_TAB]: {
       screen: PurchaseStack,
       options: {
         tabBarIcon: PurchaseTabIcon,
-        tabBarLabel: "Purchasing"
+        tabBarLabel: TAB_LABELS.PURCHASING
       }
     },
     [ROUTES.SELLER_TAB]: {
       screen: SellerStack,
       options: {
         tabBarIcon: SellerTabIcon,
-        tabBarLabel: "Sellers"
+        tabBarLabel: TAB_LABELS.SELLERS
       }
     },
     [ROUTES.SETTINGS_TAB]: {
       screen: SettingsStack,
       options: {
         tabBarIcon: SettingsTabIcon,
-        tabBarLabel: "Settings"
+        tabBarLabel: TAB_LABELS.SETTINGS
       }
     },
   }

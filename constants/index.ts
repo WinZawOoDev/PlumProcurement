@@ -52,6 +52,14 @@ export const ROUTES = {
   SETTINGS: 'Settings',
 } as const;
 
+// ===== TAB LABELS =====
+export const TAB_LABELS = {
+  PRICES: 'Prices',
+  PURCHASING: 'Purchasing',
+  SELLERS: 'Sellers',
+  SETTINGS: 'Settings',
+} as const;
+
 // ===== MESSAGES =====
 export const MESSAGES = {
   PRICE_SAVED_SUCCESS: 'Price saved successfully!',
