@@ -11,7 +11,7 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 - **Settings** — theme preference (system/light/dark), persisted on-device
 - **Notifications** — native toast on Android, in-app toast (react-native-toast-message) on iOS
 - **Loading states** — layout-accurate skeletons for price and seller screens
-- Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions); a purchase is locked against edit/delete once its seller has recorded payments
+- Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions); a purchase is locked against edit/delete once its seller is fully settled (no outstanding balance)
 
 ## Tech Stack
 
@@ -144,7 +144,7 @@ maestro test .maestro/ # Maestro
 ### 2026-09-10 (IV)
 
 **Features**
-- Purchases are locked against update/delete once their seller has recorded payments: enforced by a transaction-guarded check (`isPurchaseLocked`) in `updatePurchase`/`deletePurchase`, and reflected in the purchase history where the edit action is replaced by a lock indicator
+- Purchases are locked against update/delete only once their seller is fully settled (recorded payments cover all owed, `paid >= owed`); sellers who still owe keep editable purchases: enforced by a transaction-guarded check (`isPurchaseLocked`) in `updatePurchase`/`deletePurchase`, and reflected in the purchase history where the edit action is replaced by a lock indicator
 
 **Tests**
 - Added DB guard tests for locked/unlocked purchases (including purchases with no seller) and a service test for `getPaidSellerIds`
