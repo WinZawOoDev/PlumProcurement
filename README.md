@@ -40,7 +40,7 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 ├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN, THEME_MODES)
 ├── services/                   # Data-access layer wrapping database/
 │   ├── priceService.ts
-│   ├── purchaseService.ts      # getPurchasesPaginated(page,size,query) + edit/remove + seller stats
+│   ├── purchaseService.ts      # recent/page/count fetches + edit/remove + seller stats
 │   ├── paymentService.ts       # record/edit/remove payments + summaries
 │   ├── sellerService.ts
 │   └── settingsService.ts      # onboarded flag + theme preference
@@ -62,7 +62,7 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 │   ├── QuantityStepper.tsx     # + / − stepper with a11y (supports disabled)
 │   ├── PriceTrend.tsx          # Sparkline for last 12 prices
 │   ├── PriceDetailSheet.tsx    # Price detail (uses DetailSheet)
-│   ├── SellerDetailSheet.tsx   # Seller detail + recent purchases (uses DetailSheet)
+│   ├── StartupLoader.tsx       # Splash/overlay while bootstrapping
 │   └── ErrorBoundary.tsx       # Top-level crash fallback
 ├── screens/
 │   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards
@@ -74,7 +74,8 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 │   ├── notifications.ts        # Cross-platform showSuccess/showError
 │   ├── haptics.ts              # Shared light haptic feedback
 │   └── csvExport.ts            # shareOrSaveCsv (Share sheet)
-├── styles.ts                   # Centralized makeStyles (incl. priceTrend*)
+├── styles/                     # Per-domain theme-aware style factories (shared, onboarding,
+│                               #   pricing, purchasing, seller, settings) composed into useStyles()
 ├── theme.ts                    # RNEUI theme + navigation theme
 ├── e2e/                        # Detox (ios.sim.debug, android.emu.debug)
 └── .maestro/                   # Maestro flows (pricing, sellers, purchasing, full-flow)
@@ -87,7 +88,7 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 - **Shared cross-screen state** lives in Context (`PriceContext`) so mutations propagate automatically; screen-local state is fine for self-contained flows.
 - **All literals belong in `constants/index.ts`** — routes, messages, UI text, dimensions, typography, validation messages.
 - **Forms** use react-hook-form `Controller`s via the generic fields in `components/forms/`; pass validation through the `rules` prop.
-- **Styles** live in `styles.ts` (`useStyles()`); no inline style objects.
+- **Styles** live in `styles/` (`useStyles()`); no inline style objects.
 
 ## Getting Started
 
@@ -139,6 +140,20 @@ maestro test .maestro/ # Maestro
 ## Changelog
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### 2026-09-10 (II)
+
+**Fixes**
+- Recent-purchases screen loads a bounded page (`getRecentPurchases`) plus a `getPurchaseCount()` total instead of fetching every purchase row
+- `useAsync` holds its callbacks in a ref so `execute` stays referentially stable for inline options
+- `useSearchFilter` predicate is optional, so server-side search screens reuse the hook without a dummy filter
+
+**Database**
+- New installs now bootstrap the normalized `purchases` + `purchase_items` + `payments` schema directly; migration v3 remains for legacy flat-table upgrades
+
+**Refactor**
+- `styles.ts` split into per-domain factories under `styles/` (shared, onboarding, pricing, purchasing, seller, settings) composed by `styles/index.ts`
+- Tab labels moved from `App.tsx` literals into `TAB_LABELS` in `constants/`
 
 ### 2026-09-10
 
@@ -229,7 +244,7 @@ maestro test .maestro/ # Maestro
 
 **Pagination & CSV**
 - `fetchPurchasesPaginated({limit,offset,query})` + `countPurchases(query)` with `LIKE` server search (`category`/`seller_name`)
-- `PurchaseDetails` infinite scroll (page/hasMore/loadingMore), pull-to-refresh, filtered export
+- `PurchaseDetails` keyset infinite scroll (`nextCursor`/`hasMore`/`loadingMore`), pull-to-refresh, filtered export
 - CSV: BOM (`\uFEFF`) for Excel, empty-list header-only, `getCsvFilename()` dated, `shareOrSaveCsv` tries `react-native-fs` cache file then `Share.share` fallback, success toast with row count
 
 **Quality / Product / Ops**
