@@ -5,7 +5,8 @@ import { ThemeProvider } from '@rneui/themed'
 import PurchaseDetails from '../screens/purchasing/PurchaseDetails'
 import { SecondaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
-import { PAGINATION_CONFIG, UI_TEXT } from '../constants'
+import { paymentService } from '../services/paymentService'
+import { A11Y_LABELS, PAGINATION_CONFIG, UI_TEXT } from '../constants'
 import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 import { shareOrSaveCsv } from '../utils/csvExport'
@@ -16,14 +17,24 @@ jest.mock('../services/purchaseService', () => ({
         editPurchase: jest.fn(),
     },
 }))
+jest.mock('../services/paymentService', () => ({
+    paymentService: {
+        getPaidSellerIds: jest.fn(),
+    },
+}))
 jest.mock('../utils/csvExport', () => ({
     shareOrSaveCsv: jest.fn(),
 }))
 const mockNavigate = jest.fn()
-jest.mock('@react-navigation/native', () => ({
-    ...jest.requireActual('@react-navigation/native'),
-    useNavigation: () => ({ navigate: mockNavigate }),
-}))
+jest.mock('@react-navigation/native', () => {
+    const actual = jest.requireActual('@react-navigation/native')
+    const ReactModule = require('react')
+    return {
+        ...actual,
+        useNavigation: () => ({ navigate: mockNavigate }),
+        useFocusEffect: (callback: () => void) => ReactModule.useEffect(callback, [callback]),
+    }
+})
 
 const page1: IPurchaseDetail[] = [
     {
@@ -96,6 +107,7 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 beforeEach(() => {
     jest.clearAllMocks()
     ;(shareOrSaveCsv as jest.Mock).mockResolvedValue('shared')
+    ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([])
 })
 
 describe('PurchaseDetails screen', () => {
@@ -161,5 +173,24 @@ describe('PurchaseDetails screen', () => {
 
         expect(root.root.findByType(SecondaryButton).props.disabled).toBe(true)
         expect(textContent(root)).toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
+    })
+
+    test('locks purchases whose seller has recorded payments', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
+        ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([2])
+
+        const root = await renderScreen()
+
+        expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.LOCKED_PURCHASE }).length).toBeGreaterThan(0)
+        expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_PURCHASE })).toHaveLength(0)
+    })
+
+    test('keeps the edit action when the seller has no payments', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
+        ;(paymentService.getPaidSellerIds as jest.Mock).mockResolvedValue([])
+
+        const root = await renderScreen()
+
+        expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_PURCHASE }).length).toBeGreaterThan(0)
     })
 })

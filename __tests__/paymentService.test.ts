@@ -82,6 +82,17 @@ describe('PaymentService.getPaymentSummaries', () => {
     })
 })
 
+describe('PaymentService.getPaidSellerIds', () => {
+    test('returns only sellers with at least one payment', async () => {
+        ;(fetchPaymentSummaries as jest.Mock).mockResolvedValue([
+            { seller_id: 1, seller_name: 'Unpaid', total_owed: 10, total_paid: 0, balance: 10 },
+            stat,
+        ])
+
+        await expect(paymentService.getPaidSellerIds()).resolves.toEqual([2])
+    })
+})
+
 describe('PaymentService.recordPayment', () => {
     test('delegates to createPayment and returns insert id', async () => {
         ;(createPayment as jest.Mock).mockResolvedValue(7)
