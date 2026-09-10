@@ -36,6 +36,23 @@ describe('initializeSchema', () => {
         expect(sql.some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_sellers_name'))).toBe(true)
     })
 
+    test('creates the normalized purchases/purchase_items/payments schema on a fresh install', async () => {
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        const purchasesCreate = sql.find((q) => q.includes('CREATE TABLE IF NOT EXISTS purchases'))
+        expect(purchasesCreate).toBeDefined()
+        expect(purchasesCreate ?? '').toContain('seller_id')
+        expect(purchasesCreate ?? '').toContain('total')
+        expect(purchasesCreate ?? '').not.toContain('price_id')
+        expect(purchasesCreate ?? '').not.toContain('quantity')
+        expect(sql.some((q) => q.includes('CREATE TABLE IF NOT EXISTS purchase_items'))).toBe(true)
+        expect(sql.some((q) => q.includes('CREATE TABLE IF NOT EXISTS payments'))).toBe(true)
+        // A fresh install is already normalized — no legacy table swap.
+        expect(sql.some((q) => q.includes('CREATE TABLE purchases_new'))).toBe(false)
+        expect(sql.some((q) => q.includes('DROP TABLE purchases'))).toBe(false)
+    })
+
     test('is memoized — repeated calls do not re-run statements', async () => {
         await initializeSchema()
         const callsAfterFirst = executeAsync.mock.calls.length
