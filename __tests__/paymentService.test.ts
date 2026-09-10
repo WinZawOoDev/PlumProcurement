@@ -82,18 +82,6 @@ describe('PaymentService.getPaymentSummaries', () => {
     })
 })
 
-describe('PaymentService.getSettledSellerIds', () => {
-    test('returns only sellers with no outstanding balance', async () => {
-        ;(fetchPaymentSummaries as jest.Mock).mockResolvedValue([
-            { seller_id: 1, seller_name: 'Unpaid', total_owed: 10, total_paid: 0, balance: 10 },
-            stat, // owes 60, not settled
-            { seller_id: 3, seller_name: 'Settled', total_owed: 80, total_paid: 80, balance: 0 },
-        ])
-
-        await expect(paymentService.getSettledSellerIds()).resolves.toEqual([3])
-    })
-})
-
 describe('PaymentService.recordPayment', () => {
     test('delegates to createPayment and returns insert id', async () => {
         ;(createPayment as jest.Mock).mockResolvedValue(7)

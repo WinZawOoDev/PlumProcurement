@@ -5,7 +5,6 @@ import { ThemeProvider } from '@rneui/themed'
 import PurchaseDetails from '../screens/purchasing/PurchaseDetails'
 import { SecondaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
-import { paymentService } from '../services/paymentService'
 import { A11Y_LABELS, PAGINATION_CONFIG, UI_TEXT } from '../constants'
 import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
@@ -17,24 +16,14 @@ jest.mock('../services/purchaseService', () => ({
         editPurchase: jest.fn(),
     },
 }))
-jest.mock('../services/paymentService', () => ({
-    paymentService: {
-        getSettledSellerIds: jest.fn(),
-    },
-}))
 jest.mock('../utils/csvExport', () => ({
     shareOrSaveCsv: jest.fn(),
 }))
 const mockNavigate = jest.fn()
-jest.mock('@react-navigation/native', () => {
-    const actual = jest.requireActual('@react-navigation/native')
-    const ReactModule = require('react')
-    return {
-        ...actual,
-        useNavigation: () => ({ navigate: mockNavigate }),
-        useFocusEffect: (callback: () => void) => ReactModule.useEffect(callback, [callback]),
-    }
-})
+jest.mock('@react-navigation/native', () => ({
+    ...jest.requireActual('@react-navigation/native'),
+    useNavigation: () => ({ navigate: mockNavigate }),
+}))
 
 const page1: IPurchaseDetail[] = [
     {
@@ -42,6 +31,7 @@ const page1: IPurchaseDetail[] = [
         seller_id: 2,
         total: 10,
         seller_name: 'U Ba',
+        has_payment: 0,
         items: [
             {
                 id: 201,
@@ -62,6 +52,7 @@ const page2: IPurchaseDetail[] = [
         seller_id: null,
         total: 2,
         seller_name: null,
+        has_payment: 0,
         items: [
             {
                 id: 101,
@@ -107,7 +98,6 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 beforeEach(() => {
     jest.clearAllMocks()
     ;(shareOrSaveCsv as jest.Mock).mockResolvedValue('shared')
-    ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([])
 })
 
 describe('PurchaseDetails screen', () => {
@@ -175,9 +165,11 @@ describe('PurchaseDetails screen', () => {
         expect(textContent(root)).toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
     })
 
-    test('locks purchases whose seller has no outstanding balance', async () => {
-        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
-        ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([2])
+    test('locks purchases referenced by a payment', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({
+            items: [{ ...page1[0], has_payment: 1 }],
+            nextCursor: null,
+        })
 
         const root = await renderScreen()
 
@@ -185,9 +177,8 @@ describe('PurchaseDetails screen', () => {
         expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_PURCHASE })).toHaveLength(0)
     })
 
-    test('keeps the edit action while the seller still owes a balance', async () => {
+    test('keeps the edit action when no payment references the purchase', async () => {
         ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
-        ;(paymentService.getSettledSellerIds as jest.Mock).mockResolvedValue([])
 
         const root = await renderScreen()
 

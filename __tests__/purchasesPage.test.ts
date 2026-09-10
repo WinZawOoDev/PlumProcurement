@@ -58,7 +58,7 @@ describe('fetchPurchasesPage (keyset pagination over normalized purchases)', () 
         expect(nextCursor).toBe(20)
     })
 
-    test('first page without cursor or query has no WHERE clause', async () => {
+    test('first page without cursor or query has no cursor/search predicate', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query.includes('SELECT * FROM purchase_items')) {
                 return { results: [] }
@@ -69,7 +69,10 @@ describe('fetchPurchasesPage (keyset pagination over normalized purchases)', () 
         await fetchPurchasesPage({ limit: 2 })
 
         const [sql, params] = executeAsync.mock.calls[0]
-        expect(sql).not.toContain('WHERE')
+        expect(sql).not.toContain('p.id < ?')
+        expect(sql).not.toContain('s.name LIKE ?')
+        // The payment-lock flag is always projected for the UI.
+        expect(sql).toContain('has_payment')
         expect(params).toEqual([3])
     })
 

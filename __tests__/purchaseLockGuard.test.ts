@@ -18,13 +18,13 @@ beforeEach(() => {
 
 const item = { price_id: 1, category: 'fruit', unit: 'CUP', unit_price: 5, quantity: 2 }
 
-describe('updatePurchase settled-balance lock', () => {
-    test('blocks edits when the seller has no outstanding balance (rolls back)', async () => {
+describe('updatePurchase FIFO payment lock', () => {
+    test('blocks edits when payments fully cover the purchase and earlier ones (rolls back)', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) through this purchase
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(updatePurchase(3, { items: [item] })).rejects.toThrow(
@@ -34,12 +34,12 @@ describe('updatePurchase settled-balance lock', () => {
         expect(executeAsync).toHaveBeenNthCalledWith(5, 'ROLLBACK')
     })
 
-    test('allows edits while the seller still owes a balance (commits)', async () => {
+    test('allows edits while the seller still owes on this purchase (commits)', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 40 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) through this purchase
+            .mockResolvedValueOnce({ results: [{ total: 10 }] }) // SUM(amount) paid (partial)
             .mockResolvedValueOnce({}) // DELETE purchase_items
             .mockResolvedValueOnce({}) // INSERT purchase_item
             .mockResolvedValueOnce({}) // UPDATE purchases total
@@ -47,20 +47,6 @@ describe('updatePurchase settled-balance lock', () => {
 
         await expect(updatePurchase(3, { items: [item] })).resolves.toBeUndefined()
         expect(executeAsync).toHaveBeenLastCalledWith('COMMIT')
-    })
-
-    test('allows edits when the seller has no payments (commits)', async () => {
-        executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
-            .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
-            .mockResolvedValueOnce({}) // DELETE purchase_items
-            .mockResolvedValueOnce({}) // INSERT purchase_item
-            .mockResolvedValueOnce({}) // UPDATE purchases total
-            .mockResolvedValueOnce({}) // COMMIT
-
-        await expect(updatePurchase(3, { items: [item] })).resolves.toBeUndefined()
     })
 
     test('allows edits for purchases with no seller (no payment lookup)', async () => {
@@ -77,13 +63,13 @@ describe('updatePurchase settled-balance lock', () => {
     })
 })
 
-describe('deletePurchase settled-balance lock', () => {
-    test('blocks deletion when the seller has no outstanding balance (rolls back)', async () => {
+describe('deletePurchase FIFO payment lock', () => {
+    test('blocks deletion when payments fully cover the purchase and earlier ones (rolls back)', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) through this purchase
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(deletePurchase(3)).rejects.toThrow(MESSAGES.ERROR_PURCHASE_LOCKED)
@@ -91,12 +77,12 @@ describe('deletePurchase settled-balance lock', () => {
         expect(executeAsync).toHaveBeenNthCalledWith(5, 'ROLLBACK')
     })
 
-    test('deletes while the seller still owes a balance (commits)', async () => {
+    test('deletes while the purchase is not fully covered (commits)', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 40 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) through this purchase
+            .mockResolvedValueOnce({ results: [{ total: 10 }] }) // SUM(amount) paid (partial)
             .mockResolvedValueOnce({}) // DELETE
             .mockResolvedValueOnce({}) // COMMIT
 
@@ -113,6 +99,6 @@ describe('deletePurchase settled-balance lock', () => {
 
         await expect(deletePurchase(3)).resolves.toBeUndefined()
         expect(executeAsync).toHaveBeenNthCalledWith(3, 'DELETE FROM purchases WHERE id = ?', [3])
-        expect(executeAsync).toHaveBeenNthCalledWith(4, 'COMMIT')
+        expect(executeAsync).toHaveBeenCalledTimes(4)
     })
 })
