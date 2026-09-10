@@ -64,7 +64,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 3 }] }
+                return { results: [{ user_version: 4 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -74,6 +74,30 @@ describe('initializeSchema', () => {
         expect(queries().some((q) => q.includes('ALTER TABLE purchases'))).toBe(false)
         // user_version already applied — no migration statements, no version bump
         expect(queries().some((q) => q.includes('PRAGMA user_version ='))).toBe(false)
+    })
+
+    test('v4 backfills payment -> purchase links oldest-first', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query.includes('SELECT DISTINCT seller_id FROM payments')) {
+                return { results: [{ seller_id: 2 }] }
+            }
+            if (query.includes('SELECT p.id FROM purchases p')) {
+                return { results: [{ id: 10 }, { id: 11 }, { id: 12 }] }
+            }
+            if (query.includes('SELECT id FROM payments WHERE seller_id')) {
+                return { results: [{ id: 1 }, { id: 2 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const updates = executeAsync.mock.calls
+            .map((call) => call as [string, unknown[]])
+            .filter(([sql]) => sql.includes('UPDATE payments SET purchase_id'))
+        expect(updates).toHaveLength(2)
+        expect(updates[0][1]).toEqual([10, 1])
+        expect(updates[1][1]).toEqual([11, 2])
     })
 
     test('adds address column when missing (legacy installs)', async () => {

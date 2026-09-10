@@ -32,11 +32,12 @@ describe('createPayment overpayment guard', () => {
         expect(executeAsync).toHaveBeenNthCalledWith(4, 'ROLLBACK')
     })
 
-    test('records a payment within the balance (commits)', async () => {
+    test('records a payment within the balance and auto-links the oldest unlinked purchase', async () => {
         executeAsync
             .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ id: 7 }] }) // oldest unlinked purchase
             .mockResolvedValueOnce({ insertId: 9 }) // INSERT
             .mockResolvedValueOnce({}) // COMMIT
 
@@ -44,8 +45,32 @@ describe('createPayment overpayment guard', () => {
             createPayment({ seller_id: 5, purchase_id: null, amount: 50, method: 'cash', note: null })
         ).resolves.toBe(9)
 
+        expect(executeAsync).toHaveBeenNthCalledWith(
+            5,
+            expect.stringContaining('INSERT INTO payments'),
+            [5, 7, 50, 'cash', null]
+        )
+        expect(executeAsync).toHaveBeenLastCalledWith('COMMIT')
+    })
+
+    test('keeps an explicit purchase link and skips the FIFO lookup', async () => {
+        executeAsync
+            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
+            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ insertId: 4 }) // INSERT
+            .mockResolvedValueOnce({}) // COMMIT
+
+        await expect(
+            createPayment({ seller_id: 5, purchase_id: 3, amount: 20, method: null, note: null })
+        ).resolves.toBe(4)
+
+        expect(executeAsync).toHaveBeenNthCalledWith(
+            4,
+            expect.stringContaining('INSERT INTO payments'),
+            [5, 3, 20, null, null]
+        )
         expect(executeAsync).toHaveBeenCalledTimes(5)
-        expect(executeAsync).toHaveBeenNthCalledWith(5, 'COMMIT')
     })
 
     test('rejects non-positive amounts before touching the database', async () => {
