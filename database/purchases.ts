@@ -162,6 +162,27 @@ export async function countPurchases(query?: string): Promise<number> {
     }
 }
 
+/**
+ * A purchase is locked once its seller has any recorded payment: editing or
+ * deleting it would silently move the seller's balance (and could leave the
+ * seller overpaid). Must be called inside a transaction.
+ */
+async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: number): Promise<boolean> {
+    const { results } = await db.executeAsync(
+        `SELECT seller_id FROM purchases WHERE id = ? LIMIT 1`,
+        [purchaseId]
+    )
+    const sellerId = (results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
+    // Purchases without a seller cannot be settled, so they stay editable.
+    if (sellerId === null || sellerId === undefined) return false
+    const paid = await db.executeAsync(
+        `SELECT COUNT(*) AS count FROM payments WHERE seller_id = ?`,
+        [sellerId]
+    )
+    const count = (paid.results as unknown as Array<{ count: number }>)[0]?.count ?? 0
+    return count > 0
+}
+
 function validateItems(items: NewPurchaseItem[]): void {
     if (!Array.isArray(items) || items.length === 0) {
         throw new DatabaseError(MESSAGES.ERROR_NO_ITEMS)
@@ -230,6 +251,9 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
         db = initDb()
         await db.executeAsync(`BEGIN IMMEDIATE`)
         try {
+            if (await isPurchaseLocked(db, id)) {
+                throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+            }
             if (updates.seller_id !== undefined) {
                 await db.executeAsync(
                     `UPDATE purchases SET seller_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -275,9 +299,21 @@ export async function deletePurchase(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        // Line items cascade; linked payments keep purchase_id set to NULL.
-        await db.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])
+        // Guard + delete in a transaction so a payment recorded concurrently
+        // cannot slip in between the check and the delete.
+        await db.executeAsync(`BEGIN IMMEDIATE`)
+        try {
+            if (await isPurchaseLocked(db, id)) {
+                throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+            }
+            await db.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])
+            await db.executeAsync(`COMMIT`)
+        } catch (innerError) {
+            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
+            throw innerError
+        }
     } catch (error) {
+        if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete purchase', error)
     }
 }

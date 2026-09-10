@@ -44,6 +44,12 @@ export class PaymentService {
         return fetchPaymentSummaries()
     }
 
+    /** IDs of sellers with at least one recorded payment. */
+    async getPaidSellerIds(): Promise<number[]> {
+        const summaries = await this.getPaymentSummaries()
+        return summaries.filter((s) => s.total_paid > 0).map((s) => s.seller_id)
+    }
+
     async getSellerPaymentStat(sellerId: number): Promise<ISellerPaymentStat | null> {
         await initializeSellers()
         await initializePayments()

@@ -7,10 +7,11 @@ import React, {
   useState,
 } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '@rneui/themed';
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useStyles } from '../../styles';
 import {
   UI_TEXT,
@@ -21,6 +22,7 @@ import {
   A11Y_LABELS,
 } from '../../constants';
 import { purchaseService } from '../../services/purchaseService';
+import { paymentService } from '../../services/paymentService';
 import { IPurchaseDetail } from '../../types/database';
 import {
   buildPurchasesCsvWithBom,
@@ -92,9 +94,11 @@ function PurchaseSummarySkeleton() {
 
 function PurchaseRow({
   item,
+  locked,
   onEdit,
 }: {
   item: IPurchaseDetail;
+  locked: boolean;
   onEdit: (item: IPurchaseDetail) => void;
 }) {
   const styles = useStyles();
@@ -126,18 +130,28 @@ function PurchaseRow({
           {item.total.toFixed(2)}$
         </RNText>
         <View style={styles.purchaseItemButtons}>
-          <IconButton
-            icon={
-              <FontAwesomeIcon
-                name="edit"
-                size={DIMENSIONS.ICON_SIZE_SMALL}
-                color={theme.colors.grey5}
-              />
-            }
-            variant="ghost"
-            onPress={() => onEdit(item)}
-            accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
-          />
+          {locked ? (
+            <Ionicons
+              name="lock-closed-outline"
+              size={DIMENSIONS.ICON_SIZE_SMALL}
+              color={theme.colors.grey4}
+              accessible
+              accessibilityLabel={A11Y_LABELS.LOCKED_PURCHASE}
+            />
+          ) : (
+            <IconButton
+              icon={
+                <FontAwesomeIcon
+                  name="edit"
+                  size={DIMENSIONS.ICON_SIZE_SMALL}
+                  color={theme.colors.grey5}
+                />
+              }
+              variant="ghost"
+              onPress={() => onEdit(item)}
+              accessibilityLabel={A11Y_LABELS.EDIT_PURCHASE}
+            />
+          )}
         </View>
       </View>
     </Pressable>
@@ -219,6 +233,8 @@ export default function PurchaseDetails() {
   const { loading, withLoading } = useLoading(false);
   const [editingPurchase, setEditingPurchase] =
     useState<IPurchaseDetail | null>(null);
+  // Sellers with recorded payments — their purchases are locked (no edit).
+  const [paidSellerIds, setPaidSellerIds] = useState<Set<number>>(new Set());
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
@@ -271,6 +287,24 @@ export default function PurchaseDetails() {
     loadPurchases(true, '');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const loadPaidSellerIds = useCallback(async () => {
+    try {
+      const ids = await paymentService.getPaidSellerIds();
+      setPaidSellerIds(new Set(ids));
+    } catch {
+      // Non-fatal: if this fails the edit action stays visible and the
+      // database guard still rejects the write.
+    }
+  }, []);
+
+  // Refresh lock state whenever the screen regains focus (a payment may have
+  // been recorded on another tab).
+  useFocusEffect(
+    useCallback(() => {
+      loadPaidSellerIds();
+    }, [loadPaidSellerIds]),
+  );
+
   // Reload on search changes, but skip the mount-time run (initial load above)
   const searchEffectReady = useRef(false);
   useEffect(() => {
@@ -294,7 +328,8 @@ export default function PurchaseDetails() {
 
   const handleRefresh = useCallback(() => {
     loadPurchases(true, searchQuery);
-  }, [loadPurchases, searchQuery]);
+    loadPaidSellerIds();
+  }, [loadPurchases, searchQuery, loadPaidSellerIds]);
 
   const visiblePurchases = purchases;
   const isInitialLoading = loading && purchases.length === 0;
@@ -389,7 +424,11 @@ export default function PurchaseDetails() {
             data={visiblePurchases}
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
-              <PurchaseRow item={item} onEdit={setEditingPurchase} />
+              <PurchaseRow
+                item={item}
+                locked={item.seller_id != null && paidSellerIds.has(item.seller_id)}
+                onEdit={setEditingPurchase}
+              />
             )}
             ListEmptyComponent={
               loading ? null : (
