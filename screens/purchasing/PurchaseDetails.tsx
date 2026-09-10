@@ -233,8 +233,8 @@ export default function PurchaseDetails() {
   const { loading, withLoading } = useLoading(false);
   const [editingPurchase, setEditingPurchase] =
     useState<IPurchaseDetail | null>(null);
-  // Sellers with recorded payments — their purchases are locked (no edit).
-  const [paidSellerIds, setPaidSellerIds] = useState<Set<number>>(new Set());
+  // Fully settled sellers — their purchases are locked (no edit).
+  const [settledSellerIds, setSettledSellerIds] = useState<Set<number>>(new Set());
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
@@ -287,10 +287,10 @@ export default function PurchaseDetails() {
     loadPurchases(true, '');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadPaidSellerIds = useCallback(async () => {
+  const loadSettledSellerIds = useCallback(async () => {
     try {
-      const ids = await paymentService.getPaidSellerIds();
-      setPaidSellerIds(new Set(ids));
+      const ids = await paymentService.getSettledSellerIds();
+      setSettledSellerIds(new Set(ids));
     } catch {
       // Non-fatal: if this fails the edit action stays visible and the
       // database guard still rejects the write.
@@ -301,8 +301,8 @@ export default function PurchaseDetails() {
   // been recorded on another tab).
   useFocusEffect(
     useCallback(() => {
-      loadPaidSellerIds();
-    }, [loadPaidSellerIds]),
+      loadSettledSellerIds();
+    }, [loadSettledSellerIds]),
   );
 
   // Reload on search changes, but skip the mount-time run (initial load above)
@@ -328,8 +328,8 @@ export default function PurchaseDetails() {
 
   const handleRefresh = useCallback(() => {
     loadPurchases(true, searchQuery);
-    loadPaidSellerIds();
-  }, [loadPurchases, searchQuery, loadPaidSellerIds]);
+    loadSettledSellerIds();
+  }, [loadPurchases, searchQuery, loadSettledSellerIds]);
 
   const visiblePurchases = purchases;
   const isInitialLoading = loading && purchases.length === 0;
@@ -426,7 +426,7 @@ export default function PurchaseDetails() {
             renderItem={({ item }) => (
               <PurchaseRow
                 item={item}
-                locked={item.seller_id != null && paidSellerIds.has(item.seller_id)}
+                locked={item.seller_id != null && settledSellerIds.has(item.seller_id)}
                 onEdit={setEditingPurchase}
               />
             )}

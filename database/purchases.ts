@@ -163,9 +163,10 @@ export async function countPurchases(query?: string): Promise<number> {
 }
 
 /**
- * A purchase is locked once its seller has any recorded payment: editing or
- * deleting it would silently move the seller's balance (and could leave the
- * seller overpaid). Must be called inside a transaction.
+ * A purchase is locked only once its seller is fully settled: the seller has
+ * recorded payments and nothing is still outstanding (paid >= owed). While the
+ * seller still owes a balance, editing or deleting a purchase is allowed.
+ * Must be called inside a transaction.
  */
 async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: number): Promise<boolean> {
     const { results } = await db.executeAsync(
@@ -175,12 +176,21 @@ async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: numbe
     const sellerId = (results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
     // Purchases without a seller cannot be settled, so they stay editable.
     if (sellerId === null || sellerId === undefined) return false
-    const paid = await db.executeAsync(
-        `SELECT COUNT(*) AS count FROM payments WHERE seller_id = ?`,
+
+    const owedResult = await db.executeAsync(
+        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ?`,
         [sellerId]
     )
-    const count = (paid.results as unknown as Array<{ count: number }>)[0]?.count ?? 0
-    return count > 0
+    const owed = (owedResult.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
+
+    const paidResult = await db.executeAsync(
+        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE seller_id = ?`,
+        [sellerId]
+    )
+    const paid = (paidResult.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
+
+    // Only lock when the balance is cleared; an outstanding balance stays open.
+    return paid > 0 && paid >= owed
 }
 
 function validateItems(items: NewPurchaseItem[]): void {
