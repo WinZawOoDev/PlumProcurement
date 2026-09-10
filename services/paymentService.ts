@@ -2,26 +2,40 @@ import {
     createPayment,
     deletePayment,
     fetchPaymentSummaries,
-    fetchPaymentsBySeller,
+    fetchPaymentsPage,
+    fetchRecentPaymentsBySeller,
     fetchSellerPaymentStat,
     initializePayments,
     updatePayment,
+    type PaymentsPage,
 } from '../database/payments'
 import { initializeSellers } from '../database/sellers'
 import { IPayment, ISellerPaymentStat } from '../types/database'
 
 export type NewPayment = Omit<IPayment, 'id'>
 export type PaymentUpdates = { amount?: number; method?: string | null; note?: string | null }
+export type { PaymentsPage }
 
 /**
  * Abstraction layer over the payments database.
  * Payments settle what a seller is owed for their sold plums.
  */
 export class PaymentService {
-    async getPaymentsBySeller(sellerId: number): Promise<IPayment[]> {
+    /**
+     * Keyset pagination over one seller's payments (id DESC). Pass the previous
+     * page's `nextCursor` as `cursor`; undefined for the first page.
+     */
+    async getPaymentsPageBySeller(options: { sellerId: number; limit: number; cursor?: number }): Promise<PaymentsPage> {
         await initializeSellers()
         await initializePayments()
-        return fetchPaymentsBySeller(sellerId)
+        return fetchPaymentsPage(options)
+    }
+
+    /** Most recent payments for one seller, bounded by `limit`. */
+    async getRecentPaymentsBySeller(sellerId: number, limit = 3): Promise<IPayment[]> {
+        await initializeSellers()
+        await initializePayments()
+        return fetchRecentPaymentsBySeller(sellerId, limit)
     }
 
     async getPaymentSummaries(): Promise<ISellerPaymentStat[]> {

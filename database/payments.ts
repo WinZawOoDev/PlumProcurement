@@ -28,18 +28,46 @@ async function fetchOwedAndPaid(db: ReturnType<typeof initDb>, sellerId: number,
     return { owed, paid }
 }
 
-export async function fetchPaymentsBySeller(sellerId: number, limit = 100): Promise<IPayment[]> {
+export interface PaymentsPage {
+    items: IPayment[]
+    /** id of the last item of this page; null when there are no more rows */
+    nextCursor: number | null
+}
+
+/**
+ * Keyset pagination over a seller's payments (id DESC). The cursor is the id
+ * of the last row of the previous page so concurrent inserts cannot shift the
+ * window the way LIMIT/OFFSET would.
+ */
+export async function fetchPaymentsPage(options: { sellerId: number; limit: number; cursor?: number }): Promise<PaymentsPage> {
     let db;
     try {
         db = initDb()
+        const { sellerId, limit, cursor } = options
+        const where = ['seller_id = ?']
+        const params: number[] = [sellerId]
+        if (cursor !== undefined) {
+            where.push('id < ?')
+            params.push(cursor)
+        }
         const { results } = await db.executeAsync(
-            `SELECT * FROM payments WHERE seller_id = ? ORDER BY id DESC LIMIT ?`,
-            [sellerId, limit]
+            `SELECT * FROM payments WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
+            [...params, limit + 1]
         )
-        return results as unknown as IPayment[]
+        const rows = results as unknown as IPayment[]
+        const hasMore = rows.length > limit
+        const items = hasMore ? rows.slice(0, limit) : rows
+        const last = items[items.length - 1]
+        return { items, nextCursor: hasMore && last ? last.id : null }
     } catch (error) {
         throw new DatabaseError('Failed to fetch payments for seller', error)
     }
+}
+
+/** Loads the most recent payments for one seller in a single bounded page. */
+export async function fetchRecentPaymentsBySeller(sellerId: number, limit = 3): Promise<IPayment[]> {
+    const { items } = await fetchPaymentsPage({ sellerId, limit })
+    return items
 }
 
 export async function fetchPaymentSummaries(): Promise<ISellerPaymentStat[]> {

@@ -1,12 +1,12 @@
 import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
+import { A11Y_LABELS, MESSAGES, PAGINATION_CONFIG, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
 import { formatDate } from '../../utils'
@@ -54,26 +54,78 @@ export default function SellerPurchases() {
     const sellerId = route.params?.sellerId
 
     const [purchases, setPurchases] = useState<IPurchaseDetail[]>([])
+    const [sellerStats, setSellerStats] = useState<{ count: number; total: number } | null>(null)
+    const [hasMore, setHasMore] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
     const { loading, withLoading } = useLoading(false)
+    // Keyset cursor (id of the last loaded row); undefined = first page.
+    const cursorRef = useRef<number | undefined>(undefined)
 
-    const loadPurchases = useCallback(async () => {
+    // Header totals are independent of the loaded pages, so they stay correct
+    // as the list paginates.
+    const loadStats = useCallback(async () => {
         if (sellerId === undefined || sellerId === null) {
             return
         }
-        await withLoading(async () => {
-            try {
-                setPurchases(await purchaseService.getPurchasesBySeller(sellerId))
-            } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+        try {
+            const stats = await purchaseService.getSellerStats()
+            const stat = stats.find((s) => s.seller_id === sellerId)
+            setSellerStats(stat ? { count: stat.purchase_count, total: stat.total_spent } : { count: 0, total: 0 })
+        } catch {
+            // best-effort: the list still renders without the aggregate header
+        }
+    }, [sellerId])
+
+    const loadPurchases = useCallback(
+        async (reset = true) => {
+            if (sellerId === undefined || sellerId === null) {
+                return
             }
-        })
-    }, [sellerId, withLoading])
+            const cursor = reset ? undefined : cursorRef.current
+            const loader = reset
+                ? withLoading
+                : async (fn: () => Promise<void>) => {
+                    setLoadingMore(true)
+                    try {
+                        await fn()
+                    } finally {
+                        setLoadingMore(false)
+                    }
+                }
+            await loader(async () => {
+                try {
+                    const { items, nextCursor } = await purchaseService.getPurchasesPage({
+                        limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+                        cursor,
+                        sellerId,
+                    })
+                    setPurchases((prev) => (reset ? items : [...prev, ...items]))
+                    cursorRef.current = nextCursor ?? undefined
+                    setHasMore(nextCursor !== null)
+                } catch (error) {
+                    showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                }
+            })
+        },
+        [sellerId, withLoading],
+    )
+
+    const handleRefresh = useCallback(() => {
+        loadStats()
+        loadPurchases(true)
+    }, [loadStats, loadPurchases])
+
+    const handleLoadMore = useCallback(() => {
+        if (!loading && !loadingMore && hasMore) {
+            loadPurchases(false)
+        }
+    }, [loading, loadingMore, hasMore, loadPurchases])
 
     React.useEffect(() => {
-        loadPurchases()
-    }, [loadPurchases])
+        handleRefresh()
+    }, [handleRefresh])
 
-    const total = purchases.reduce((sum, p) => sum + p.total, 0)
+    const total = sellerStats?.total ?? 0
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
@@ -91,7 +143,7 @@ export default function SellerPurchases() {
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
                     <RNText style={styles.recentPurchasesCount}>
-                        {purchases.length > 0 ? `${purchases.length} · ${total.toFixed(2)}$` : ''}
+                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${total.toFixed(2)}$` : ''}
                     </RNText>
                 </View>
 
@@ -107,10 +159,18 @@ export default function SellerPurchases() {
                         data={purchases}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => <SellerPurchasesRow item={item} />}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={loadingMore ? (
+                            <>
+                                <CardSkeleton />
+                                <CardSkeleton />
+                            </>
+                        ) : null}
                         refreshControl={
                             <RefreshControl
                                 refreshing={loading}
-                                onRefresh={loadPurchases}
+                                onRefresh={handleRefresh}
                                 colors={[theme.colors.primary]}
                             />
                         }

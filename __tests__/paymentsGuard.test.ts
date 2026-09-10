@@ -1,5 +1,5 @@
 import { open } from 'react-native-nitro-sqlite'
-import { createPayment } from '../database/payments'
+import { createPayment, fetchPaymentsPage } from '../database/payments'
 import { __resetDbForTests } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
@@ -54,5 +54,38 @@ describe('createPayment overpayment guard', () => {
         ).rejects.toThrow('Amount must be greater than zero.')
 
         expect(executeAsync).not.toHaveBeenCalled()
+    })
+})
+
+describe('fetchPaymentsPage (keyset pagination per seller)', () => {
+    test('scopes to the seller, applies the cursor and detects more pages', async () => {
+        executeAsync.mockResolvedValueOnce({
+            results: [
+                { id: 5, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
+                { id: 4, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
+                { id: 3, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
+            ],
+        })
+
+        const { items, nextCursor } = await fetchPaymentsPage({ sellerId: 2, limit: 2, cursor: 6 })
+
+        const [sql, params] = executeAsync.mock.calls[0]
+        expect(sql).toContain('seller_id = ?')
+        expect(sql).toContain('id < ?')
+        expect(sql).toContain('ORDER BY id DESC LIMIT ?')
+        expect(params).toEqual([2, 6, 3])
+        expect(items.map((p) => p.id)).toEqual([5, 4])
+        expect(nextCursor).toBe(4)
+    })
+
+    test('returns a null cursor when fewer rows than the limit are returned', async () => {
+        executeAsync.mockResolvedValueOnce({
+            results: [{ id: 2, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null }],
+        })
+
+        const { items, nextCursor } = await fetchPaymentsPage({ sellerId: 2, limit: 5 })
+
+        expect(items).toHaveLength(1)
+        expect(nextCursor).toBeNull()
     })
 })

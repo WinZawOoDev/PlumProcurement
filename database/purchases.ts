@@ -80,13 +80,13 @@ export async function fetchRecentPurchases(limit = 4): Promise<IPurchaseDetail[]
  * Keyset pagination over purchases (id DESC).
  * The cursor is the id of the last row of the previous page, so inserts
  * between page loads can no longer skip or duplicate rows the way
- * LIMIT/OFFSET windows do.
+ * LIMIT/OFFSET windows do. Pass `sellerId` to scope to one seller.
  */
-export async function fetchPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
+export async function fetchPurchasesPage(options: { limit: number; cursor?: number; query?: string; sellerId?: number }): Promise<PurchasesPage> {
     let db;
     try {
         db = initDb()
-        const { limit, cursor, query } = options
+        const { limit, cursor, query, sellerId } = options
         const q = query?.trim()
 
         const where: string[] = []
@@ -94,6 +94,10 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
         if (cursor !== undefined) {
             where.push('p.id < ?')
             params.push(cursor)
+        }
+        if (sellerId !== undefined) {
+            where.push('p.seller_id = ?')
+            params.push(sellerId)
         }
         if (q) {
             const like = `%${escapeLikePattern(q)}%`
@@ -294,23 +298,8 @@ export async function fetchSellerStats(): Promise<ISellerStat[]> {
     }
 }
 
-export async function fetchPurchasesBySeller(sellerId: number, limit = 100): Promise<IPurchaseDetail[]> {
-    let db;
-    try {
-        db = initDb()
-        const { results } = await db.executeAsync(
-            `
-            SELECT p.*, s.name AS seller_name
-            FROM purchases p
-            LEFT JOIN sellers s ON s.id = p.seller_id
-            WHERE p.seller_id = ?
-            ORDER BY p.id DESC LIMIT ?
-        `,
-            [sellerId, limit]
-        )
-        const rows = results as unknown as IPurchaseWithSeller[]
-        return attachItems(db, rows)
-    } catch (error) {
-        throw new DatabaseError('Failed to fetch purchases for seller', error)
-    }
+/** Loads the most recent purchases for one seller in a single bounded page. */
+export async function fetchRecentPurchasesBySeller(sellerId: number, limit = 3): Promise<IPurchaseDetail[]> {
+    const { items } = await fetchPurchasesPage({ limit, sellerId })
+    return items
 }

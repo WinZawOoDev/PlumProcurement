@@ -1,12 +1,12 @@
-import { RefreshControl, ScrollView, Text as RNText, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
+import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
+import { A11Y_LABELS, MESSAGES, PAGINATION_CONFIG, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
 import { formatDate } from '../../utils'
@@ -70,35 +70,69 @@ export default function SellerPayments() {
 
     const [paymentStat, setPaymentStat] = useState<ISellerPaymentStat | null>(null)
     const [payments, setPayments] = useState<IPayment[]>([])
+    const [hasMore, setHasMore] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
     const { loading, withLoading } = useLoading(false)
+    // Keyset cursor (id of the last loaded row); undefined = first page.
+    const cursorRef = useRef<number | undefined>(undefined)
 
-    const loadPayments = useCallback(async () => {
-        if (sellerId === undefined || sellerId === null) {
-            return
-        }
-        await withLoading(async () => {
-            try {
-                const [stat, paid] = await Promise.all([
-                    paymentService.getSellerPaymentStat(sellerId).catch(() => null),
-                    paymentService.getPaymentsBySeller(sellerId).catch(() => [] as IPayment[]),
-                ])
-                setPaymentStat(stat)
-                setPayments(paid)
-            } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+    const loadPayments = useCallback(
+        async (reset = true) => {
+            if (sellerId === undefined || sellerId === null) {
+                return
             }
-        })
-    }, [sellerId, withLoading])
+            const cursor = reset ? undefined : cursorRef.current
+            const loader = reset
+                ? withLoading
+                : async (fn: () => Promise<void>) => {
+                    setLoadingMore(true)
+                    try {
+                        await fn()
+                    } finally {
+                        setLoadingMore(false)
+                    }
+                }
+            await loader(async () => {
+                try {
+                    if (reset) {
+                        const stat = await paymentService.getSellerPaymentStat(sellerId).catch(() => null)
+                        setPaymentStat(stat)
+                    }
+                    const { items, nextCursor } = await paymentService.getPaymentsPageBySeller({
+                        sellerId,
+                        limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+                        cursor,
+                    })
+                    setPayments((prev) => (reset ? items : [...prev, ...items]))
+                    cursorRef.current = nextCursor ?? undefined
+                    setHasMore(nextCursor !== null)
+                } catch (error) {
+                    showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                }
+            })
+        },
+        [sellerId, withLoading],
+    )
+
+    const handleRefresh = useCallback(() => {
+        loadPayments(true)
+    }, [loadPayments])
+
+    const handleLoadMore = useCallback(() => {
+        if (!loading && !loadingMore && hasMore) {
+            loadPayments(false)
+        }
+    }, [loading, loadingMore, hasMore, loadPayments])
 
     const confirmDeletePayment = useConfirmDelete<[number]>({
         remove: (id) => paymentService.removePayment(id),
         confirmMessage: 'Delete this payment? This cannot be undone.',
         successMessage: MESSAGES.PAYMENT_DELETE_SUCCESS,
-        onDeleted: loadPayments,
+        onDeleted: handleRefresh,
     })
 
     React.useEffect(() => {
-        loadPayments()
+        loadPayments(true)
     }, [loadPayments])
 
     return (
@@ -114,43 +148,46 @@ export default function SellerPayments() {
                     <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.PAYMENT_HISTORY}</RNText>
                 </View>
 
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={loading}
-                            onRefresh={loadPayments}
-                            colors={[theme.colors.primary]}
-                        />
-                    }
-                >
-                    {loading && payments.length === 0 && !paymentStat ? (
-                        <>
-                            <CardSkeleton />
-                            <CardSkeleton />
-                        </>
-                    ) : (
-                        <>
-                            {paymentStat && <PaymentStatsSection stat={paymentStat} />}
-
-                            {payments.length === 0 ? (
+                {loading && payments.length === 0 && !paymentStat ? (
+                    <>
+                        <CardSkeleton />
+                        <CardSkeleton />
+                    </>
+                ) : (
+                    <FlatList
+                        style={styles.recentPurchasesList}
+                        data={payments}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <PaymentRow item={item} onDelete={() => confirmDeletePayment(item.id)} />
+                        )}
+                        ListHeaderComponent={paymentStat ? <PaymentStatsSection stat={paymentStat} /> : null}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={loadingMore ? (
+                            <>
+                                <CardSkeleton />
+                                <CardSkeleton />
+                            </>
+                        ) : null}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={loading}
+                                onRefresh={handleRefresh}
+                                colors={[theme.colors.primary]}
+                            />
+                        }
+                        ListEmptyComponent={
+                            loading ? null : (
                                 <EmptyState
                                     icon="cash-outline"
                                     title={UI_TEXT.EMPTY_PAYMENT_LIST}
                                     description="Record a payment to settle this seller's balance"
                                 />
-                            ) : (
-                                payments.map((payment) => (
-                                    <PaymentRow
-                                        key={payment.id}
-                                        item={payment}
-                                        onDelete={() => confirmDeletePayment(payment.id)}
-                                    />
-                                ))
-                            )}
-                        </>
-                    )}
-                </ScrollView>
+                            )
+                        }
+                    />
+                )}
             </View>
         </SafeAreaView>
     )

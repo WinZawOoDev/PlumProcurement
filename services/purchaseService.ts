@@ -2,9 +2,9 @@ import {
     countPurchases,
     createPurchase,
     deletePurchase,
-    fetchPurchasesBySeller,
     fetchPurchasesPage,
     fetchRecentPurchases,
+    fetchRecentPurchasesBySeller,
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
@@ -42,9 +42,9 @@ export class PurchaseService {
     /**
      * Keyset pagination: pass the previous page's `nextCursor` as `cursor`
      * (undefined for the first page). Query filters by seller name or item
-     * category/unit.
+     * category/unit; `sellerId` scopes the page to one seller.
      */
-    async getPurchasesPage(options: { limit: number; cursor?: number; query?: string }): Promise<PurchasesPage> {
+    async getPurchasesPage(options: { limit: number; cursor?: number; query?: string; sellerId?: number }): Promise<PurchasesPage> {
         await initializeSellers()
         await initializePurchases()
         return fetchPurchasesPage(options)
@@ -74,10 +74,11 @@ export class PurchaseService {
         return fetchSellerStats()
     }
 
-    async getPurchasesBySeller(sellerId: number): Promise<IPurchaseDetail[]> {
+    /** Most recent purchases for one seller, bounded by `limit`. */
+    async getRecentPurchasesBySeller(sellerId: number, limit = 3): Promise<IPurchaseDetail[]> {
         await initializeSellers()
         await initializePurchases()
-        return fetchPurchasesBySeller(sellerId)
+        return fetchRecentPurchasesBySeller(sellerId, limit)
     }
 }
 

@@ -28,7 +28,6 @@ jest.mock('../services/sellerService', () => ({
 jest.mock('../services/purchaseService', () => ({
     purchaseService: {
         getSellerStats: jest.fn(),
-        getPurchasesBySeller: jest.fn(),
     },
 }))
 jest.mock('../services/paymentService', () => ({
@@ -95,7 +94,6 @@ beforeEach(() => {
     ;(purchaseService.getSellerStats as jest.Mock).mockResolvedValue(mockStats)
     ;(paymentService.getPaymentSummaries as jest.Mock).mockResolvedValue([])
     ;(sellerService.removeSeller as jest.Mock).mockResolvedValue(undefined)
-    ;(purchaseService.getPurchasesBySeller as jest.Mock).mockResolvedValue([])
 })
 
 describe('Sellers screen', () => {

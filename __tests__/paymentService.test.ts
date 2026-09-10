@@ -3,7 +3,8 @@ import {
     createPayment,
     deletePayment,
     fetchPaymentSummaries,
-    fetchPaymentsBySeller,
+    fetchPaymentsPage,
+    fetchRecentPaymentsBySeller,
     fetchSellerPaymentStat,
     initializePayments,
     updatePayment,
@@ -13,7 +14,8 @@ import { ISellerPaymentStat } from '../types/database'
 
 jest.mock('../database/payments', () => ({
     initializePayments: jest.fn(),
-    fetchPaymentsBySeller: jest.fn(),
+    fetchPaymentsPage: jest.fn(),
+    fetchRecentPaymentsBySeller: jest.fn(),
     fetchPaymentSummaries: jest.fn(),
     fetchSellerPaymentStat: jest.fn(),
     createPayment: jest.fn(),
@@ -39,14 +41,26 @@ beforeEach(() => {
     ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
 })
 
-describe('PaymentService.getPaymentsBySeller', () => {
-    test('initializes then fetches payments for a seller', async () => {
-        const payments = [{ id: 1, seller_id: 2, purchase_id: null, amount: 40, method: 'cash', note: null }]
-        ;(fetchPaymentsBySeller as jest.Mock).mockResolvedValue(payments)
+describe('PaymentService.getPaymentsPageBySeller', () => {
+    test('initializes then fetches a keyset page for a seller', async () => {
+        const page = { items: [{ id: 1, seller_id: 2, purchase_id: null, amount: 40, method: 'cash', note: null }], nextCursor: null }
+        ;(fetchPaymentsPage as jest.Mock).mockResolvedValue(page)
 
-        await expect(paymentService.getPaymentsBySeller(2)).resolves.toEqual(payments)
+        const result = await paymentService.getPaymentsPageBySeller({ sellerId: 2, limit: 20 })
+
         expect(initializePayments).toHaveBeenCalledTimes(1)
-        expect(fetchPaymentsBySeller).toHaveBeenCalledWith(2)
+        expect(fetchPaymentsPage).toHaveBeenCalledWith({ sellerId: 2, limit: 20 })
+        expect(result).toEqual(page)
+    })
+})
+
+describe('PaymentService.getRecentPaymentsBySeller', () => {
+    test('initializes then fetches a bounded recent page', async () => {
+        const payments = [{ id: 1, seller_id: 2, purchase_id: null, amount: 40, method: 'cash', note: null }]
+        ;(fetchRecentPaymentsBySeller as jest.Mock).mockResolvedValue(payments)
+
+        await expect(paymentService.getRecentPaymentsBySeller(2, 3)).resolves.toEqual(payments)
+        expect(fetchRecentPaymentsBySeller).toHaveBeenCalledWith(2, 3)
     })
 })
 

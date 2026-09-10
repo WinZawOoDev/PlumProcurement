@@ -3,9 +3,9 @@ import {
     countPurchases,
     createPurchase,
     deletePurchase,
-    fetchPurchasesBySeller,
     fetchPurchasesPage,
     fetchRecentPurchases,
+    fetchRecentPurchasesBySeller,
     fetchSellerStats,
     initializePurchases,
     updatePurchase,
@@ -22,7 +22,7 @@ jest.mock('../database/purchases', () => ({
     updatePurchase: jest.fn(),
     deletePurchase: jest.fn(),
     fetchSellerStats: jest.fn(),
-    fetchPurchasesBySeller: jest.fn(),
+    fetchRecentPurchasesBySeller: jest.fn(),
 }))
 
 jest.mock('../database/sellers', () => ({
@@ -102,6 +102,14 @@ describe('PurchaseService.getPurchasesPage', () => {
 
         expect(fetchPurchasesPage).toHaveBeenCalledWith({ limit: 20, cursor: 5, query: 'fruit' })
     })
+
+    test('passes sellerId through to the database layer', async () => {
+        ;(fetchPurchasesPage as jest.Mock).mockResolvedValue({ items: [], nextCursor: null })
+
+        await purchaseService.getPurchasesPage({ limit: 20, sellerId: 2 })
+
+        expect(fetchPurchasesPage).toHaveBeenCalledWith({ limit: 20, sellerId: 2 })
+    })
 })
 
 describe('PurchaseService.editPurchase', () => {
@@ -140,13 +148,13 @@ describe('PurchaseService.getSellerStats', () => {
     })
 })
 
-describe('PurchaseService.getPurchasesBySeller', () => {
-    test('initializes then fetches purchases filtered by seller', async () => {
+describe('PurchaseService.getRecentPurchasesBySeller', () => {
+    test('initializes then fetches a bounded recent page filtered by seller', async () => {
         ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
-        ;(fetchPurchasesBySeller as jest.Mock).mockResolvedValue(mockPurchases)
+        ;(fetchRecentPurchasesBySeller as jest.Mock).mockResolvedValue(mockPurchases)
 
-        await expect(purchaseService.getPurchasesBySeller(2)).resolves.toEqual(mockPurchases)
-        expect(fetchPurchasesBySeller).toHaveBeenCalledWith(2)
+        await expect(purchaseService.getRecentPurchasesBySeller(2, 3)).resolves.toEqual(mockPurchases)
+        expect(fetchRecentPurchasesBySeller).toHaveBeenCalledWith(2, 3)
     })
 })
 

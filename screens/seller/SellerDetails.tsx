@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
+import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS, PAGINATION_CONFIG } from '../../constants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
@@ -335,8 +335,8 @@ export default function SellerDetails() {
                     sellerService.getSellerById(sellerId),
                     purchaseService.getSellerStats().catch(() => [] as { seller_id: number; purchase_count: number; total_spent: number }[]),
                     paymentService.getSellerPaymentStat(sellerId).catch(() => null),
-                    purchaseService.getPurchasesBySeller(sellerId).catch(() => [] as IPurchaseDetail[]),
-                    paymentService.getPaymentsBySeller(sellerId).catch(() => [] as IPayment[]),
+                    purchaseService.getRecentPurchasesBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT).catch(() => [] as IPurchaseDetail[]),
+                    paymentService.getRecentPaymentsBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT).catch(() => [] as IPayment[]),
                 ])
                 if (!found) {
                     setNotFound(true)
@@ -351,8 +351,8 @@ export default function SellerDetails() {
                         : { count: 0, total: 0 },
                 )
                 setPaymentStat(stat)
-                setRecentPurchases(history.slice(0, 3))
-                setRecentPayments(paid.slice(0, 3))
+                setRecentPurchases(history)
+                setRecentPayments(paid)
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }

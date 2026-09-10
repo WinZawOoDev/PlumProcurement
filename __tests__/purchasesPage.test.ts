@@ -110,6 +110,21 @@ describe('fetchPurchasesPage (keyset pagination over normalized purchases)', () 
         expect(items).toEqual([])
         expect(nextCursor).toBeNull()
     })
+
+    test('scopes the page to a seller when sellerId is provided', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query.includes('SELECT * FROM purchase_items')) {
+                return { results: [] }
+            }
+            return { results: [headerRow(3)] }
+        })
+
+        await fetchPurchasesPage({ limit: 2, sellerId: 7 })
+
+        const [sql, params] = executeAsync.mock.calls[0]
+        expect(sql).toContain('p.seller_id = ?')
+        expect(params).toEqual([7, 3])
+    })
 })
 
 describe('fetchRecentPurchases', () => {
