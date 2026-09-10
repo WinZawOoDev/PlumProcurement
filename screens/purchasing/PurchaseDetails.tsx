@@ -222,17 +222,14 @@ export default function PurchaseDetails() {
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
-  // visibility/query/toggle state comes from the hook.
+  // visibility/query/toggle state comes from the hook, so no predicate.
   const {
     visible: searchVisible,
     query: searchQuery,
     setQuery: setSearchQuery,
     toggle: handleToggleSearch,
     hasQuery,
-  } = useSearchFilter(
-    purchases,
-    useCallback(() => true, []),
-  );
+  } = useSearchFilter(purchases);
 
   const loadPurchases = useCallback(
     async (reset = true, queryOverride?: string) => {

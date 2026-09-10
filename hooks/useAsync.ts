@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 interface UseAsyncOptions {
     onSuccess?: () => void
@@ -8,6 +8,10 @@ interface UseAsyncOptions {
 export function useAsync(options?: UseAsyncOptions) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<unknown>(null)
+    // Keep the latest callbacks in a ref so `execute` stays referentially stable
+    // even when callers pass inline option objects.
+    const optionsRef = useRef(options)
+    optionsRef.current = options
 
     const execute = useCallback(
         async (operation: () => Promise<void>) => {
@@ -15,16 +19,16 @@ export function useAsync(options?: UseAsyncOptions) {
             setError(null)
             try {
                 await operation()
-                options?.onSuccess?.()
+                optionsRef.current?.onSuccess?.()
             } catch (err: unknown) {
                 setError(err)
-                options?.onError?.(err)
+                optionsRef.current?.onError?.(err)
                 throw err
             } finally {
                 setLoading(false)
             }
         },
-        [options]
+        []
     )
 
     return { loading, error, execute, setLoading, setError }

@@ -4,10 +4,13 @@ import { useCallback, useMemo, useRef, useState } from 'react'
  * Shared search state for list screens: visibility toggle (clears the query
  * on close), the query itself, and a memoized filtered list.
  * The predicate is stored in a ref so inline definitions don't rememoize.
+ *
+ * Omit `predicate` for screens that filter server-side — `filtered` then
+ * mirrors `items` and only visibility/query/toggle state is used.
  */
 export function useSearchFilter<T>(
     items: T[],
-    predicate: (item: T, query: string) => boolean
+    predicate?: (item: T, query: string) => boolean
 ) {
     const [visible, setVisible] = useState(false)
     const [query, setQuery] = useState('')
@@ -23,8 +26,8 @@ export function useSearchFilter<T>(
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
-        if (!q) return items
-        return items.filter((item) => predicateRef.current(item, q))
+        if (!q || !predicateRef.current) return items
+        return items.filter((item) => predicateRef.current!(item, q))
     }, [items, query])
 
     return {
