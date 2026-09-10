@@ -1,4 +1,4 @@
-# Executes every step line by line, in order — a failing step does not skip the rest.
+# Executes every step line by line, in order - a failing step does not skip the rest.
 # The script lives in scripts/, so the project root is one level up from it.
 $ErrorActionPreference = 'Continue'
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
@@ -60,6 +60,6 @@ Write-Host ""
 if ($Failures -eq 0) {
     Write-Host 'All steps completed successfully.'
 } else {
-    Write-Host "Completed with $Failures failing step(s) — see details above."
+    Write-Host "Completed with $Failures failing step(s) - see details above."
 }
 exit $Failures
