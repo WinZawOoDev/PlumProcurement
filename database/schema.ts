@@ -3,7 +3,9 @@ import { runMigrations } from './migrations'
 
 /**
  * One-time database bootstrap.
- * Creates all tables (idempotent) and applies versioned migrations.
+ * Creates the current schema (idempotent) and applies versioned migrations.
+ * New installs get the normalized purchases/purchase_items split directly;
+ * legacy installs keep their existing tables and are upgraded by migrations.
  * Memoized: repeated calls (e.g. from every service method) are no-ops.
  */
 const TABLE_STATEMENTS = [
@@ -25,13 +27,30 @@ const TABLE_STATEMENTS = [
     )`,
     `CREATE TABLE IF NOT EXISTS purchases (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        price_id INTEGER NOT NULL REFERENCES prices(id) ON DELETE RESTRICT,
         seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
+        total REAL NOT NULL,
+        purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS purchase_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+        price_id INTEGER REFERENCES prices(id) ON DELETE RESTRICT,
         category TEXT NOT NULL,
         unit TEXT NOT NULL,
         unit_price REAL NOT NULL,
         quantity INTEGER NOT NULL CHECK(quantity > 0),
-        total REAL NOT NULL,
+        line_total REAL NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        seller_id INTEGER NOT NULL REFERENCES sellers(id) ON DELETE RESTRICT,
+        purchase_id INTEGER REFERENCES purchases(id) ON DELETE SET NULL,
+        amount REAL NOT NULL CHECK(amount > 0),
+        method TEXT,
+        note TEXT,
+        paid_at TEXT DEFAULT CURRENT_TIMESTAMP,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS app_settings (
