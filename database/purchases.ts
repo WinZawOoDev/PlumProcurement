@@ -114,18 +114,11 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
         const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
         // Fetch one extra row to detect whether another page exists.
-        // `has_payment` marks purchases already covered by the seller's
-        // payments under FIFO settlement (oldest first).
+        // `has_payment` marks purchases a payment has been linked to.
         const { results } = await db.executeAsync(
             `
             SELECT p.*, s.name AS seller_name,
-                   CASE
-                       WHEN p.seller_id IS NOT NULL
-                        AND (SELECT COALESCE(SUM(pay.amount), 0) FROM payments pay WHERE pay.seller_id = p.seller_id)
-                            >= (SELECT COALESCE(SUM(p2.total), 0) FROM purchases p2
-                                WHERE p2.seller_id = p.seller_id AND p2.id <= p.id)
-                       THEN 1 ELSE 0
-                   END AS has_payment
+                   EXISTS (SELECT 1 FROM payments py WHERE py.purchase_id = p.id) AS has_payment
             FROM purchases p
             LEFT JOIN sellers s ON s.id = p.seller_id
             ${whereSql}
@@ -172,25 +165,36 @@ export async function countPurchases(query?: string): Promise<number> {
 }
 
 /**
- * Payments settle a seller's purchases oldest-first (FIFO). A purchase header
- * is locked once the seller's payments have fully covered it and every earlier
- * purchase: `paid >= SUM(total) for purchases up to and including this one`.
- * The remaining (still-owed) purchases stay editable.
+ * A purchase header is locked once a payment has been initialized against it
+ * (`payments.purchase_id` references this purchase). Sellers' payments are
+ * allocated to their purchases oldest-first, so the paid purchases are the
+ * locked ones and the remaining still-owed purchases stay editable.
  * Must be called inside a transaction.
  */
 async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: number): Promise<boolean> {
-    const purchase = await db.executeAsync(
-        `SELECT seller_id FROM purchases WHERE id = ? LIMIT 1`,
+    const { results } = await db.executeAsync(
+        `SELECT 1 FROM payments WHERE purchase_id = ? LIMIT 1`,
         [purchaseId]
     )
-    const sellerId = (purchase.results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
-    if (sellerId === null || sellerId === undefined) return false
+    return (results as unknown as unknown[]).length > 0
+}
 
+/**
+ * Blocks a mutation that would leave the seller with more paid than owed.
+ * `newTotal` is the purchase's total after the change (0 when deleting).
+ * Must be called inside a transaction.
+ */
+async function assertSellerNotOverpaid(
+    db: ReturnType<typeof initDb>,
+    sellerId: number,
+    oldTotal: number,
+    newTotal: number
+): Promise<void> {
     const owed = await db.executeAsync(
-        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ? AND id <= ?`,
-        [sellerId, purchaseId]
+        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ?`,
+        [sellerId]
     )
-    const owedThrough = (owed.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
+    const totalOwed = (owed.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
     const paid = await db.executeAsync(
         `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE seller_id = ?`,
@@ -198,7 +202,9 @@ async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: numbe
     )
     const totalPaid = (paid.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
-    return totalPaid > 0 && totalPaid >= owedThrough
+    if (totalPaid > totalOwed - oldTotal + newTotal) {
+        throw new DatabaseError(MESSAGES.ERROR_PURCHASE_OVERPAY)
+    }
 }
 
 function validateItems(items: NewPurchaseItem[]): void {
@@ -272,6 +278,17 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
             if (await isPurchaseLocked(db, id)) {
                 throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
             }
+            const current = (await db.executeAsync(
+                `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,
+                [id]
+            )).results as unknown as Array<{ seller_id: number | null; total: number }>
+            const existing = current[0]
+            const newTotal = updates.items === undefined
+                ? existing?.total ?? 0
+                : updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
+            if (existing?.seller_id != null) {
+                await assertSellerNotOverpaid(db, existing.seller_id, existing.total, newTotal)
+            }
             if (updates.seller_id !== undefined) {
                 await db.executeAsync(
                     `UPDATE purchases SET seller_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -323,6 +340,15 @@ export async function deletePurchase(id: number): Promise<void> {
         try {
             if (await isPurchaseLocked(db, id)) {
                 throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+            }
+            const current = (await db.executeAsync(
+                `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,
+                [id]
+            )).results as unknown as Array<{ seller_id: number | null; total: number }>
+            const existing = current[0]
+            // Deleting removes this purchase's total from what the seller is owed.
+            if (existing?.seller_id != null) {
+                await assertSellerNotOverpaid(db, existing.seller_id, existing.total, 0)
             }
             await db.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])
             await db.executeAsync(`COMMIT`)

@@ -29,7 +29,7 @@ export interface IPurchaseItem {
 
 export interface IPurchaseWithSeller extends IPurchase {
     seller_name: string | null
-    /** 1 when the seller's payments have fully covered this purchase (FIFO), else 0 */
+    /** 1 when a payment has been linked to this purchase header, else 0 */
     has_payment?: number | null
 }
 

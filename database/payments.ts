@@ -130,9 +130,22 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
             if (amount > owed - paid) {
                 throw new DatabaseError(MESSAGES.ERROR_PAYMENT_EXCEEDS_BALANCE)
             }
+            // Explicit link wins; otherwise settle the seller's oldest purchase
+            // that no payment has been linked to yet (FIFO).
+            let linkedPurchaseId = purchase_id ?? null
+            if (linkedPurchaseId === null) {
+                const { results } = await db.executeAsync(
+                    `SELECT p.id FROM purchases p
+                     WHERE p.seller_id = ?
+                       AND NOT EXISTS (SELECT 1 FROM payments pay WHERE pay.purchase_id = p.id)
+                     ORDER BY p.id ASC LIMIT 1`,
+                    [seller_id]
+                )
+                linkedPurchaseId = (results as unknown as Array<{ id: number }>)[0]?.id ?? null
+            }
             const { insertId } = await db.executeAsync(
                 `INSERT INTO payments (seller_id, purchase_id, amount, method, note) VALUES (?, ?, ?, ?, ?)`,
-                [seller_id, purchase_id ?? null, amount, method ?? null, note ?? null]
+                [seller_id, linkedPurchaseId, amount, method ?? null, note ?? null]
             )
             await db.executeAsync(`COMMIT`)
             return insertId as number

@@ -108,6 +108,44 @@ const MIGRATIONS: Migration[] = [
             await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_payments_paid_at ON payments(paid_at)`)
         },
     },
+    {
+        version: 4,
+        up: async () => {
+            const db = initDb()
+            // Backfill explicit payment -> purchase links for payments recorded
+            // before linking existed. Each unlinked payment is paired with the
+            // seller's oldest purchase that has no payment yet (FIFO), so the
+            // paid purchases become the locked ones.
+            const { results } = await db.executeAsync(
+                `SELECT DISTINCT seller_id FROM payments WHERE purchase_id IS NULL AND seller_id IS NOT NULL`
+            )
+            const sellers = results as unknown as Array<{ seller_id: number }>
+
+            for (const { seller_id } of sellers) {
+                const { results: purchaseRows } = await db.executeAsync(
+                    `SELECT p.id FROM purchases p
+                     WHERE p.seller_id = ?
+                       AND NOT EXISTS (SELECT 1 FROM payments pay WHERE pay.purchase_id = p.id)
+                     ORDER BY p.id ASC`,
+                    [seller_id]
+                )
+                const { results: paymentRows } = await db.executeAsync(
+                    `SELECT id FROM payments WHERE seller_id = ? AND purchase_id IS NULL ORDER BY id ASC`,
+                    [seller_id]
+                )
+                const purchaseIds = (purchaseRows as unknown as Array<{ id: number }>).map((row) => row.id)
+                const paymentIds = (paymentRows as unknown as Array<{ id: number }>).map((row) => row.id)
+
+                const pairs = Math.min(purchaseIds.length, paymentIds.length)
+                for (let i = 0; i < pairs; i++) {
+                    await db.executeAsync(
+                        `UPDATE payments SET purchase_id = ? WHERE id = ?`,
+                        [purchaseIds[i], paymentIds[i]]
+                    )
+                }
+            }
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null
