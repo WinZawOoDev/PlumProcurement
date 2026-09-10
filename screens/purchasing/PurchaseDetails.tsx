@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '@rneui/themed';
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid';
@@ -22,7 +22,6 @@ import {
   A11Y_LABELS,
 } from '../../constants';
 import { purchaseService } from '../../services/purchaseService';
-import { paymentService } from '../../services/paymentService';
 import { IPurchaseDetail } from '../../types/database';
 import {
   buildPurchasesCsvWithBom,
@@ -233,8 +232,6 @@ export default function PurchaseDetails() {
   const { loading, withLoading } = useLoading(false);
   const [editingPurchase, setEditingPurchase] =
     useState<IPurchaseDetail | null>(null);
-  // Fully settled sellers — their purchases are locked (no edit).
-  const [settledSellerIds, setSettledSellerIds] = useState<Set<number>>(new Set());
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
@@ -287,24 +284,6 @@ export default function PurchaseDetails() {
     loadPurchases(true, '');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadSettledSellerIds = useCallback(async () => {
-    try {
-      const ids = await paymentService.getSettledSellerIds();
-      setSettledSellerIds(new Set(ids));
-    } catch {
-      // Non-fatal: if this fails the edit action stays visible and the
-      // database guard still rejects the write.
-    }
-  }, []);
-
-  // Refresh lock state whenever the screen regains focus (a payment may have
-  // been recorded on another tab).
-  useFocusEffect(
-    useCallback(() => {
-      loadSettledSellerIds();
-    }, [loadSettledSellerIds]),
-  );
-
   // Reload on search changes, but skip the mount-time run (initial load above)
   const searchEffectReady = useRef(false);
   useEffect(() => {
@@ -328,8 +307,7 @@ export default function PurchaseDetails() {
 
   const handleRefresh = useCallback(() => {
     loadPurchases(true, searchQuery);
-    loadSettledSellerIds();
-  }, [loadPurchases, searchQuery, loadSettledSellerIds]);
+  }, [loadPurchases, searchQuery]);
 
   const visiblePurchases = purchases;
   const isInitialLoading = loading && purchases.length === 0;
@@ -426,7 +404,7 @@ export default function PurchaseDetails() {
             renderItem={({ item }) => (
               <PurchaseRow
                 item={item}
-                locked={item.seller_id != null && settledSellerIds.has(item.seller_id)}
+                locked={Number(item.has_payment) > 0}
                 onEdit={setEditingPurchase}
               />
             )}

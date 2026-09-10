@@ -44,12 +44,6 @@ export class PaymentService {
         return fetchPaymentSummaries()
     }
 
-    /** IDs of sellers that are fully settled (paid, with no outstanding balance). */
-    async getSettledSellerIds(): Promise<number[]> {
-        const summaries = await this.getPaymentSummaries()
-        return summaries.filter((s) => s.total_paid > 0 && s.balance <= 0).map((s) => s.seller_id)
-    }
-
     async getSellerPaymentStat(sellerId: number): Promise<ISellerPaymentStat | null> {
         await initializeSellers()
         await initializePayments()

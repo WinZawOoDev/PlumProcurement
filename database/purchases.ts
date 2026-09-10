@@ -113,10 +113,19 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
         }
         const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
-        // Fetch one extra row to detect whether another page exists
+        // Fetch one extra row to detect whether another page exists.
+        // `has_payment` marks purchases already covered by the seller's
+        // payments under FIFO settlement (oldest first).
         const { results } = await db.executeAsync(
             `
-            SELECT p.*, s.name AS seller_name
+            SELECT p.*, s.name AS seller_name,
+                   CASE
+                       WHEN p.seller_id IS NOT NULL
+                        AND (SELECT COALESCE(SUM(pay.amount), 0) FROM payments pay WHERE pay.seller_id = p.seller_id)
+                            >= (SELECT COALESCE(SUM(p2.total), 0) FROM purchases p2
+                                WHERE p2.seller_id = p.seller_id AND p2.id <= p.id)
+                       THEN 1 ELSE 0
+                   END AS has_payment
             FROM purchases p
             LEFT JOIN sellers s ON s.id = p.seller_id
             ${whereSql}
@@ -163,34 +172,33 @@ export async function countPurchases(query?: string): Promise<number> {
 }
 
 /**
- * A purchase is locked only once its seller is fully settled: the seller has
- * recorded payments and nothing is still outstanding (paid >= owed). While the
- * seller still owes a balance, editing or deleting a purchase is allowed.
+ * Payments settle a seller's purchases oldest-first (FIFO). A purchase header
+ * is locked once the seller's payments have fully covered it and every earlier
+ * purchase: `paid >= SUM(total) for purchases up to and including this one`.
+ * The remaining (still-owed) purchases stay editable.
  * Must be called inside a transaction.
  */
 async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: number): Promise<boolean> {
-    const { results } = await db.executeAsync(
+    const purchase = await db.executeAsync(
         `SELECT seller_id FROM purchases WHERE id = ? LIMIT 1`,
         [purchaseId]
     )
-    const sellerId = (results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
-    // Purchases without a seller cannot be settled, so they stay editable.
+    const sellerId = (purchase.results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
     if (sellerId === null || sellerId === undefined) return false
 
-    const owedResult = await db.executeAsync(
-        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ?`,
-        [sellerId]
+    const owed = await db.executeAsync(
+        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ? AND id <= ?`,
+        [sellerId, purchaseId]
     )
-    const owed = (owedResult.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
+    const owedThrough = (owed.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
-    const paidResult = await db.executeAsync(
+    const paid = await db.executeAsync(
         `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE seller_id = ?`,
         [sellerId]
     )
-    const paid = (paidResult.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
+    const totalPaid = (paid.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
-    // Only lock when the balance is cleared; an outstanding balance stays open.
-    return paid > 0 && paid >= owed
+    return totalPaid > 0 && totalPaid >= owedThrough
 }
 
 function validateItems(items: NewPurchaseItem[]): void {

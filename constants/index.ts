@@ -80,7 +80,7 @@ export const MESSAGES = {
   ERROR_SELECT_PRICE: 'Please select a price item first.',
   ERROR_SELECT_SELLER: 'Please select a seller first.',
   ERROR_NO_ITEMS: 'Add at least one item to record a purchase.',
-  ERROR_PURCHASE_LOCKED: 'Cannot change this purchase because its seller is fully settled.',
+  ERROR_PURCHASE_LOCKED: 'Cannot change this purchase because it has already been paid.',
   ERROR_PAYMENT_EXCEEDS_BALANCE: 'Payment exceeds the outstanding balance.',
   ERROR_INVALID_AMOUNT: 'Amount must be greater than zero.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',
