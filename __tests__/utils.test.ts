@@ -9,6 +9,7 @@ import {
     sleep,
     isEmpty,
     formatDate,
+    formatDateDisplay,
     formatNumber,
     toMyanmarDigits,
     toWesternDigits,
@@ -147,6 +148,26 @@ describe('formatDate', () => {
         expect(formatDate(null)).toBe('')
         expect(formatDate(undefined)).toBe('')
         expect(formatDate('')).toBe('')
+    })
+})
+
+describe('formatDateDisplay', () => {
+    afterEach(async () => {
+        await changeLanguage('en')
+    })
+
+    test('keeps Western digits in English', () => {
+        expect(formatDateDisplay('2026-08-24 13:45:00')).toBe('2026-08-24')
+    })
+
+    test('uses Myanmar digits in Myanmar', async () => {
+        await changeLanguage('my')
+        expect(formatDateDisplay('2026-08-24 13:45:00')).toBe('၂၀၂၆-၀၈-၂၄')
+    })
+
+    test('returns empty string for missing values', () => {
+        expect(formatDateDisplay(null)).toBe('')
+        expect(formatDateDisplay(undefined)).toBe('')
     })
 })
 

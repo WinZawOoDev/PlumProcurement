@@ -9,7 +9,7 @@ import { useStyles } from '../../styles'
 import { ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPurchaseDetail } from '../../types/database'
-import { formatDate, formatNumber } from '../../utils'
+import { formatDateDisplay, formatNumber } from '../../utils'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 
@@ -93,7 +93,7 @@ export default function PurchaseSummary() {
                             <RNText style={styles.purchaseSummarySellerName}>
                                 {purchase.seller_name ?? UI_TEXT.NO_SELLER}
                             </RNText>
-                            <RNText style={styles.purchaseSummaryDateText}>{formatDate(purchase.created_at)}</RNText>
+                            <RNText style={styles.purchaseSummaryDateText}>{formatDateDisplay(purchase.created_at)}</RNText>
                         </View>
                     </View>
                     <View style={styles.purchaseSummaryStatsRow}>

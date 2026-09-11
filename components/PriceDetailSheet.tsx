@@ -6,7 +6,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../styles'
 import { IPrice } from '../types/database'
-import { formatDate, formatNumber } from '../utils'
+import { formatDateDisplay, formatNumber } from '../utils'
 import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { DetailSheet } from './DetailSheet'
@@ -42,7 +42,7 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
 
             <View style={styles.priceDetailMetaRow}>
                 <Ionicons name="calendar-outline" size={14} color={theme.colors.grey4} />
-                <RNText style={styles.priceDetailMetaText}>{UI_TEXT.CREATED} {formatDate(price.created_at)}</RNText>
+                <RNText style={styles.priceDetailMetaText}>{UI_TEXT.CREATED} {formatDateDisplay(price.created_at)}</RNText>
             </View>
 
             {(onEdit || onDelete) && (

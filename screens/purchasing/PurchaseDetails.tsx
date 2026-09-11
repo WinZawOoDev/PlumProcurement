@@ -24,7 +24,7 @@ import { purchaseService } from '../../services/purchaseService';
 import { IPurchaseDetail } from '../../types/database';
 import {
   buildPurchasesCsvWithBom,
-  formatDate,
+  formatDateDisplay,
   formatNumber,
   getCsvFilename,
 } from '../../utils';
@@ -121,7 +121,7 @@ function PurchaseRow({
           {item.seller_name ?? UI_TEXT.NO_SELLER}
         </RNText>
         <RNText style={styles.purchaseItemSubtitle}>
-          {formatDate(item.created_at)}
+          {formatDateDisplay(item.created_at)}
         </RNText>
         <RNText style={styles.purchaseItemSubtitle}>
           {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}

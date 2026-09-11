@@ -13,7 +13,7 @@ import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
 import { ISeller, ISellerPaymentStat, IPayment, IPurchaseDetail } from '../../types/database'
-import { formatDate, formatNumber } from '../../utils'
+import { formatDateDisplay, formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -182,7 +182,7 @@ function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerRecentTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
-                    {formatDate(item.paid_at)}
+                    {formatDateDisplay(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
                 </RNText>
             </View>
@@ -200,10 +200,10 @@ function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: b
             onPress={() => navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${formatDate(item.created_at)}`}
+            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${formatDateDisplay(item.created_at)}`}
         >
             <View style={styles.sellerInfo}>
-                <RNText style={styles.sellerRecentTitle}>{formatDate(item.created_at)}</RNText>
+                <RNText style={styles.sellerRecentTitle}>{formatDateDisplay(item.created_at)}</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
                     {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
                 </RNText>

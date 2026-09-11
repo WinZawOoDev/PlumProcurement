@@ -11,7 +11,7 @@ import { PAGINATION_CONFIG, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
-import { formatDate } from '../../utils'
+import { formatDateDisplay } from '../../utils'
 import { formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
@@ -47,7 +47,7 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
             <View style={styles.sellerInfo}>
                 <RNText style={styles.purchaseItemTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {formatDate(item.paid_at)}
+                    {formatDateDisplay(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
                     {item.note ? ` · ${item.note}` : ''}
                 </RNText>

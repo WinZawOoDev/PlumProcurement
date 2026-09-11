@@ -109,7 +109,7 @@ export const my: TranslationSchema = {
 
     // Payments
     OWED: 'အကြွေး',
-    PAID: 'ပေးချေပြီးဖြစ်သည်',
+    PAID: 'ပေးချေပြီး',
     BALANCE: 'လက်ကျန်',
     RECORD_PAYMENT: 'ငွေပေးချေမှုမှတ်တမ်းတင်ရန်',
     PAYMENT: 'ငွေပေးချေမှု',

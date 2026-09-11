@@ -126,6 +126,15 @@ export function formatDate(value?: string | null): string {
     return value.slice(0, 10)
 }
 
+/**
+ * Formats a date for display, localizing numerals for the active language.
+ * Use `formatDate` (always ASCII) for CSV/data interchange.
+ */
+export function formatDateDisplay(value?: string | null): string {
+    const iso = formatDate(value)
+    return i18n.language === 'my' ? toMyanmarDigits(iso) : iso
+}
+
 export { showSuccess, showError, getErrorMessage } from './notifications'
 
 function csvEscape(value: unknown): string {

@@ -11,7 +11,7 @@ import { PAGINATION_CONFIG, ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
-import { formatDate, formatNumber } from '../../utils'
+import { formatDateDisplay, formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { CardSkeleton } from '../../components/Skeleton'
@@ -36,7 +36,7 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
         >
             <View style={styles.sellerInfo}>
                 <RNText style={styles.purchaseItemTitle}>
-                    {formatDate(item.created_at)}
+                    {formatDateDisplay(item.created_at)}
                 </RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
                     {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
