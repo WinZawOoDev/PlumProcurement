@@ -23,6 +23,13 @@ export const UI_TEXT = {
   UNIT_SELECTION: 'Unit',
   PRICE: 'Price',
 
+  // Placeholders
+  PRICE_PLACEHOLDER: 'e.g. 12.50',
+  AMOUNT_PLACEHOLDER: 'e.g. 50.00',
+  SELLER_NAME_PLACEHOLDER: 'e.g. U Ba',
+  PHONE_PLACEHOLDER: 'e.g. 09-123-456-789',
+  ADDRESS_PLACEHOLDER: 'e.g. No. 123, Main Road',
+
   // Sections
   PRICE_MANAGEMENT: 'Price Management',
   PRICE_DESCRIPTION: 'Define and adjust market rates for plum varieties.',

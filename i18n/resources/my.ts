@@ -31,6 +31,13 @@ export const my: TranslationSchema = {
     UNIT_SELECTION: 'ယူနစ်',
     PRICE: 'ဈေးနှုန်း',
 
+    // Placeholders
+    PRICE_PLACEHOLDER: 'ဥပမာ ၁၂.၅၀',
+    AMOUNT_PLACEHOLDER: 'ဥပမာ ၅၀.၀၀',
+    SELLER_NAME_PLACEHOLDER: 'ဥပမာ ဦးဘ',
+    PHONE_PLACEHOLDER: 'ဥပမာ ၀၉-၁၂၃-၄၅၆-၇၈၉',
+    ADDRESS_PLACEHOLDER: 'ဥပမာ အမှတ် ၁၂၃၊ အဓိကလမ်း',
+
     // Sections
     PRICE_MANAGEMENT: 'ဈေးနှုန်းစီမံခန့်ခွဲမှု',
     PRICE_DESCRIPTION: 'ဇီးသီးနှင့် ဇီးစေ့အမျိုးအစားများအတွက် ဈေးကွက်နှုန်းထားများကို သတ်မှတ်ပြီး ချိန်ညှိပါ။',
@@ -200,7 +207,7 @@ export const my: TranslationSchema = {
     CATEGORY_REQUIRED: 'အမျိုးအစား လိုအပ်ပါသည်',
     UNIT_REQUIRED: 'ယူနစ် ရွေးချယ်ရန် လိုအပ်ပါသည်',
     PRICE_REQUIRED: 'ဈေးနှုန်း လိုအပ်ပါသည်',
-    PRICE_INVALID: 'မှန်ကန်သော ဈေးနှုန်း ထည့်ပါ (ဥပမာ 12.50)',
+    PRICE_INVALID: 'မှန်ကန်သော ဈေးနှုန်း ထည့်ပါ (ဥပမာ ၁၂.၅၀)',
     NAME_REQUIRED: 'အမည် လိုအပ်ပါသည်',
     PHONE_REQUIRED: 'ဖုန်းနံပါတ် လိုအပ်ပါသည်',
     ADDRESS_REQUIRED: 'လိပ်စာ လိုအပ်ပါသည်',

@@ -73,7 +73,7 @@ export default function PaymentFormSheet({ visible, sellerId, balance, onClose, 
                     name="amount"
                     control={control}
                     label={UI_TEXT.AMOUNT}
-                    placeholder="e.g. 50.00"
+                    placeholder={UI_TEXT.AMOUNT_PLACEHOLDER}
                     keyboardType="decimal-pad"
                     required
                     rules={{ required: VALIDATION_MESSAGES.AMOUNT_REQUIRED }}

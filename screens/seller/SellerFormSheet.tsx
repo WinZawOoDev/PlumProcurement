@@ -31,7 +31,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 name="name"
                 control={control}
                 label={UI_TEXT.SELLER_NAME}
-                placeholder="e.g. U Ba"
+                placeholder={UI_TEXT.SELLER_NAME_PLACEHOLDER}
                 required
                 rules={{ required: VALIDATION_MESSAGES.NAME_REQUIRED }}
             />
@@ -39,7 +39,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 name="phone"
                 control={control}
                 label={UI_TEXT.PHONE}
-                placeholder="e.g. 09-123-456-789"
+                placeholder={UI_TEXT.PHONE_PLACEHOLDER}
                 keyboardType="default"
                 required
                 rules={{ required: VALIDATION_MESSAGES.PHONE_REQUIRED }}
@@ -48,7 +48,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 name="address"
                 control={control}
                 label={UI_TEXT.ADDRESS}
-                placeholder="e.g. No. 123, Main Road"
+                placeholder={UI_TEXT.ADDRESS_PLACEHOLDER}
                 keyboardType="default"
                 required
                 rules={{ required: VALIDATION_MESSAGES.ADDRESS_REQUIRED }}

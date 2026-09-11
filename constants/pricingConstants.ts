@@ -35,7 +35,6 @@ export const UNIT_LIST = [
 // ===== FORM CONFIGURATION =====
 export const FORM_CONFIG = {
   PRICE_DEFAULT: '',
-  PRICE_PLACEHOLDER: 'e.g. 12.50',
   PRICE_KEYTYPE: 'decimal-pad' as const,
   UNIT_DEFAULT: 0,
   CATEGORY_DEFAULT: PRODUCT_CATEGORIES.FRUIT,

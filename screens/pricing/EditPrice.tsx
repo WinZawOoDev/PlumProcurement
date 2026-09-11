@@ -57,7 +57,7 @@ function EditPriceFields({ control }: { control: Control<FormData> }) {
                 name="price"
                 control={control}
                 label={UI_TEXT.PRICE}
-                placeholder={FORM_CONFIG.PRICE_PLACEHOLDER}
+                placeholder={UI_TEXT.PRICE_PLACEHOLDER}
                 keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
                 required
                 rules={{
