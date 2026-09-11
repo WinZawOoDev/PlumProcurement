@@ -9,6 +9,7 @@ import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
 import { SAFE_AREA, SORT_MODES, SortMode, CATEGORY_LIST } from '../../constants'
+import { formatNumber } from '../../utils'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPrice } from '../../types/database'
 import { SearchBar } from '../../components/SearchBar'
@@ -87,7 +88,7 @@ function PriceList({
                     <RNText style={styles.priceListSectionTitle} numberOfLines={1}>
                         {t(`categories.${section.category}`, { defaultValue: section.category })}
                     </RNText>
-                    <RNText style={styles.priceListSectionCount}>{section.data.length}</RNText>
+                    <RNText style={styles.priceListSectionCount}>{formatNumber(section.data.length, 0)}</RNText>
                 </View>
             )}
             ListEmptyComponent={
@@ -171,7 +172,7 @@ export default function PurchasePrices() {
                 <SectionHeader
                     icon="pricetags-outline"
                     title={UI_TEXT.PRICE_MANAGEMENT}
-                    description={`${UI_TEXT.PRICE_DESCRIPTION} • ${visiblePrices.length} ${visiblePrices.length === 1 ? UI_TEXT.PRICE_SINGULAR : UI_TEXT.PRICE_PLURAL}`}
+                    description={`${UI_TEXT.PRICE_DESCRIPTION} • ${formatNumber(visiblePrices.length, 0)} ${visiblePrices.length === 1 ? UI_TEXT.PRICE_SINGULAR : UI_TEXT.PRICE_PLURAL}`}
                 />
                 <ActionButtons
                     searchActive={searchVisible}

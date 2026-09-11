@@ -16,6 +16,7 @@ import { ISeller } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
 import { showError } from '../../utils/notifications'
+import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { SearchIconButton } from '../../components/SearchIconButton'
@@ -32,7 +33,7 @@ function SellerHeader({ count }: { count: number }) {
         <SectionHeader
             icon="people-outline"
             title={UI_TEXT.SELLERS}
-            description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${count} ${count === 1 ? UI_TEXT.SELLER_SINGULAR : UI_TEXT.SELLER_PLURAL}`}
+            description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${formatNumber(count, 0)} ${count === 1 ? UI_TEXT.SELLER_SINGULAR : UI_TEXT.SELLER_PLURAL}`}
         />
     )
 }

@@ -79,7 +79,7 @@ function PriceItemCard({
                     <RNText style={styles.priceItemCardStepperButtonText}>−</RNText>
                 </TouchableOpacity>
                 <View style={styles.priceItemCardValueBubble}>
-                    <RNText style={[styles.priceItemCardValue, selected && styles.priceItemCardValueActive]}>{quantity}</RNText>
+                    <RNText style={[styles.priceItemCardValue, selected && styles.priceItemCardValueActive]}>{formatNumber(quantity, 0)}</RNText>
                 </View>
                 <TouchableOpacity
                     style={[styles.priceItemCardStepperButton, styles.priceItemCardStepperButtonPlus]}
@@ -98,7 +98,7 @@ function PriceItemCard({
             {selected && (
                 <View style={styles.priceItemCardFooter}>
                     <RNText style={styles.priceItemCardFooterCalc}>
-                        {quantity} × {formatNumber(price.price)}{CURRENCY}
+                        {formatNumber(quantity, 0)} × {formatNumber(price.price)}{CURRENCY}
                     </RNText>
                     <RNText style={styles.priceItemCardFooterTotal}>{formatNumber(lineTotal)}{CURRENCY}</RNText>
                 </View>
@@ -122,7 +122,7 @@ function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; tot
         >
             <View style={styles.purchaseSummaryRow}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_ITEMS}</Text>
-                <Text style={[styles.purchaseSummaryValue, !hasItems && styles.purchaseSummaryValueMuted]}>{itemCount}</Text>
+                <Text style={[styles.purchaseSummaryValue, !hasItems && styles.purchaseSummaryValueMuted]}>{formatNumber(itemCount, 0)}</Text>
             </View>
             <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_AMOUNT}</Text>
@@ -259,7 +259,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                 <>
                     <View style={styles.priceItemListHeader}>
                         <RNText style={styles.priceItemListTitle}>{UI_TEXT.PRICE_ITEMS}</RNText>
-                        <RNText style={styles.priceItemCount}>{selectablePrices.length}</RNText>
+                        <RNText style={styles.priceItemCount}>{formatNumber(selectablePrices.length, 0)}</RNText>
                     </View>
                     <ScrollView
                     horizontal
@@ -314,8 +314,8 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
     const { UI_TEXT, UNITS, CURRENCY } = useLocalizedConstants()
     const single = item.items.length === 1 ? item.items[0] : null
     const title = single
-        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${single.quantity} (${UNITS[single.unit] ?? single.unit})`
-        : `${item.items.length} ${UI_TEXT.ITEMS.toLowerCase()}`
+        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${formatNumber(single.quantity, 0)} (${UNITS[single.unit] ?? single.unit})`
+        : `${formatNumber(item.items.length, 0)} ${UI_TEXT.ITEMS.toLowerCase()}`
     return (
         <View style={styles.purchaseItemRow}>
             <View style={styles.sellerInfo}>

@@ -27,7 +27,7 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
         <View style={styles.purchaseDetailItemRow}>
             <View style={styles.sellerInfo}>
                 <View style={styles.purchaseDetailItemTitleRow}>
-                    <RNText style={styles.purchaseDetailItemQty}>{item.quantity}</RNText>
+                    <RNText style={styles.purchaseDetailItemQty}>{formatNumber(item.quantity, 0)}</RNText>
                     <Ionicons
                         name="close"
                         size={12}
@@ -97,7 +97,7 @@ export default function PurchaseSummary() {
                         </View>
                     </View>
                     <View style={styles.purchaseSummaryStatsRow}>
-                        <StatCell label={UI_TEXT.TOTAL_ITEMS} value={purchase.items.length.toString()} />
+                        <StatCell label={UI_TEXT.TOTAL_ITEMS} value={formatNumber(purchase.items.length, 0)} />
                         <View style={styles.purchaseSummaryStatDivider} />
                         <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${formatNumber(purchase.total)}${CURRENCY}`} highlight />
                     </View>

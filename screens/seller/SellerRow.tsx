@@ -46,13 +46,13 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                     <View
                         style={styles.sellerRowDotLegend}
                         accessible
-                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${formatNumber(purchaseTotal ?? 0)}${CURRENCY} ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${formatNumber(balance ?? 0)}${CURRENCY} ${UI_TEXT.BALANCE.toLowerCase()}`}
+                        accessibilityLabel={`${formatNumber(purchaseCount ?? 0, 0)} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${formatNumber(purchaseTotal ?? 0)}${CURRENCY} ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${formatNumber(balance ?? 0)}${CURRENCY} ${UI_TEXT.BALANCE.toLowerCase()}`}
                     >
                         {(purchaseCount ?? 0) > 0 && (
                             <>
                                 <Ionicons name="receipt-outline" size={12} color={theme.colors.primary} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {purchaseCount} · {formatNumber(purchaseTotal ?? 0)}{CURRENCY}
+                                    {formatNumber(purchaseCount ?? 0, 0)} · {formatNumber(purchaseTotal ?? 0)}{CURRENCY}
                                 </RNText>
                             </>
                         )}

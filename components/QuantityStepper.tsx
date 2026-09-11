@@ -4,6 +4,7 @@ import { Text } from '@rneui/themed'
 import { useStyles } from '../styles'
 import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { lightHaptic } from '../utils/haptics'
+import { formatNumber } from '../utils'
 
 interface QuantityStepperProps {
     value: string
@@ -39,7 +40,7 @@ export function QuantityStepper({ value, onChange, disabled = false }: QuantityS
             >
                 <RNText style={[styles.quantityStepperButtonText, disabled && styles.quantityStepperTextDisabled]}>+</RNText>
             </TouchableOpacity>
-            <RNText style={[styles.quantityValue, disabled && styles.quantityStepperTextDisabled]}>{value}</RNText>
+            <RNText style={[styles.quantityValue, disabled && styles.quantityStepperTextDisabled]}>{formatNumber(parseInt(value, 10) || 0, 0)}</RNText>
             <TouchableOpacity
                 style={[styles.quantityStepperButton, disabled && styles.quantityStepperButtonDisabled]}
                 onPress={handleDecrease}

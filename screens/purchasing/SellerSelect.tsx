@@ -12,6 +12,7 @@ import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService } from '../../services/sellerService'
 import { ISeller } from '../../types/database'
 import { showError } from '../../utils/notifications'
+import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 import { lightHaptic } from '../../utils/haptics'
 import { SearchBar } from '../../components/SearchBar'
@@ -84,7 +85,7 @@ export default function SellerSelect() {
 
     const countLabel = query.trim()
         ? t('uiText.SHOWING_COUNT', { filtered: filtered.length, total: sellers.length })
-        : `${sellers.length}`
+        : `${formatNumber(sellers.length, 0)}`
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>

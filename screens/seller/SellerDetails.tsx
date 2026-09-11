@@ -124,7 +124,7 @@ function PurchasesSection({
                 accessibilityLabel={`${UI_TEXT.PURCHASE_HISTORY_TITLE}: ${UI_TEXT.VIEW_ALL}`}
             >
                 <View style={styles.sellerStatsRow}>
-                    <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(count)} icon="receipt-outline" />
+                    <StatCell label={UI_TEXT.PURCHASES_COUNT} value={formatNumber(count, 0)} icon="receipt-outline" />
                     <View style={styles.sellerStatDivider} />
                     <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${formatNumber(total)}${CURRENCY}`} icon="wallet-outline" />
                     <View style={styles.sellerStatDivider} />
@@ -205,7 +205,7 @@ function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: b
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerRecentTitle}>{formatDate(item.created_at)}</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
-                    {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+                    {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>

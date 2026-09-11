@@ -39,7 +39,7 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
                     {formatDate(item.created_at)}
                 </RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+                    {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
@@ -148,7 +148,7 @@ export default function SellerPurchases() {
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
                     <RNText style={styles.recentPurchasesCount}>
-                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${formatNumber(total)}${CURRENCY}` : ''}
+                        {sellerStats && sellerStats.count > 0 ? `${formatNumber(sellerStats.count, 0)} · ${formatNumber(total)}${CURRENCY}` : ''}
                     </RNText>
                 </View>
 

@@ -50,7 +50,7 @@ function PurchaseSummaryCard({ count, total }: { count: number; total: number })
         <RNText style={styles.purchaseSummaryLabel}>
           {UI_TEXT.PURCHASES_COUNT}
         </RNText>
-        <RNText style={styles.purchaseSummaryValue}>{count}</RNText>
+        <RNText style={styles.purchaseSummaryValue}>{formatNumber(count, 0)}</RNText>
       </View>
       <View
         style={[
@@ -124,7 +124,7 @@ function PurchaseRow({
           {formatDate(item.created_at)}
         </RNText>
         <RNText style={styles.purchaseItemSubtitle}>
-          {item.items.length} {UI_TEXT.ITEMS.toLowerCase()}
+          {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
         </RNText>
       </View>
       <View style={styles.purchaseItemActions}>
