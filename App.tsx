@@ -27,6 +27,7 @@ import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
 import { ROUTES, ThemeMode, Language, DEFAULT_LANGUAGE } from './constants';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from './components/UndoToast';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
 import { settingsService } from './services/settingsService';
@@ -280,7 +281,7 @@ function App() {
               </LanguageContext.Provider>
             </ThemeModeContext.Provider>
           </PriceProvider>
-          <Toast />
+          <Toast config={toastConfig} />
         </SafeAreaProvider>
       </ThemeProvider>
     </ErrorBoundary>

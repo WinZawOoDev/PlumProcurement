@@ -322,6 +322,33 @@ export const sharedStyles = (theme: ThemeOptions) => StyleSheet.create({
         gap: 8,
         marginTop: 12,
     },
+    // ===== UNDO TOAST =====
+    undoToast: {
+        width: '90%',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        backgroundColor: '#2B2B2F',
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+    },
+    undoToastText: {
+        flex: 1,
+        color: '#F5F5F5',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        fontSize: 14,
+    },
+    undoToastAction: {
+        color: '#F0C8E0',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        fontSize: 14,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+    },
     // ===== SKELETON =====
     cardSkeletonContainer: {
         padding: 16,

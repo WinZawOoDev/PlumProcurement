@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
 import { Alert } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { ThemeProvider } from '@rneui/themed'
 import EditPurchase from '../screens/purchasing/EditPurchase'
 import { PrimaryButton } from '../components/buttons/Button'
@@ -90,6 +91,27 @@ describe('EditPurchase screen', () => {
             findIncrease(root).props.onPress()
         })
         expect(textContent(root)).toContain('15.00$')
+    })
+
+    test('undo restores the previous quantity', async () => {
+        const showSpy = jest.spyOn(Toast, 'show')
+        const root = await renderScreen()
+
+        await act(async () => {
+            findIncrease(root).props.onPress()
+        })
+        expect(textContent(root)).toContain('15.00$')
+
+        const undoOptions = showSpy.mock.calls
+            .map((call) => call[0] as { type?: string; props?: { onUndo?: () => void } })
+            .reverse()
+            .find((options) => options.type === 'undo')
+        expect(undoOptions?.props?.onUndo).toBeDefined()
+
+        await act(async () => {
+            undoOptions!.props!.onUndo!()
+        })
+        expect(textContent(root)).toContain('10.00$')
     })
 
     test('saves updated item quantities and goes back', async () => {

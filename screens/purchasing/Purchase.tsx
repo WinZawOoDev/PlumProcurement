@@ -1,6 +1,6 @@
-import { FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import { Alert, FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
 import { useTranslation } from 'react-i18next'
@@ -15,7 +15,7 @@ import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
-import { showSuccess, showError } from '../../utils/notifications'
+import { showSuccess, showError, showUndo } from '../../utils/notifications'
 import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
@@ -140,11 +140,13 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
 
     const [quantities, setQuantities] = useState<Record<string, number>>({})
     const [activeCardIndex, setActiveCardIndex] = useState(0)
+    // Synchronous mirror so quick repeated taps accumulate correctly (state
+    // updates are async) and so undo can restore the exact previous value.
+    const quantitiesRef = useRef<Record<string, number>>({})
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const selectablePrices = prices
 
-    // pagingEnabled snaps by the viewport, which equals the card width here.
     const handleCardsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const next = Math.round(event.nativeEvent.contentOffset.x / cardWidth)
         const clamped = Math.min(selectablePrices.length - 1, Math.max(0, next))
@@ -152,12 +154,21 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     }
 
     const getQuantity = (priceId: string) => quantities[priceId] ?? 0
-    const increment = (priceId: string) => {
-        setQuantities((prev) => ({ ...prev, [priceId]: (prev[priceId] ?? 0) + 1 }))
+    const applyQuantities = (next: Record<string, number>) => {
+        quantitiesRef.current = next
+        setQuantities(next)
     }
-    const decrement = (priceId: string) => {
-        setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, (prev[priceId] ?? 0) - 1) }))
+    const setQuantity = (priceId: string, delta: number) => {
+        const previous = quantitiesRef.current[priceId] ?? 0
+        const next = Math.max(0, previous + delta)
+        if (next === previous) return
+        applyQuantities({ ...quantitiesRef.current, [priceId]: next })
+        showUndo(UI_TEXT.QUANTITY_UPDATED, () => {
+            applyQuantities({ ...quantitiesRef.current, [priceId]: previous })
+        })
     }
+    const increment = (priceId: string) => setQuantity(priceId, 1)
+    const decrement = (priceId: string) => setQuantity(priceId, -1)
 
     const selectedItems = selectablePrices
         .map((price) => ({ price, quantity: getQuantity(price.id.toString()) }))
@@ -182,19 +193,11 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
         })),
     }
 
-    const handleRecord = async () => {
-        if (!selectedSeller) {
-            showError(MESSAGES.ERROR_SELECT_SELLER)
-            return
-        }
-        if (selectedItems.length === 0) {
-            showError(MESSAGES.ERROR_NO_ITEMS)
-            return
-        }
+    const performRecord = async () => {
         await withRecording(async () => {
             try {
                 await purchaseService.recordPurchase({
-                    seller_id: selectedSeller.id,
+                    seller_id: selectedSeller!.id,
                     items: selectedItems.map(({ price, quantity }) => ({
                         price_id: price.id,
                         category: price.category,
@@ -205,12 +208,27 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                 })
                 showSuccess(MESSAGES.PURCHASE_RECORDED_SUCCESS)
                 onRecorded()
-                setQuantities({})
+                applyQuantities({})
             } catch (error) {
                 const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
                 showError(message)
             }
         })
+    }
+
+    const handleRecord = () => {
+        if (!selectedSeller) {
+            showError(MESSAGES.ERROR_SELECT_SELLER)
+            return
+        }
+        if (selectedItems.length === 0) {
+            showError(MESSAGES.ERROR_NO_ITEMS)
+            return
+        }
+        Alert.alert(UI_TEXT.RECORD_PURCHASE_CONFIRM_TITLE, UI_TEXT.RECORD_PURCHASE_CONFIRM_MESSAGE, [
+            { text: UI_TEXT.CANCEL, style: 'cancel' },
+            { text: UI_TEXT.CONFIRM, onPress: performRecord },
+        ])
     }
 
     return (

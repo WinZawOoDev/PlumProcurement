@@ -15,6 +15,8 @@ export const my: TranslationSchema = {
     // Common buttons
     SAVE: 'သိမ်းဆည်းရန်',
     CANCEL: 'ပယ်ဖျက်ရန်',
+    CONFIRM: 'အတည်ပြုရန်',
+    UNDO: 'နောက်ပြန်',
     UPDATE: 'မွမ်းမံရန်',
     DELETE: 'ဖျက်ရန်',
     EDIT: 'ပြင်ဆင်ရန်',
@@ -72,6 +74,8 @@ export const my: TranslationSchema = {
     // Purchasing
     RECORD_PURCHASE: 'အဝယ်မှတ်တမ်းတင်ရန်',
     PURCHASE_DESCRIPTION: 'ဈေးနှုန်းမှတ်တမ်းနှင့် ရောင်းချသူကို ရွေးချယ်ပြီး ဝယ်ယူသည့် အရေအတွက်ကို မှတ်တမ်းတင်ပါ။',
+    RECORD_PURCHASE_CONFIRM_TITLE: 'ဤအဝယ်ကို မှတ်တမ်းတင်မည်လား?',
+    RECORD_PURCHASE_CONFIRM_MESSAGE: 'ရွေးချယ်ထားသော ပစ္စည်းများကို သိမ်းဆည်းပြီး ရောင်းချသူလက်ကျန်ကို မွမ်းမံပါမည်။',
     SELECT_PRICE_ITEM: 'ဈေးနှုန်းမှတ်တမ်း',
     PRICE_ITEMS: 'ဈေးနှုန်းမှတ်တမ်းများ',
     PRICE_ITEMS_HINT: 'ကြည့်ရှုရန် ပွတ်ဆွဲပါ',
@@ -81,6 +85,7 @@ export const my: TranslationSchema = {
     NO_SELLER: 'ရောင်းချသူမရှိ',
     SOLD_BY: 'ရောင်းချသည့်သူ',
     QUANTITY: 'အရေအတွက်',
+    QUANTITY_UPDATED: 'အရေအတွက် မွမ်းမံပြီးပါပြီ',
     UNIT_PRICE: 'တစ်ယူနစ်ဈေးနှုန်း',
     TOTAL: 'စုစုပေါင်း',
     TOTAL_ITEMS: 'ပစ္စည်းအရေအတွက်စုစုပေါင်း',

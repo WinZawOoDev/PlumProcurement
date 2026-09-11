@@ -13,7 +13,7 @@ import { QuantityCounter } from '../../components/QuantityCounter'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-import { showSuccess, showError } from '../../utils/notifications'
+import { showSuccess, showError, showUndo } from '../../utils/notifications'
 import { formatDateDisplay, formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 
@@ -77,6 +77,9 @@ export default function EditPurchase() {
     const [quantities, setQuantities] = useState<Record<number, number>>({})
     const { loading: saving, withLoading: withSaving } = useLoading(false)
     const allowLeaveRef = useRef(false)
+    // Synchronous mirror so quick repeated taps accumulate correctly and undo
+    // can restore the exact previous value.
+    const quantitiesRef = useRef<Record<number, number>>({})
 
     useEffect(() => {
         if (purchase) {
@@ -84,6 +87,7 @@ export default function EditPurchase() {
             for (const item of purchase.items) {
                 map[item.id] = item.quantity
             }
+            quantitiesRef.current = map
             setQuantities(map)
         }
     }, [purchase])
@@ -103,9 +107,16 @@ export default function EditPurchase() {
     const isDirty = resolved.some(({ item, qty }) => qty !== item.quantity)
 
     const adjust = (itemId: number, delta: number) => {
-        setQuantities((prev) => {
-            const current = prev[itemId] ?? 1
-            return { ...prev, [itemId]: Math.max(1, current + delta) }
+        const previous = quantitiesRef.current[itemId] ?? 1
+        const next = Math.max(1, previous + delta)
+        if (next === previous) return
+        const updated = { ...quantitiesRef.current, [itemId]: next }
+        quantitiesRef.current = updated
+        setQuantities(updated)
+        showUndo(UI_TEXT.QUANTITY_UPDATED, () => {
+            const restored = { ...quantitiesRef.current, [itemId]: previous }
+            quantitiesRef.current = restored
+            setQuantities(restored)
         })
     }
 

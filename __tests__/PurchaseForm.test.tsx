@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
-import { Text as RNText } from 'react-native'
+import { Alert, Text as RNText } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { ThemeProvider } from '@rneui/themed'
 import { PurchaseForm } from '../screens/purchasing/Purchase'
 import { PriceProvider, usePrices } from '../context/PriceContext'
@@ -100,6 +101,11 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 
 beforeEach(() => {
     jest.clearAllMocks()
+    // Auto-confirm the record dialog so existing flows can proceed; individual
+    // tests override this when they need to assert on cancellation.
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+        buttons?.find((button) => button.style !== 'cancel')?.onPress?.()
+    })
     ;(priceService.getPrices as jest.Mock).mockResolvedValue(mockPrices)
     ;(purchaseService.recordPurchase as jest.Mock).mockResolvedValue(1)
 })
@@ -185,6 +191,53 @@ describe('PurchaseForm', () => {
             ],
         })
         expect(onRecorded).toHaveBeenCalledTimes(1)
+    })
+
+    test('asks for confirmation before recording', async () => {
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+        const root = await renderForm()
+
+        await selectSeller(root)
+        await act(async () => {
+            findIncreaseButton(root).props.onPress()
+            await flush()
+        })
+        await act(async () => {
+            findRecordButton(root).props.onPress()
+            await flush()
+        })
+
+        expect(alertSpy).toHaveBeenCalledWith(
+            UI_TEXT.RECORD_PURCHASE_CONFIRM_TITLE,
+            UI_TEXT.RECORD_PURCHASE_CONFIRM_MESSAGE,
+            expect.any(Array)
+        )
+        expect(purchaseService.recordPurchase).not.toHaveBeenCalled()
+        expect(onRecorded).not.toHaveBeenCalled()
+    })
+
+    test('undo restores the previous quantity', async () => {
+        const showSpy = jest.spyOn(Toast, 'show')
+        const root = await renderForm()
+
+        await selectSeller(root)
+        await act(async () => {
+            findIncreaseButton(root).props.onPress()
+            await flush()
+        })
+        expect(textContent(root)).toContain('100.00$')
+
+        const undoOptions = showSpy.mock.calls
+            .map((call) => call[0] as { type?: string; props?: { onUndo?: () => void } })
+            .reverse()
+            .find((options) => options.type === 'undo')
+        expect(undoOptions?.props?.onUndo).toBeDefined()
+
+        await act(async () => {
+            undoOptions!.props!.onUndo!()
+            await flush()
+        })
+        expect(textContent(root)).toContain('—')
     })
 
     test('does not record without a selected seller', async () => {

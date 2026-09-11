@@ -7,6 +7,8 @@ export const UI_TEXT = {
   // Common buttons
   SAVE: 'Save',
   CANCEL: 'Cancel',
+  CONFIRM: 'Confirm',
+  UNDO: 'Undo',
   UPDATE: 'Update',
   DELETE: 'Delete',
   EDIT: 'Edit',
@@ -64,6 +66,8 @@ export const UI_TEXT = {
   // Purchasing
   RECORD_PURCHASE: 'Record Purchase',
   PURCHASE_DESCRIPTION: 'Select a price item and record purchased quantities.',
+  RECORD_PURCHASE_CONFIRM_TITLE: 'Record this purchase?',
+  RECORD_PURCHASE_CONFIRM_MESSAGE: 'This will save the selected items and update the seller balance.',
   SELECT_PRICE_ITEM: 'Price Item',
   PRICE_ITEMS: 'Price Items',
   PRICE_ITEMS_HINT: 'Swipe to browse',
@@ -73,6 +77,7 @@ export const UI_TEXT = {
   NO_SELLER: 'No seller',
   SOLD_BY: 'Sold by',
   QUANTITY: 'Quantity',
+  QUANTITY_UPDATED: 'Quantity updated',
   UNIT_PRICE: 'Unit Price',
   TOTAL: 'Total',
   TOTAL_ITEMS: 'Total Items',
