@@ -2,6 +2,7 @@ import React from 'react'
 import { Text as RNText, View } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../styles'
@@ -22,6 +23,7 @@ interface PriceDetailSheetProps {
 export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: PriceDetailSheetProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
     const { UI_TEXT, UNITS, CURRENCY } = useLocalizedConstants()
     if (!price) return null
     return (
@@ -30,7 +32,7 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
 
             <View style={styles.priceDetailHero}>
                 <View style={styles.priceDetailCategoryChip}>
-                    <RNText style={styles.priceDetailCategoryText} numberOfLines={1}>{price.category}</RNText>
+                    <RNText style={styles.priceDetailCategoryText} numberOfLines={1}>{t(`categories.${price.category}`, { defaultValue: price.category })}</RNText>
                 </View>
                 <RNText style={styles.priceDetailPrice}>
                     {formatNumber(price.price)}<Text style={styles.priceDetailCurrency}> {CURRENCY}</Text>

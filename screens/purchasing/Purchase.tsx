@@ -73,7 +73,7 @@ function PriceItemCard({
                     activeOpacity={0.6}
                     accessible
                     accessibilityRole="button"
-                    accessibilityLabel={`${A11Y_LABELS.DECREASE_QUANTITY} ${price.category}`}
+                    accessibilityLabel={`${A11Y_LABELS.DECREASE_QUANTITY} ${t(`categories.${price.category}`, { defaultValue: price.category })}`}
                     accessibilityState={{ disabled: !selected }}
                 >
                     <RNText style={styles.priceItemCardStepperButtonText}>−</RNText>
@@ -90,7 +90,7 @@ function PriceItemCard({
                     activeOpacity={0.6}
                     accessible
                     accessibilityRole="button"
-                    accessibilityLabel={`${A11Y_LABELS.INCREASE_QUANTITY} ${price.category}`}
+                    accessibilityLabel={`${A11Y_LABELS.INCREASE_QUANTITY} ${t(`categories.${price.category}`, { defaultValue: price.category })}`}
                 >
                     <RNText style={styles.priceItemCardStepperButtonTextPlus}>+</RNText>
                 </TouchableOpacity>
