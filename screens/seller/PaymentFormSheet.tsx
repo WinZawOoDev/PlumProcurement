@@ -5,13 +5,8 @@ import { useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import { FormInputField, FormSelectField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import {
-    UI_TEXT,
-    MESSAGES,
-    VALIDATION_MESSAGES,
-    AMOUNT_PATTERN,
-    PAYMENT_METHODS,
-} from '../../constants'
+import { AMOUNT_PATTERN } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { showSuccess, showError } from '../../utils/notifications'
 
@@ -31,6 +26,7 @@ interface PaymentFormSheetProps {
 
 export default function PaymentFormSheet({ visible, sellerId, balance, onClose, onSaved }: PaymentFormSheetProps) {
     const styles = useStyles()
+    const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS } = useLocalizedConstants()
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({
         defaultValues: { amount: '', method: '', note: '' },
@@ -86,13 +82,13 @@ export default function PaymentFormSheet({ visible, sellerId, balance, onClose, 
                     control={control}
                     label={UI_TEXT.PAYMENT_METHOD}
                     options={[...PAYMENT_METHODS]}
-                    placeholder="Select method"
+                    placeholder={UI_TEXT.SELECT_METHOD_PLACEHOLDER}
                 />
                 <FormInputField
                     name="note"
                     control={control}
                     label={UI_TEXT.NOTE}
-                    placeholder="Optional note"
+                    placeholder={UI_TEXT.OPTIONAL_NOTE_PLACEHOLDER}
                     keyboardType="default"
                 />
                 <View style={styles.formActions}>

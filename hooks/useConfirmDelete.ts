@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { Alert } from 'react-native'
-import { UI_TEXT, MESSAGES } from '../constants'
+import { useTranslation } from 'react-i18next'
 import { showSuccess, showError, getErrorMessage } from '../utils/notifications'
 
 interface UseConfirmDeleteOptions<TArgs extends unknown[]> {
@@ -24,12 +24,13 @@ export function useConfirmDelete<TArgs extends unknown[]>({
     successMessage,
     onDeleted,
 }: UseConfirmDeleteOptions<TArgs>) {
+    const { t } = useTranslation()
     return useCallback(
         (...args: TArgs) => {
-            Alert.alert(UI_TEXT.DELETE_CONFIRM_TITLE, confirmMessage, [
-                { text: UI_TEXT.CANCEL, style: 'cancel' },
+            Alert.alert(t('uiText.DELETE_CONFIRM_TITLE'), confirmMessage, [
+                { text: t('uiText.CANCEL'), style: 'cancel' },
                 {
-                    text: UI_TEXT.DELETE,
+                    text: t('uiText.DELETE'),
                     style: 'destructive',
                     onPress: () => {
                         ;(async () => {
@@ -39,13 +40,13 @@ export function useConfirmDelete<TArgs extends unknown[]>({
                                 await onDeleted?.()
                             } catch (error) {
                                 // DatabaseError carries a user-facing message
-                                showError(getErrorMessage(error, MESSAGES.ERROR_GENERIC))
+                                showError(getErrorMessage(error, t('messages.ERROR_GENERIC')))
                             }
                         })()
                     },
                 },
             ])
         },
-        [remove, confirmMessage, successMessage, onDeleted]
+        [t, remove, confirmMessage, successMessage, onDeleted]
     )
 }

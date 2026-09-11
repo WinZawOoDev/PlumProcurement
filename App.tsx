@@ -5,11 +5,12 @@
  * @format
  */
 
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar, StyleSheet, Text, useColorScheme } from 'react-native';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import { DefaultTheme, DarkTheme, createStaticNavigation, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from "@react-native-vector-icons/ionicons/static";
 import SellerStack from './screens/seller/Stack';
 import PriceStack from './screens/pricing/Stack';
@@ -20,13 +21,31 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
 import { ThemeModeContext } from './context/ThemeModeContext';
+import { LanguageContext, useLanguage } from './context/LanguageContext';
+import { MYANMAR_FONT_FAMILY_BOLD } from './styles/fonts';
 import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
-import { ROUTES, TAB_LABELS, ThemeMode } from './constants';
+import { ROUTES, ThemeMode, Language, DEFAULT_LANGUAGE } from './constants';
 import Toast from 'react-native-toast-message';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
 import { settingsService } from './services/settingsService';
+import { changeLanguage } from './i18n';
+
+const tabLabelStyles = StyleSheet.create({
+  label: { fontWeight: '700', fontSize: 11, letterSpacing: 0.3, marginTop: 2 },
+  myanmar: { fontFamily: MYANMAR_FONT_FAMILY_BOLD },
+});
+
+function LocalizedTabLabel({ label, color }: { label: string; color: string }) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+  return (
+    <Text style={[tabLabelStyles.label, { color }, language === 'my' && tabLabelStyles.myanmar]}>
+      {t(label)}
+    </Text>
+  );
+}
 
 function SettingsTabIcon({ color, size }: { color: string; size: number }) {
   return <Ionicons name="settings-outline" color={color} size={size} />;
@@ -80,28 +99,28 @@ const RootStack = createBottomTabNavigator({
       screen: PriceStack,
       options: {
         tabBarIcon: PriceTabIcon,
-        tabBarLabel: TAB_LABELS.PRICES
+        tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.PRICES" color={color} />,
       }
     },
     [ROUTES.PURCHASE_TAB]: {
       screen: PurchaseStack,
       options: {
         tabBarIcon: PurchaseTabIcon,
-        tabBarLabel: TAB_LABELS.PURCHASING
+        tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.PURCHASING" color={color} />,
       }
     },
     [ROUTES.SELLER_TAB]: {
       screen: SellerStack,
       options: {
         tabBarIcon: SellerTabIcon,
-        tabBarLabel: TAB_LABELS.SELLERS
+        tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.SELLERS" color={color} />,
       }
     },
     [ROUTES.SETTINGS_TAB]: {
       screen: SettingsStack,
       options: {
         tabBarIcon: SettingsTabIcon,
-        tabBarLabel: TAB_LABELS.SETTINGS
+        tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.SETTINGS" color={color} />,
       }
     },
   }
@@ -209,6 +228,7 @@ function AppShell({ isDarkMode }: AppShellProps) {
 function App() {
   const systemIsDarkMode = useColorScheme() === 'dark';
   const [themeMode, setThemeModeState] = React.useState<ThemeMode>('system');
+  const [language, setLanguageState] = React.useState<Language>(DEFAULT_LANGUAGE);
   const isDarkMode = themeMode === 'system' ? systemIsDarkMode : themeMode === 'dark';
   const appTheme = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode]);
 
@@ -217,14 +237,36 @@ function App() {
     settingsService.setThemeMode(mode).catch(() => undefined);
   }, []);
 
+  const handleSetLanguage = useCallback((next: Language) => {
+    setLanguageState(next);
+    changeLanguage(next).catch(() => undefined);
+    settingsService.setLanguage(next).catch(() => undefined);
+  }, []);
+
   const themeModeContextValue = useMemo(
     () => ({ mode: themeMode, setMode: handleSetThemeMode }),
     [themeMode, handleSetThemeMode]
   );
 
+  const languageContextValue = useMemo(
+    () => ({ language, setLanguage: handleSetLanguage }),
+    [language, handleSetLanguage]
+  );
+
   // Load the persisted theme preference as early as possible
   React.useEffect(() => {
     settingsService.getThemeMode().then(setThemeModeState).catch(() => undefined);
+  }, []);
+
+  // Load the persisted (or device) language preference
+  React.useEffect(() => {
+    settingsService
+      .getLanguage()
+      .then((stored) => {
+        setLanguageState(stored);
+        changeLanguage(stored).catch(() => undefined);
+      })
+      .catch(() => undefined);
   }, []);
 
   return (
@@ -233,7 +275,9 @@ function App() {
         <SafeAreaProvider>
           <PriceProvider>
             <ThemeModeContext.Provider value={themeModeContextValue}>
-              <AppShell isDarkMode={isDarkMode} />
+              <LanguageContext.Provider value={languageContextValue}>
+                <AppShell isDarkMode={isDarkMode} />
+              </LanguageContext.Provider>
             </ThemeModeContext.Provider>
           </PriceProvider>
           <Toast />

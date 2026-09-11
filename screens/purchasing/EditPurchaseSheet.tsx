@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text as RNText } from 'react-native'
 import { BottomSheet, Text } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import { useStyles } from '../../styles'
-import { MESSAGES, UI_TEXT, QUANTITY_PATTERN } from '../../constants'
+import { QUANTITY_PATTERN } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPurchaseDetail } from '../../types/database'
 import { purchaseService } from '../../services/purchaseService'
 import { QuantityStepper } from '../../components/QuantityStepper'
@@ -19,6 +21,7 @@ interface EditPurchaseSheetProps {
 
 function EditPurchaseSummary({ total }: { total: number }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.purchaseSummaryCard}>
             <View style={styles.purchaseSummaryRow}>
@@ -39,6 +42,7 @@ function EditPurchaseActions({
     onCancel: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.formActions}>
             <PrimaryButton title={UI_TEXT.SAVE} disabled={saving} loading={saving} onPress={onSave} />
@@ -49,6 +53,8 @@ function EditPurchaseActions({
 
 export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditPurchaseSheetProps) {
     const styles = useStyles()
+    const { t } = useTranslation()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const [quantities, setQuantities] = useState<Record<number, string>>({})
     const { loading: saving, withLoading: withSaving } = useLoading(false)
 
@@ -110,7 +116,7 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
                 {resolved.map(({ item, q }) => (
                     <View key={item.id} style={styles.editItemBlock}>
                         <RNText style={styles.purchaseItemSubtitle}>
-                            {item.category} ({item.unit}) @ {item.unit_price.toFixed(2)}$
+                            {t(`categories.${item.category}`, { defaultValue: item.category })} ({item.unit}) @ {item.unit_price.toFixed(2)}$
                         </RNText>
                         <QuantityStepper
                             value={q}

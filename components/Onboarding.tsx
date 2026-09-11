@@ -2,19 +2,21 @@ import React, { useRef, useState } from 'react'
 import { View, Text as RNText, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Pressable } from 'react-native'
 import { Text } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
+import { useTranslation } from 'react-i18next'
 import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../styles'
 
 const SLIDES = [
-    { icon: 'pricetags-outline', title: 'Manage Prices', desc: 'Define market rates per category and unit in seconds.' },
-    { icon: 'cart-outline', title: 'Record Purchases', desc: 'Pick a price, choose a seller, set quantity — total auto-calculates.' },
-    { icon: 'people-outline', title: 'Track Sellers', desc: 'Keep your seller directory with purchase stats at a glance.' },
+    { icon: 'pricetags-outline', titleKey: 'onboarding.pricesTitle', descKey: 'onboarding.pricesDescription' },
+    { icon: 'cart-outline', titleKey: 'onboarding.purchasesTitle', descKey: 'onboarding.purchasesDescription' },
+    { icon: 'people-outline', titleKey: 'onboarding.sellersTitle', descKey: 'onboarding.sellersDescription' },
 ]
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
     const scrollRef = useRef<ScrollView>(null)
     const [idx, setIdx] = useState(0)
     const [pageWidth, setPageWidth] = useState(0)
@@ -51,12 +53,12 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
             >
                 {SLIDES.map((s) => (
-                    <View key={s.title} style={[styles.onboardingSlide, { width: pageWidth || '100%' }]}>
+                    <View key={s.titleKey} style={[styles.onboardingSlide, { width: pageWidth || '100%' }]}>
                         <View style={styles.onboardingIconCircle}>
                             <Ionicons name={s.icon as any} size={36} color={theme.colors.primary} />
                         </View>
-                        <Text style={styles.onboardingTitle}>{s.title}</Text>
-                        <RNText style={styles.onboardingDescription}>{s.desc}</RNText>
+                        <Text style={styles.onboardingTitle}>{t(s.titleKey)}</Text>
+                        <RNText style={styles.onboardingDescription}>{t(s.descKey)}</RNText>
                     </View>
                 ))}
             </ScrollView>
@@ -66,15 +68,15 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                         key={i}
                         onPress={() => goTo(i)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Go to slide ${i + 1}`}
+                        accessibilityLabel={t('onboarding.goToSlide', { index: i + 1 })}
                     >
                         <View style={[styles.onboardingDot, i === idx ? dotActiveStyle : dotInactiveStyle]} />
                     </Pressable>
                 ))}
             </View>
             <View style={styles.onboardingButtons}>
-                <PrimaryButton title={last ? 'Get Started' : 'Next'} onPress={handleNext} />
-                {!last && <SecondaryButton title="Skip" onPress={onDone} />}
+                <PrimaryButton title={last ? t('onboarding.getStarted') : t('onboarding.next')} onPress={handleNext} />
+                {!last && <SecondaryButton title={t('onboarding.skip')} onPress={onDone} />}
             </View>
         </View>
     )

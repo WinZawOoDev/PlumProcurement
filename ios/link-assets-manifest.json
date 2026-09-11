@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/NotoSansMyanmar_400Regular.ttf",
+      "sha1": "63bc959a1e552caa6b69a806c65cb86342a6d30b"
+    },
+    {
+      "path": "assets/fonts/NotoSansMyanmar_700Bold.ttf",
+      "sha1": "256c225ebff6397abf42c6d6443b5ebce6a36e0a"
+    }
+  ]
+}

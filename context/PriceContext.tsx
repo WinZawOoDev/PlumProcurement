@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { IPrice } from '../types/database'
 import { NewPrice, priceService } from '../services/priceService'
 import { showError } from '../utils/notifications'
-import { MESSAGES } from '../constants'
 
 interface PriceContextValue {
     prices: IPrice[]
@@ -16,6 +16,7 @@ interface PriceContextValue {
 const PriceContext = createContext<PriceContextValue | undefined>(undefined)
 
 export function PriceProvider({ children }: { children: React.ReactNode }) {
+    const { t } = useTranslation()
     const [prices, setPrices] = useState<IPrice[]>([])
     const [loading, setLoading] = useState(false)
     // Monotonic token: only the most recent refresh call may commit its result,
@@ -41,14 +42,14 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             // Never propagate: every screen treats refresh() as fire-and-forget.
             if (token === refreshToken.current) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
             }
         } finally {
             if (mounted.current && token === refreshToken.current) {
                 setLoading(false)
             }
         }
-    }, [])
+    }, [t])
 
     const addPrice = useCallback(
         async (data: NewPrice) => {

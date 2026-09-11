@@ -9,7 +9,8 @@ import { DatabaseError } from '../../database/connection'
 import { usePrices } from '../../context/PriceContext'
 import { FormSelectField, FormInputField, FormButtonGroupField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST, MESSAGES, UI_TEXT, ROUTES, ANIMATIONS, VALIDATION_MESSAGES, PRICE_PATTERN } from '../../constants'
+import { FORM_CONFIG, UNIT_LIST, ROUTES, ANIMATIONS, PRICE_PATTERN } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useAsync } from '../../hooks/useAsync'
 
@@ -20,6 +21,7 @@ type FormData = {
 }
 
 function PriceFields({ control }: { control: Control<FormData> }) {
+    const { UI_TEXT, VALIDATION_MESSAGES, CATEGORY_LIST } = useLocalizedConstants()
     return (
         <>
             <FormSelectField
@@ -69,6 +71,7 @@ function PriceActions({
     onCancel: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.createPriceActions}>
             <PrimaryButton
@@ -88,6 +91,7 @@ function PriceActions({
 
 export default function CreatePrice() {
     const styles = useStyles()
+    const { MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { addPrice } = usePrices()
     const { loading: saving, execute } = useAsync()
@@ -136,10 +140,11 @@ export default function CreatePrice() {
 
 export function CreatePriceHeaderTitle() {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View>
             <Text style={styles.headerTitleText}>
-                Price Entry
+                {UI_TEXT.PRICE_ENTRY}
             </Text>
         </View>
     )

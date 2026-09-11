@@ -5,8 +5,10 @@ import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import { PrimaryButton } from '../../components/buttons/Button'
-import { ROUTES, UI_TEXT, MESSAGES, SAFE_AREA, A11Y_LABELS } from '../../constants'
+import { ROUTES, SAFE_AREA } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
@@ -25,11 +27,12 @@ import { Skeleton } from '../../components/Skeleton'
 type SellerStats = Record<number, { count: number; total: number }>
 
 function SellerHeader({ count }: { count: number }) {
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <SectionHeader
             icon="people-outline"
             title={UI_TEXT.SELLERS}
-            description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${count} ${count === 1 ? 'seller' : 'sellers'}`}
+            description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${count} ${count === 1 ? UI_TEXT.SELLER_SINGULAR : UI_TEXT.SELLER_PLURAL}`}
         />
     )
 }
@@ -44,6 +47,7 @@ function SellerActions({
     onToggleSearch: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
 
     return (
         <View style={styles.sellerActionsRow}>
@@ -66,6 +70,7 @@ function SellerSearch({
     query: string
     onChangeText: (query: string) => void
 }) {
+    const { UI_TEXT } = useLocalizedConstants()
     if (!visible) {
         return null
     }
@@ -120,6 +125,8 @@ function SellerList({
     onEdit: (seller: ISeller) => void
 }) {
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT } = useLocalizedConstants()
 
     if (loading && sellers.length === 0) {
         return <SellerListSkeleton />
@@ -146,7 +153,7 @@ function SellerList({
                 <EmptyState
                     icon={hasQuery ? 'search-outline' : 'people-outline'}
                     title={hasQuery ? UI_TEXT.NO_MATCHING_RESULTS : UI_TEXT.EMPTY_SELLER_LIST}
-                    description={hasQuery ? `No sellers matching "${searchQuery}"` : 'Add your first seller to get started'}
+                    description={hasQuery ? t('uiText.NO_SELLERS_MATCHING', { query: searchQuery }) : UI_TEXT.ADD_FIRST_SELLER_HINT}
                 />
             }
             refreshControl={
@@ -183,6 +190,7 @@ function SellerForm({
 
 export default function Sellers() {
     const styles = useStyles()
+    const { t } = useTranslation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [sellerStats, setSellerStats] = useState<SellerStats>({})
@@ -227,10 +235,10 @@ export default function Sellers() {
                 }
                 setBalances(balanceMap)
             } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
             }
         })
-    }, [withLoading])
+    }, [withLoading, t])
 
     useEffect(() => {
         loadSellers()

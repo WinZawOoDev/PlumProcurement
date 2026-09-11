@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { View, Text as RNText, Pressable } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import { useStyles } from '../styles'
 import { IPrice } from '../types/database'
 
@@ -13,6 +14,7 @@ interface PriceTrendProps {
 export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
 
     const stats = useMemo(() => {
         if (prices.length === 0) return null
@@ -31,7 +33,7 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
     return (
         <View style={styles.priceTrendContainer}>
             <Text style={styles.priceTrendTitle}>
-                Price Trend ({stats.count} items) — Avg {stats.avg.toFixed(2)}$
+                {t('uiText.PRICE_TREND_SUMMARY', { count: stats.count, avg: stats.avg.toFixed(2) })}
             </Text>
             <View style={styles.priceTrendBarsRow}>
                 {stats.sorted.slice(-12).map((p) => {
@@ -45,7 +47,7 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
                                 { height: h, backgroundColor: theme.colors.primary },
                             ]}
                             accessible
-                            accessibilityLabel={`${p.category} ${p.price} dollars`}
+                            accessibilityLabel={t('a11y.PRICE_TREND_BAR', { category: p.category, price: p.price })}
                             accessibilityRole="button"
                         />
                     )

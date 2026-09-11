@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Input, useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../styles'
-import { A11Y_LABELS } from '../constants'
+import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { debounce } from '../utils'
 
 interface SearchBarProps {
@@ -15,6 +15,7 @@ interface SearchBarProps {
 export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }: SearchBarProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { A11Y_LABELS } = useLocalizedConstants()
     const [localValue, setLocalValue] = useState(value)
 
     useEffect(() => {

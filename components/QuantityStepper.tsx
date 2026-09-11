@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text as RNText, TouchableOpacity } from 'react-native'
 import { Text } from '@rneui/themed'
 import { useStyles } from '../styles'
-import { UI_TEXT, A11Y_LABELS } from '../constants'
+import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { lightHaptic } from '../utils/haptics'
 
 interface QuantityStepperProps {
@@ -13,6 +13,7 @@ interface QuantityStepperProps {
 
 export function QuantityStepper({ value, onChange, disabled = false }: QuantityStepperProps) {
     const styles = useStyles()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     const handleIncrease = () => {
         if (disabled) return
         lightHaptic()

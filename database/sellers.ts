@@ -1,4 +1,4 @@
-import { MESSAGES } from '../constants'
+import { tMessage } from '../i18n'
 import type { ISeller } from '../types/database'
 import { DatabaseError, initDb } from './connection'
 import { initializeSchema } from './schema'
@@ -44,7 +44,7 @@ export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<num
         const { name, phone, address } = sellerData;
 
         if (!name || !name.trim()) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
 
         db = initDb()
@@ -68,7 +68,7 @@ export async function updateSeller(id: number, sellerData: Partial<Omit<ISeller,
 
         if (sellerData.name !== undefined) {
             if (!sellerData.name.trim()) {
-                throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+                throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
             }
             updates.push('name = ?')
             values.push(sellerData.name.trim())
@@ -116,7 +116,7 @@ export async function deleteSeller(id: number): Promise<void> {
             const referencedCount =
                 (results as unknown as Array<{ count: number }>)[0]?.count ?? 0;
             if (referencedCount > 0) {
-                throw new DatabaseError(MESSAGES.ERROR_SELLER_IN_USE)
+                throw new DatabaseError(tMessage('ERROR_SELLER_IN_USE'))
             }
             const { results: paymentResults } = await db.executeAsync(
                 `SELECT COUNT(*) AS count FROM payments WHERE seller_id = ?`,
@@ -125,7 +125,7 @@ export async function deleteSeller(id: number): Promise<void> {
             const paymentCount =
                 (paymentResults as unknown as Array<{ count: number }>)[0]?.count ?? 0;
             if (paymentCount > 0) {
-                throw new DatabaseError(MESSAGES.ERROR_SELLER_HAS_PAYMENTS)
+                throw new DatabaseError(tMessage('ERROR_SELLER_HAS_PAYMENTS'))
             }
             await db.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
             await db.executeAsync(`COMMIT`)
@@ -136,7 +136,7 @@ export async function deleteSeller(id: number): Promise<void> {
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isForeignKeyViolation(error)) {
-            throw new DatabaseError(MESSAGES.ERROR_SELLER_IN_USE, error)
+            throw new DatabaseError(tMessage('ERROR_SELLER_IN_USE'), error)
         }
         throw new DatabaseError('Failed to delete seller', error)
     }

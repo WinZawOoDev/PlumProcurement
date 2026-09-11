@@ -5,7 +5,7 @@ import { Control, useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import { FormInputField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, VALIDATION_MESSAGES } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService, NewSeller } from '../../services/sellerService'
 import { ISeller } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -24,6 +24,7 @@ interface SellerFormSheetProps {
 }
 
 function SellerFormFields({ control }: { control: Control<FormData> }) {
+    const { UI_TEXT, VALIDATION_MESSAGES } = useLocalizedConstants()
     return (
         <>
             <FormInputField
@@ -68,6 +69,7 @@ function SellerFormActions({
     onCancel: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <>
             <PrimaryButton
@@ -88,6 +90,7 @@ function SellerFormActions({
 
 export default function SellerFormSheet({ visible, seller, onClose, onSaved }: SellerFormSheetProps) {
     const styles = useStyles()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const editing = !!seller
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({

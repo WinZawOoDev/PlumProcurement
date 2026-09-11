@@ -5,7 +5,7 @@ import { EditPurchaseSheet } from '../screens/purchasing/EditPurchaseSheet'
 import { QuantityStepper } from '../components/QuantityStepper'
 import { PrimaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
-import { A11Y_LABELS, UI_TEXT } from '../constants'
+import { A11Y_LABELS, UI_TEXT, CATEGORY_LABELS } from '../constants'
 import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 
@@ -70,7 +70,7 @@ describe('EditPurchaseSheet', () => {
         const root = await renderSheet()
         const text = textContent(root)
         expect(text).toContain(UI_TEXT.EDIT_PURCHASE)
-        expect(text).toContain('fruit (CUP)')
+        expect(text).toContain(`${CATEGORY_LABELS.fruit} (CUP)`)
         expect(text).toContain(`${UI_TEXT.SOLD_BY}: U Ba`)
         expect(text).toContain('10.00$')
     })

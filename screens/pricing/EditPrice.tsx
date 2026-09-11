@@ -10,14 +10,12 @@ import {
 } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import {
-    UI_TEXT,
-    MESSAGES,
-    VALIDATION_MESSAGES,
     PRICE_PATTERN,
     FORM_CONFIG,
     CATEGORY_LIST,
     UNIT_LIST,
 } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
 import { IPrice } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
@@ -36,13 +34,14 @@ interface EditPriceProps {
 }
 
 function EditPriceFields({ control }: { control: Control<FormData> }) {
+    const { UI_TEXT, VALIDATION_MESSAGES, CATEGORY_LIST: categoryOptions } = useLocalizedConstants()
     return (
         <>
             <FormSelectField
                 name="category"
                 control={control}
                 label={UI_TEXT.CATEGORY}
-                options={CATEGORY_LIST}
+                options={categoryOptions}
                 required
                 rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
             />
@@ -83,6 +82,7 @@ function EditPriceActions({
     onCancel: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <>
             <PrimaryButton
@@ -103,6 +103,7 @@ function EditPriceActions({
 
 export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
     const styles = useStyles()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const { editPrice } = usePrices()
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({

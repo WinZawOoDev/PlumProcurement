@@ -26,6 +26,9 @@ const themeOptions = (root: ReactTestRenderer.ReactTestRenderer) =>
     root.root
         .findAllByProps({ accessibilityRole: 'radio' })
         .filter((inst) => typeof inst.props.onPress === 'function')
+        .filter((inst) =>
+            String(inst.props.accessibilityLabel).startsWith(`${A11Y_LABELS.SELECT_THEME_MODE}:`)
+        )
 
 const renderScreen = async () => {
     let root!: ReactTestRenderer.ReactTestRenderer

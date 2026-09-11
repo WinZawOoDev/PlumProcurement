@@ -1,4 +1,4 @@
-import { MESSAGES } from '../constants'
+import { tMessage } from '../i18n'
 import type { IPrice } from '../types/database'
 import { DatabaseError, initDb } from './connection'
 import { initializeSchema } from './schema'
@@ -31,10 +31,10 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
 
         // Validate input
         if (!price || price <= 0) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
         if (!unit || !category) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
 
         db = initDb()
@@ -58,7 +58,7 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
 
         if (priceData.price !== undefined) {
             if (priceData.price <= 0) {
-                throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+                throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
             }
             updates.push('price = ?')
             values.push(priceData.price)
@@ -106,7 +106,7 @@ export async function deletePrice(id: number): Promise<void> {
             const referencedCount =
                 (results as unknown as Array<{ count: number }>)[0]?.count ?? 0;
             if (referencedCount > 0) {
-                throw new DatabaseError(MESSAGES.ERROR_PRICE_IN_USE)
+                throw new DatabaseError(tMessage('ERROR_PRICE_IN_USE'))
             }
             await db.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
             await db.executeAsync(`COMMIT`)
@@ -117,7 +117,7 @@ export async function deletePrice(id: number): Promise<void> {
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isForeignKeyViolation(error)) {
-            throw new DatabaseError(MESSAGES.ERROR_PRICE_IN_USE, error)
+            throw new DatabaseError(tMessage('ERROR_PRICE_IN_USE'), error)
         }
         throw new DatabaseError('Failed to delete price', error)
     }

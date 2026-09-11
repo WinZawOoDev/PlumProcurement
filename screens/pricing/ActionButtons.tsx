@@ -3,7 +3,8 @@ import React from 'react'
 import { useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { IconButton } from '../../components/buttons/Button'
-import { UI_TEXT, ROUTES, DIMENSIONS } from '../../constants'
+import { ROUTES, DIMENSIONS } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { useNavigation } from '@react-navigation/native'
 import { useStyles } from '../../styles'
 import { SearchIconButton } from '../../components/SearchIconButton'
@@ -26,6 +27,7 @@ export default function ActionButtons({
     const styles = useStyles()
     const { theme } = useTheme()
     const navigation = useNavigation()
+    const { UI_TEXT } = useLocalizedConstants()
 
     return (
         <View style={styles.actionButtonsRow}>

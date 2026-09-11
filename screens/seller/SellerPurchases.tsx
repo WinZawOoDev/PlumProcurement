@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, PAGINATION_CONFIG, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
+import { PAGINATION_CONFIG, ROUTES, SAFE_AREA } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
 import { formatDate } from '../../utils'
@@ -20,6 +22,7 @@ type SellerPurchasesRouteProp = RouteProp<Record<string, { sellerId: number }>, 
 
 function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
@@ -49,6 +52,8 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
 export default function SellerPurchases() {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPurchasesRouteProp>()
     const sellerId = route.params?.sellerId
@@ -103,11 +108,11 @@ export default function SellerPurchases() {
                     cursorRef.current = nextCursor ?? undefined
                     setHasMore(nextCursor !== null)
                 } catch (error) {
-                    showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                    showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
                 }
             })
         },
-        [sellerId, withLoading],
+        [sellerId, withLoading, t],
     )
 
     const handleRefresh = useCallback(() => {

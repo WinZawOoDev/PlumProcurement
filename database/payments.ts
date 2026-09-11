@@ -1,4 +1,4 @@
-import { MESSAGES } from '../constants'
+import { tMessage } from '../i18n'
 import type { IPayment, ISellerPaymentStat } from '../types/database'
 import { DatabaseError, initDb } from './connection'
 import { initializeSchema } from './schema'
@@ -117,10 +117,10 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
     try {
         const { seller_id, purchase_id, amount, method, note } = data
         if (!seller_id) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
         if (!amount || amount <= 0) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_AMOUNT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_AMOUNT'))
         }
 
         db = initDb()
@@ -128,7 +128,7 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
         try {
             const { owed, paid } = await fetchOwedAndPaid(db, seller_id)
             if (amount > owed - paid) {
-                throw new DatabaseError(MESSAGES.ERROR_PAYMENT_EXCEEDS_BALANCE)
+                throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
             }
             // Explicit link wins; otherwise settle the seller's oldest purchase
             // that no payment has been linked to yet (FIFO).
@@ -170,7 +170,7 @@ export async function updatePayment(
 
         if (updates.amount !== undefined) {
             if (updates.amount <= 0) {
-                throw new DatabaseError(MESSAGES.ERROR_INVALID_AMOUNT)
+                throw new DatabaseError(tMessage('ERROR_INVALID_AMOUNT'))
             }
             setClauses.push('amount = ?')
             values.push(updates.amount)
@@ -198,7 +198,7 @@ export async function updatePayment(
                     const { owed, paid } = await fetchOwedAndPaid(db, existing.seller_id, id)
                     const balanceWithoutThis = owed - paid
                     if (updates.amount > balanceWithoutThis) {
-                        throw new DatabaseError(MESSAGES.ERROR_PAYMENT_EXCEEDS_BALANCE)
+                        throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
                     }
                 }
             }

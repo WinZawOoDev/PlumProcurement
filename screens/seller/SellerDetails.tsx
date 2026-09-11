@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT, PAYMENT_METHODS, PAGINATION_CONFIG } from '../../constants'
+import { ROUTES, SAFE_AREA, PAGINATION_CONFIG } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
@@ -27,6 +29,7 @@ type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, st
 function SellerBackRow({ onBack }: { onBack: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     return (
         <View style={styles.sellerDetailsBackRow}>
             <IconButton
@@ -51,6 +54,7 @@ function SellerProfileHeader({
 }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { A11Y_LABELS } = useLocalizedConstants()
     return (
         <SectionHeader
             icon="person-outline"
@@ -77,6 +81,7 @@ function SellerProfileHeader({
 function ViewAllLink({ onPress }: { onPress: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <Pressable
             onPress={onPress}
@@ -104,6 +109,7 @@ function PurchasesSection({
     onPress: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     const average = count > 0 ? total / count : 0
     return (
         <View style={styles.sellerSectionSpacer}>
@@ -137,6 +143,7 @@ function PaymentsSection({
     onPress: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.sellerSectionSpacer}>
             <SectionHeader
@@ -166,20 +173,16 @@ function PaymentsSection({
     )
 }
 
-function methodLabel(method: string | null): string {
-    if (!method) return ''
-    return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? method
-}
-
 function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }) {
     const styles = useStyles()
+    const { t } = useTranslation()
     return (
         <View style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}>
             <View style={styles.sellerInfo}>
                 <RNText style={styles.sellerRecentTitle}>{item.amount.toFixed(2)}$</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
                     {formatDate(item.paid_at)}
-                    {item.method ? ` · ${methodLabel(item.method)}` : ''}
+                    {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
                 </RNText>
             </View>
         </View>
@@ -188,6 +191,7 @@ function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }
 
 function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: boolean }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
@@ -304,6 +308,8 @@ function SellerDetailsSkeleton() {
 export default function SellerDetails() {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerDetailsRouteProp>()
     const sellerId = route.params?.sellerId
@@ -354,10 +360,10 @@ export default function SellerDetails() {
                 setRecentPurchases(history)
                 setRecentPayments(paid)
             } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
             }
         })
-    }, [sellerId, withLoading])
+    }, [sellerId, withLoading, t])
 
     useEffect(() => {
         loadDetails()
@@ -398,7 +404,7 @@ export default function SellerDetails() {
                     <EmptyState
                         icon="people-outline"
                         title={UI_TEXT.EMPTY_SELLER_LIST}
-                        description="Seller not found"
+                        description={UI_TEXT.SELLER_NOT_FOUND}
                     />
                 </View>
             </SafeAreaView>
@@ -452,7 +458,7 @@ export default function SellerDetails() {
                                         compact
                                         icon="receipt-outline"
                                         title={UI_TEXT.EMPTY_PURCHASE_LIST}
-                                        description={`No purchases recorded for ${seller.name} yet`}
+                                        description={t('uiText.SELLER_NO_PURCHASES', { name: seller.name })}
                                     />
                                 ) : (
                                     recentPurchases.map((purchase, index) => (
@@ -496,7 +502,7 @@ export default function SellerDetails() {
                                         compact
                                         icon="cash-outline"
                                         title={UI_TEXT.EMPTY_PAYMENT_LIST}
-                                        description="Record a payment to settle this seller's balance"
+                                        description={UI_TEXT.PAYMENT_SETTLE_HINT}
                                     />
                                 ) : (
                                     recentPayments.map((payment, index) => (

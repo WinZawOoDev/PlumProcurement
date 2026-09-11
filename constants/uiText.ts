@@ -11,6 +11,7 @@ export const UI_TEXT = {
   DELETE: 'Delete',
   EDIT: 'Edit',
   ADD: 'Add New',
+  SOMETHING_WENT_WRONG: 'Something went wrong',
 
   // Specific buttons
   SAVE_PRICE: 'Save Price',
@@ -26,6 +27,9 @@ export const UI_TEXT = {
   PRICE_MANAGEMENT: 'Price Management',
   PRICE_DESCRIPTION: 'Define and adjust market rates for plum varieties.',
   EDIT_PRICE: 'Edit Price',
+  PRICE_DETAIL: 'Price Detail',
+  PRICE_ENTRY: 'Price Entry',
+  CREATED: 'Created',
 
   // Field names for display
   UNIT: 'Unit',
@@ -39,6 +43,15 @@ export const UI_TEXT = {
   SEARCH_PURCHASES_PLACEHOLDER: 'Search by category or seller',
   SEARCH_SELLERS_PLACEHOLDER: 'Search by name or phone',
   NO_MATCHING_RESULTS: 'No matching results',
+  NO_PRICES_MATCHING: 'No prices matching "{{query}}"',
+  NO_PURCHASES_MATCHING: 'No purchases matching "{{query}}"',
+  NO_SELLERS_MATCHING: 'No sellers matching "{{query}}"',
+  SHOWING_COUNT: '{{filtered}} of {{total}}',
+  PRICE_SINGULAR: 'price',
+  PRICE_PLURAL: 'prices',
+  SELLER_SINGULAR: 'seller',
+  SELLER_PLURAL: 'sellers',
+  PRICE_TREND_SUMMARY: 'Price Trend ({{count}} items) — Avg {{avg}}$',
 
   // Purchasing
   RECORD_PURCHASE: 'Record Purchase',
@@ -61,6 +74,7 @@ export const UI_TEXT = {
   REMOVE_ITEM: 'Remove',
   RECENT_PURCHASES: 'Recent Purchases',
   RECENT_PAYMENTS: 'Recent Payments',
+  TOTAL_COUNT: '{{count}} total',
   PURCHASE_HISTORY_TITLE: 'Purchase History',
   PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
   PURCHASE_SUMMARY_TITLE: 'Purchase Summary',
@@ -70,7 +84,10 @@ export const UI_TEXT = {
   VIEW_HISTORY: 'View History',
   VIEW_ALL: 'View all',
   EXPORT_CSV: 'Export CSV',
+  EXPORT_ROWS: '{{count}} rows',
   EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
+  EMPTY_PURCHASE_HINT: 'Record your first purchase to see it here',
+  PURCHASE_HISTORY_EMPTY_HINT: 'Your purchase history will appear here',
   TOTAL_VALUE: 'Total',
   PURCHASES_COUNT: 'Purchases',
   AVERAGE_VALUE: 'Average',
@@ -87,19 +104,33 @@ export const UI_TEXT = {
   AMOUNT: 'Amount',
   OUTSTANDING_BALANCE: 'Outstanding Balance',
   EMPTY_PAYMENT_LIST: 'No payments recorded yet',
+  SELECT_METHOD_PLACEHOLDER: 'Select method',
+  OPTIONAL_NOTE_PLACEHOLDER: 'Optional note',
+  PAYMENT_SETTLE_HINT: "Record a payment to settle this seller's balance",
+  DELETE_PAYMENT_CONFIRM_MESSAGE: 'Delete this payment? This cannot be undone.',
 
   // Sellers
   SELLERS_DESCRIPTION: 'Manage the sellers you buy from.',
   ADD_SELLER: 'Add Seller',
   EDIT_SELLER: 'Edit Seller',
+  SELLER_DETAILS: 'Seller Details',
   SELLER_NAME: 'Seller Name',
   PHONE: 'Phone (optional)',
   ADDRESS: 'Address (optional)',
   EMPTY_SELLER_LIST: 'No sellers added yet',
+  ADD_FIRST_SELLER_HINT: 'Add your first seller to get started',
+  SELLER_NOT_FOUND: 'Seller not found',
+  SELLER_NO_PURCHASES: 'No purchases recorded for {{name}} yet',
 
   // Settings
   SETTINGS: 'Settings',
   SETTINGS_DESCRIPTION: 'Personalize how the app looks and behaves.',
+  LANGUAGE: 'Language',
+  LANGUAGE_DESCRIPTION: 'Choose the language used across the app.',
+  LANGUAGE_EN: 'English',
+  LANGUAGE_MY: 'မြန်မာ',
+  LANGUAGE_EN_HINT: 'Use English',
+  LANGUAGE_MY_HINT: 'မြန်မာဘာသာ အသုံးပြုရန်',
   THEME: 'Theme',
   THEME_MODE_SYSTEM: 'Match system',
   THEME_MODE_LIGHT: 'Light',
@@ -147,4 +178,6 @@ export const A11Y_LABELS = {
   TOGGLE_SEARCH: 'Toggle search',
   GO_BACK: 'Go back',
   SELECT_THEME_MODE: 'Select theme mode',
+  PRICE_CARD: '{{unit}}, {{price}} dollars',
+  PRICE_TREND_BAR: '{{category}} {{price}} dollars',
 } as const;

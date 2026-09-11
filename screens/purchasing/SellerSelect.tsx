@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
+import { ROUTES, SAFE_AREA } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService } from '../../services/sellerService'
 import { ISeller } from '../../types/database'
 import { showError } from '../../utils/notifications'
@@ -30,6 +32,8 @@ function ItemSeparator() {
 export default function SellerSelect() {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerSelectRouteProp>()
     const currentSellerId = route.params?.currentSellerId
@@ -43,7 +47,7 @@ export default function SellerSelect() {
             try {
                 setSellers(await sellerService.getSellers())
             } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
             }
         })
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,7 +83,7 @@ export default function SellerSelect() {
     )
 
     const countLabel = query.trim()
-        ? `${filtered.length} of ${sellers.length}`
+        ? t('uiText.SHOWING_COUNT', { filtered: filtered.length, total: sellers.length })
         : `${sellers.length}`
 
     return (
@@ -172,7 +176,7 @@ export default function SellerSelect() {
                                 description={
                                     sellers.length === 0
                                         ? UI_TEXT.SELECT_SELLER_PLACEHOLDER
-                                        : `No sellers matching "${query.trim()}"`
+                                        : t('uiText.NO_SELLERS_MATCHING', { query: query.trim() })
                                 }
                             />
                         }

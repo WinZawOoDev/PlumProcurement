@@ -1,5 +1,6 @@
 import { Pressable, Text } from 'react-native'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { IPrice } from '../../types/database'
 import { useStyles } from '../../styles'
 
@@ -10,6 +11,7 @@ interface PriceCardProps extends Omit<IPrice, 'id'> {
 function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
 
     const styles = useStyles()
+    const { t } = useTranslation()
 
     return (
         <Pressable
@@ -17,7 +19,7 @@ function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
             onPress={onPress}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`${unit}, ${price.toFixed(2)} dollars`}
+            accessibilityLabel={t('a11y.PRICE_CARD', { unit, price: price.toFixed(2) })}
         >
             <Text style={styles.priceCardUnitText} numberOfLines={1}>{unit}</Text>
             <Text style={styles.priceCardPriceValue}>

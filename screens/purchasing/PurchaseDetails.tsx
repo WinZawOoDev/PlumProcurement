@@ -10,17 +10,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '@rneui/themed';
+import { useTranslation } from 'react-i18next';
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useStyles } from '../../styles';
 import {
-  UI_TEXT,
-  MESSAGES,
   ROUTES,
   SAFE_AREA,
   DIMENSIONS,
-  A11Y_LABELS,
 } from '../../constants';
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants';
 import { purchaseService } from '../../services/purchaseService';
 import { IPurchaseDetail } from '../../types/database';
 import {
@@ -43,6 +42,7 @@ import { EditPurchaseSheet } from './EditPurchaseSheet';
 
 function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
   const styles = useStyles();
+  const { UI_TEXT } = useLocalizedConstants();
   return (
     <View style={styles.purchaseSummaryCard}>
       <View style={styles.purchaseSummaryRow}>
@@ -68,6 +68,7 @@ function PurchaseSummaryCard({ count, total }: { count: number; total: number })
 
 function PurchaseSummarySkeleton() {
   const styles = useStyles();
+  const { UI_TEXT } = useLocalizedConstants();
   return (
     <View style={styles.purchaseSummaryCard}>
       <View style={styles.purchaseSummaryRow}>
@@ -102,6 +103,7 @@ function PurchaseRow({
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
+  const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   return (
     <Pressable
@@ -189,6 +191,7 @@ function PurchaseActions({
   onToggleSearch: () => void;
 }) {
   const styles = useStyles();
+  const { UI_TEXT } = useLocalizedConstants();
   return (
     <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
       <SecondaryButton
@@ -211,6 +214,7 @@ function PurchaseSearch({
   query: string;
   onChangeText: (query: string) => void;
 }) {
+  const { UI_TEXT } = useLocalizedConstants();
   if (!visible) {
     return null;
   }
@@ -226,6 +230,8 @@ function PurchaseSearch({
 export default function PurchaseDetails() {
   const styles = useStyles();
   const { theme } = useTheme();
+  const { t } = useTranslation();
+  const { UI_TEXT, MESSAGES } = useLocalizedConstants();
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -273,11 +279,11 @@ export default function PurchaseDetails() {
           cursorRef.current = nextCursor ?? undefined;
           setHasMore(nextCursor !== null);
         } catch (error) {
-          showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC);
+          showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'));
         }
       });
     },
-    [withLoading, searchQuery],
+    [withLoading, searchQuery, t],
   );
 
   useEffect(() => {
@@ -363,7 +369,7 @@ export default function PurchaseDetails() {
       `${UI_TEXT.EXPORT_CSV}: ${filename}`,
     );
     if (result === 'failed') showError(MESSAGES.ERROR_GENERIC);
-    else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${csvRows.length} rows`);
+    else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${t('uiText.EXPORT_ROWS', { count: csvRows.length })}`);
   };
 
   return (
@@ -419,8 +425,8 @@ export default function PurchaseDetails() {
                   }
                   description={
                     hasQuery
-                      ? `No purchases matching "${searchQuery}"`
-                      : 'Your purchase history will appear here'
+                      ? t('uiText.NO_PURCHASES_MATCHING', { query: searchQuery })
+                      : UI_TEXT.PURCHASE_HISTORY_EMPTY_HINT
                   }
                 />
               )

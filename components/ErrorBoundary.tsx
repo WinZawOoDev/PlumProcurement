@@ -1,6 +1,8 @@
 import React from 'react'
 import { Appearance, View, Text, StyleSheet } from 'react-native'
 import { makeAppTheme } from '../theme'
+import i18n from '../i18n'
+import { MYANMAR_FONT_FAMILY, MYANMAR_FONT_FAMILY_BOLD } from '../styles/fonts'
 
 const isDark = Appearance.getColorScheme() === 'dark'
 const appTheme = makeAppTheme(isDark)
@@ -31,10 +33,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     render() {
         if (this.state.hasError) {
+            const isMyanmar = i18n.language === 'my'
             return (
                 <View style={fallbackStyles.container}>
-                    <Text style={fallbackStyles.title}>Something went wrong</Text>
-                    <Text style={fallbackStyles.message}>{this.state.message}</Text>
+                    <Text style={[fallbackStyles.title, isMyanmar && fallbackStyles.myanmarBold]}>{i18n.t('uiText.SOMETHING_WENT_WRONG')}</Text>
+                    <Text style={[fallbackStyles.message, isMyanmar && fallbackStyles.myanmar]}>{this.state.message}</Text>
                 </View>
             )
         }
@@ -60,5 +63,11 @@ const fallbackStyles = StyleSheet.create({
         fontSize: 14,
         color: palette.black ?? '#ECECEC',
         textAlign: 'center',
+    },
+    myanmar: {
+        fontFamily: MYANMAR_FONT_FAMILY,
+    },
+    myanmarBold: {
+        fontFamily: MYANMAR_FONT_FAMILY_BOLD,
     },
 })

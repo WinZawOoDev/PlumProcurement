@@ -1,5 +1,6 @@
 import { RefreshControl, SectionList, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,7 +8,8 @@ import PriceCard from './PriceCard'
 import ActionButtons from './ActionButtons'
 import { usePrices } from '../../context/PriceContext'
 import EditPrice from './EditPrice'
-import { SAFE_AREA, UI_TEXT, MESSAGES, SORT_MODES, SortMode, CATEGORY_LIST } from '../../constants'
+import { SAFE_AREA, SORT_MODES, SortMode, CATEGORY_LIST } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPrice } from '../../types/database'
 import { SearchBar } from '../../components/SearchBar'
 import { PriceTrend } from '../../components/PriceTrend'
@@ -65,6 +67,8 @@ function PriceList({
 }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const sections = React.useMemo(() => groupByCategory(prices), [prices])
     return (
         <SectionList
@@ -81,7 +85,7 @@ function PriceList({
             renderSectionHeader={({ section }) => (
                 <View style={[styles.priceListSectionHeader, styles.priceListSectionHeaderSticky]}>
                     <RNText style={styles.priceListSectionTitle} numberOfLines={1}>
-                        {section.category}
+                        {t(`categories.${section.category}`, { defaultValue: section.category })}
                     </RNText>
                     <RNText style={styles.priceListSectionCount}>{section.data.length}</RNText>
                 </View>
@@ -90,7 +94,7 @@ function PriceList({
                 <EmptyState
                     icon={hasQuery ? 'search-outline' : 'pricetag-outline'}
                     title={hasQuery ? UI_TEXT.NO_MATCHING_RESULTS : MESSAGES.EMPTY_PRICE_LIST}
-                    description={hasQuery ? `No prices matching "${searchQuery}"` : UI_TEXT.PLUM_COUNT_TITLE}
+                    description={hasQuery ? t('uiText.NO_PRICES_MATCHING', { query: searchQuery }) : UI_TEXT.PLUM_COUNT_TITLE}
                 />
             }
             removeClippedSubviews={true}
@@ -112,6 +116,7 @@ function PriceList({
 
 export default function PurchasePrices() {
     const styles = useStyles()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const { prices, loading, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
     const [detailPrice, setDetailPrice] = useState<IPrice | null>(null)
@@ -166,7 +171,7 @@ export default function PurchasePrices() {
                 <SectionHeader
                     icon="pricetags-outline"
                     title={UI_TEXT.PRICE_MANAGEMENT}
-                    description={`${UI_TEXT.PRICE_DESCRIPTION} • ${visiblePrices.length} ${visiblePrices.length === 1 ? 'price' : 'prices'}`}
+                    description={`${UI_TEXT.PRICE_DESCRIPTION} • ${visiblePrices.length} ${visiblePrices.length === 1 ? UI_TEXT.PRICE_SINGULAR : UI_TEXT.PRICE_PLURAL}`}
                 />
                 <ActionButtons
                     searchActive={searchVisible}

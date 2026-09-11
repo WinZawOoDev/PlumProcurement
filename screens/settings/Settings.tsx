@@ -4,27 +4,22 @@ import { useTheme } from '@rneui/themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, SAFE_AREA, THEME_MODES, ThemeMode, UI_TEXT } from '../../constants'
+import { LANGUAGES, Language, SAFE_AREA, THEME_MODES, ThemeMode } from '../../constants'
 import { useThemeMode } from '../../context/ThemeModeContext'
+import { useLanguage } from '../../context/LanguageContext'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { SectionHeader } from '../../components/SectionHeader'
 import { lightHaptic } from '../../utils/haptics'
-
-const THEME_MODE_LABELS: Record<ThemeMode, string> = {
-    system: UI_TEXT.THEME_MODE_SYSTEM,
-    light: UI_TEXT.THEME_MODE_LIGHT,
-    dark: UI_TEXT.THEME_MODE_DARK,
-}
-
-const THEME_MODE_HINTS: Record<ThemeMode, string> = {
-    system: UI_TEXT.THEME_MODE_SYSTEM_HINT,
-    light: UI_TEXT.THEME_MODE_LIGHT_HINT,
-    dark: UI_TEXT.THEME_MODE_DARK_HINT,
-}
 
 const THEME_MODE_ICONS: Record<ThemeMode, string> = {
     system: 'phone-portrait-outline',
     light: 'sunny-outline',
     dark: 'moon-outline',
+}
+
+const LANGUAGE_ICONS: Record<Language, string> = {
+    en: 'globe-outline',
+    my: 'language-outline',
 }
 
 function SettingsSectionHeader({ icon, title, description }: { icon: string; title: string; description: string }) {
@@ -46,13 +41,26 @@ function SettingsSectionHeader({ icon, title, description }: { icon: string; tit
 function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected: boolean; onPress: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT, A11Y_LABELS: a11y } = useLocalizedConstants()
+
+    const labels: Record<ThemeMode, string> = {
+        system: UI_TEXT.THEME_MODE_SYSTEM,
+        light: UI_TEXT.THEME_MODE_LIGHT,
+        dark: UI_TEXT.THEME_MODE_DARK,
+    }
+    const hints: Record<ThemeMode, string> = {
+        system: UI_TEXT.THEME_MODE_SYSTEM_HINT,
+        light: UI_TEXT.THEME_MODE_LIGHT_HINT,
+        dark: UI_TEXT.THEME_MODE_DARK_HINT,
+    }
+
     return (
         <Pressable
             onPress={onPress}
             hitSlop={4}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
-            accessibilityLabel={`${A11Y_LABELS.SELECT_THEME_MODE}: ${THEME_MODE_LABELS[mode]}`}
+            accessibilityLabel={`${a11y.SELECT_THEME_MODE}: ${labels[mode]}`}
             style={({ pressed }) => [
                 styles.settingsThemeOption,
                 selected && styles.settingsThemeOptionSelected,
@@ -77,15 +85,16 @@ function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected:
                     selected && styles.settingsThemeOptionLabelSelected,
                 ]}
             >
-                {THEME_MODE_LABELS[mode]}
+                {labels[mode]}
             </RNText>
-            <RNText style={styles.settingsThemeOptionHint}>{THEME_MODE_HINTS[mode]}</RNText>
+            <RNText style={styles.settingsThemeOptionHint}>{hints[mode]}</RNText>
         </Pressable>
     )
 }
 
 function AppearanceSection({ mode, onSelect }: { mode: ThemeMode; onSelect: (mode: ThemeMode) => void }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.settingsSectionCard}>
             <SettingsSectionHeader
@@ -102,9 +111,88 @@ function AppearanceSection({ mode, onSelect }: { mode: ThemeMode; onSelect: (mod
     )
 }
 
+function LanguageTile({ language, selected, onPress }: { language: Language; selected: boolean; onPress: () => void }) {
+    const styles = useStyles()
+    const { theme } = useTheme()
+    const { UI_TEXT } = useLocalizedConstants()
+
+    const labels: Record<Language, string> = {
+        en: UI_TEXT.LANGUAGE_EN,
+        my: UI_TEXT.LANGUAGE_MY,
+    }
+    const hints: Record<Language, string> = {
+        en: UI_TEXT.LANGUAGE_EN_HINT,
+        my: UI_TEXT.LANGUAGE_MY_HINT,
+    }
+
+    return (
+        <Pressable
+            onPress={onPress}
+            hitSlop={4}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={labels[language]}
+            style={({ pressed }) => [
+                styles.settingsThemeOption,
+                selected && styles.settingsThemeOptionSelected,
+                pressed && styles.settingsThemeOptionPressed,
+            ]}
+        >
+            <View
+                style={[
+                    styles.settingsThemeOptionIconCircle,
+                    selected && styles.settingsThemeOptionIconCircleSelected,
+                ]}
+            >
+                <Ionicons
+                    name={LANGUAGE_ICONS[language] as any}
+                    size={18}
+                    color={selected ? theme.colors.white : theme.colors.primary}
+                />
+            </View>
+            <RNText
+                style={[
+                    styles.settingsThemeOptionLabel,
+                    selected && styles.settingsThemeOptionLabelSelected,
+                ]}
+            >
+                {labels[language]}
+            </RNText>
+            <RNText style={styles.settingsThemeOptionHint}>{hints[language]}</RNText>
+        </Pressable>
+    )
+}
+
+function LanguageSection({ language, onSelect }: { language: Language; onSelect: (language: Language) => void }) {
+    const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
+    return (
+        <View style={styles.settingsSectionCard}>
+            <SettingsSectionHeader
+                icon="language-outline"
+                title={UI_TEXT.LANGUAGE}
+                description={UI_TEXT.LANGUAGE_DESCRIPTION}
+            />
+            <View style={styles.settingsThemeOptionsRow}>
+                {LANGUAGES.map((l) => (
+                    <LanguageTile key={l} language={l} selected={language === l} onPress={() => onSelect(l)} />
+                ))}
+            </View>
+        </View>
+    )
+}
+
 function ThemePreviewSection({ mode }: { mode: ThemeMode }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT } = useLocalizedConstants()
+
+    const labels: Record<ThemeMode, string> = {
+        system: UI_TEXT.THEME_MODE_SYSTEM,
+        light: UI_TEXT.THEME_MODE_LIGHT,
+        dark: UI_TEXT.THEME_MODE_DARK,
+    }
+
     return (
         <View style={styles.settingsSectionCard}>
             <SettingsSectionHeader
@@ -122,7 +210,7 @@ function ThemePreviewSection({ mode }: { mode: ThemeMode }) {
                 </View>
                 <View style={styles.settingsPreviewPill}>
                     <RNText style={[styles.settingsThemeOptionLabel, styles.settingsThemeOptionLabelSelected]}>
-                        {THEME_MODE_LABELS[mode]}
+                        {labels[mode]}
                     </RNText>
                 </View>
             </View>
@@ -132,6 +220,7 @@ function ThemePreviewSection({ mode }: { mode: ThemeMode }) {
 
 function DataStorageSection() {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.settingsSectionCard}>
             <SettingsSectionHeader
@@ -145,6 +234,7 @@ function DataStorageSection() {
 
 function AboutSection() {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.settingsSectionCard}>
             <SettingsSectionHeader
@@ -165,11 +255,19 @@ function AboutSection() {
 export default function Settings() {
     const styles = useStyles()
     const { mode, setMode } = useThemeMode()
+    const { language, setLanguage } = useLanguage()
+    const { UI_TEXT } = useLocalizedConstants()
 
     const handleSelectMode = (next: ThemeMode) => {
         if (next === mode) return
         lightHaptic()
         setMode(next)
+    }
+
+    const handleSelectLanguage = (next: Language) => {
+        if (next === language) return
+        lightHaptic()
+        setLanguage(next)
     }
 
     return (
@@ -182,6 +280,7 @@ export default function Settings() {
                     contentContainerStyle={styles.settingsScrollContent}
                     showsVerticalScrollIndicator={false}
                 >
+                    <LanguageSection language={language} onSelect={handleSelectLanguage} />
                     <AppearanceSection mode={mode} onSelect={handleSelectMode} />
                     <ThemePreviewSection mode={mode} />
                     <DataStorageSection />

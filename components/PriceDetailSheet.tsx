@@ -7,7 +7,7 @@ import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../styles'
 import { IPrice } from '../types/database'
 import { formatDate } from '../utils'
-import { UI_TEXT } from '../constants'
+import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { DetailSheet } from './DetailSheet'
 
@@ -22,10 +22,11 @@ interface PriceDetailSheetProps {
 export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: PriceDetailSheetProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT } = useLocalizedConstants()
     if (!price) return null
     return (
         <DetailSheet visible={visible} onClose={onClose}>
-            <Text style={styles.bottomSheetTitle}>Price Detail</Text>
+            <Text style={styles.bottomSheetTitle}>{UI_TEXT.PRICE_DETAIL}</Text>
 
             <View style={styles.priceDetailHero}>
                 <View style={styles.priceDetailCategoryChip}>
@@ -41,7 +42,7 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
 
             <View style={styles.priceDetailMetaRow}>
                 <Ionicons name="calendar-outline" size={14} color={theme.colors.grey4} />
-                <RNText style={styles.priceDetailMetaText}>Created {formatDate(price.created_at)}</RNText>
+                <RNText style={styles.priceDetailMetaText}>{UI_TEXT.CREATED} {formatDate(price.created_at)}</RNText>
             </View>
 
             {(onEdit || onDelete) && (

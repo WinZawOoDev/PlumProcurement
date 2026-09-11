@@ -4,7 +4,8 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, DIMENSIONS, UI_TEXT } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
+import { DIMENSIONS } from '../../constants'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
@@ -19,6 +20,7 @@ interface SellerRowProps {
 function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal, balance }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
         <Pressable onPress={onPress} style={styles.purchaseItemRow}>

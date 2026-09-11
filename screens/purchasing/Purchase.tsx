@@ -2,13 +2,15 @@ import { FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useW
 import React, { useCallback, useEffect, useState } from 'react'
 import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { UI_TEXT, MESSAGES, ROUTES, SAFE_AREA, A11Y_LABELS, PAGINATION_CONFIG } from '../../constants'
+import { ROUTES, SAFE_AREA, PAGINATION_CONFIG } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
@@ -43,13 +45,15 @@ function PriceItemCard({
     onDecrease: () => void
 }) {
     const styles = useStyles()
+    const { t } = useTranslation()
+    const { A11Y_LABELS } = useLocalizedConstants()
     const selected = quantity > 0
     const lineTotal = price.price * quantity
     return (
         <View style={[styles.priceItemCard, { width }]}>
             <View style={styles.priceItemCardHeader}>
                 <View style={styles.priceItemCardHeaderText}>
-                    <RNText style={styles.priceItemCardTitle}>{price.category}</RNText>
+                    <RNText style={styles.priceItemCardTitle}>{t(`categories.${price.category}`, { defaultValue: price.category })}</RNText>
                     <RNText style={styles.priceItemCardUnit}>{price.unit}</RNText>
                 </View>
                 <View style={styles.priceItemCardPriceBlock}>
@@ -104,6 +108,7 @@ function PriceItemCard({
 
 function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; total: number; onPress: () => void }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     const hasItems = itemCount > 0
     return (
         <TouchableOpacity
@@ -140,6 +145,7 @@ function PurchaseFormActions({
     onViewHistory: () => void
 }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.formActions}>
             <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !canRecord} loading={recording} onPress={onRecord} />
@@ -151,6 +157,7 @@ function PurchaseFormActions({
 export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, onOpenSellerSelect, onRecorded }: PurchaseFormProps) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()
     const { width } = useWindowDimensions()
@@ -302,9 +309,11 @@ interface RecentPurchasesListProps {
 
 function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
+    const { t } = useTranslation()
+    const { UI_TEXT } = useLocalizedConstants()
     const single = item.items.length === 1 ? item.items[0] : null
     const title = single
-        ? `${single.category} × ${single.quantity} (${single.unit})`
+        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${single.quantity} (${single.unit})`
         : `${item.items.length} ${UI_TEXT.ITEMS.toLowerCase()}`
     return (
         <View style={styles.purchaseItemRow}>
@@ -319,11 +328,13 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
 
 const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent, count }: RecentPurchasesListProps) {
     const styles = useStyles()
+    const { t } = useTranslation()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <>
             <View style={styles.recentPurchasesHeader}>
                 <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
-                <RNText style={styles.recentPurchasesCount}>{count > 0 ? `${count} total` : ''}</RNText>
+                <RNText style={styles.recentPurchasesCount}>{count > 0 ? t('uiText.TOTAL_COUNT', { count }) : ''}</RNText>
             </View>
             <FlatList
                 style={styles.recentPurchasesList}
@@ -332,7 +343,7 @@ const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent, co
                 data={recent}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => <RecentPurchaseRow item={item} />}
-                ListEmptyComponent={<EmptyState compact icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description="Record your first purchase to see it here" />}
+                ListEmptyComponent={<EmptyState compact icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description={UI_TEXT.EMPTY_PURCHASE_HINT} />}
             />
         </>
     )
@@ -340,6 +351,8 @@ const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent, co
 
 export default function Purchase() {
     const styles = useStyles()
+    const { t } = useTranslation()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { refresh: refreshPrices } = usePrices()
     const route = useRoute<
@@ -371,9 +384,9 @@ export default function Purchase() {
             setRecent(items)
             setPurchaseCount(count)
         } catch (error) {
-            showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+            showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
         }
-    }, [])
+    }, [t])
 
     // Reload on every focus so returning from history/detail screens shows fresh data
     useFocusEffect(

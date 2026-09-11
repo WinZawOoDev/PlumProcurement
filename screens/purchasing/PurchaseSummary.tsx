@@ -3,9 +3,11 @@ import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { ROUTES, SAFE_AREA, UI_TEXT } from '../../constants'
+import { ROUTES, SAFE_AREA } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPurchaseDetail } from '../../types/database'
 import { formatDate } from '../../utils'
 import { SectionHeader } from '../../components/SectionHeader'
@@ -19,6 +21,7 @@ type PurchaseSummaryRouteProp = RouteProp<
 function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
     return (
         <View style={styles.purchaseDetailItemRow}>
             <View style={styles.sellerInfo}>
@@ -29,7 +32,7 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
                         size={12}
                         color={theme.colors.grey4}
                     />
-                    <RNText style={styles.purchaseItemTitle}>{item.category}</RNText>
+                    <RNText style={styles.purchaseItemTitle}>{t(`categories.${item.category}`, { defaultValue: item.category })}</RNText>
                 </View>
                 <RNText style={styles.purchaseItemSubtitle}>
                     {item.unit_price.toFixed(2)}$ / {item.unit}
@@ -54,6 +57,7 @@ function StatCell({ label, value, highlight }: { label: string; value: string; h
 
 export default function PurchaseSummary() {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     const route = useRoute<PurchaseSummaryRouteProp>()
     const purchase = route.params?.purchase
 

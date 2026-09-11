@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'react-native',
+  setupFiles: ['<rootDir>/jest.setup.js'],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|@rneui|@react-navigation|@react-native-vector-icons|react-native-size-matters|react-native-toast-message)/)'

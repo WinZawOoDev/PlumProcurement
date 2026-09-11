@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
+import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { A11Y_LABELS, MESSAGES, PAGINATION_CONFIG, SAFE_AREA, UI_TEXT, PAYMENT_METHODS } from '../../constants'
+import { PAGINATION_CONFIG, SAFE_AREA } from '../../constants'
+import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
 import { formatDate } from '../../utils'
@@ -20,13 +22,9 @@ import { StatCell } from '../../components/StatCell'
 
 type SellerPaymentsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
-function methodLabel(method: string | null): string {
-    if (!method) return ''
-    return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? method
-}
-
 function PaymentStatsSection({ stat }: { stat: ISellerPaymentStat }) {
     const styles = useStyles()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.sellerStatsRow}>
             <StatCell label={UI_TEXT.OWED} value={`${stat.total_owed.toFixed(2)}$`} icon="cart-outline" />
@@ -41,13 +39,15 @@ function PaymentStatsSection({ stat }: { stat: ISellerPaymentStat }) {
 function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { A11Y_LABELS } = useLocalizedConstants()
     return (
         <View style={styles.purchaseItemRow}>
             <View style={styles.sellerInfo}>
                 <RNText style={styles.purchaseItemTitle}>{item.amount.toFixed(2)}$</RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
                     {formatDate(item.paid_at)}
-                    {item.method ? ` · ${methodLabel(item.method)}` : ''}
+                    {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
                     {item.note ? ` · ${item.note}` : ''}
                 </RNText>
             </View>
@@ -64,6 +64,8 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
 export default function SellerPayments() {
     const styles = useStyles()
     const { theme } = useTheme()
+    const { t } = useTranslation()
+    const { UI_TEXT, MESSAGES, A11Y_LABELS } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPaymentsRouteProp>()
     const sellerId = route.params?.sellerId
@@ -107,11 +109,11 @@ export default function SellerPayments() {
                     cursorRef.current = nextCursor ?? undefined
                     setHasMore(nextCursor !== null)
                 } catch (error) {
-                    showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                    showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
                 }
             })
         },
-        [sellerId, withLoading],
+        [sellerId, withLoading, t],
     )
 
     const handleRefresh = useCallback(() => {
@@ -126,7 +128,7 @@ export default function SellerPayments() {
 
     const confirmDeletePayment = useConfirmDelete<[number]>({
         remove: (id) => paymentService.removePayment(id),
-        confirmMessage: 'Delete this payment? This cannot be undone.',
+        confirmMessage: UI_TEXT.DELETE_PAYMENT_CONFIRM_MESSAGE,
         successMessage: MESSAGES.PAYMENT_DELETE_SUCCESS,
         onDeleted: handleRefresh,
     })
@@ -182,7 +184,7 @@ export default function SellerPayments() {
                                 <EmptyState
                                     icon="cash-outline"
                                     title={UI_TEXT.EMPTY_PAYMENT_LIST}
-                                    description="Record a payment to settle this seller's balance"
+                                    description={UI_TEXT.PAYMENT_SETTLE_HINT}
                                 />
                             )
                         }

@@ -1,4 +1,4 @@
-import { MESSAGES } from '../constants'
+import { tMessage } from '../i18n'
 import type {
     IPurchaseDetail,
     IPurchaseItem,
@@ -203,23 +203,23 @@ async function assertSellerNotOverpaid(
     const totalPaid = (paid.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
     if (totalPaid > totalOwed - oldTotal + newTotal) {
-        throw new DatabaseError(MESSAGES.ERROR_PURCHASE_OVERPAY)
+        throw new DatabaseError(tMessage('ERROR_PURCHASE_OVERPAY'))
     }
 }
 
 function validateItems(items: NewPurchaseItem[]): void {
     if (!Array.isArray(items) || items.length === 0) {
-        throw new DatabaseError(MESSAGES.ERROR_NO_ITEMS)
+        throw new DatabaseError(tMessage('ERROR_NO_ITEMS'))
     }
     for (const item of items) {
         if (!item.category || !item.unit) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
         if (!item.unit_price || item.unit_price <= 0) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
         if (!item.quantity || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_QUANTITY)
+            throw new DatabaseError(tMessage('ERROR_INVALID_QUANTITY'))
         }
     }
 }
@@ -231,7 +231,7 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
         validateItems(items)
         const total = items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
         if (total <= 0) {
-            throw new DatabaseError(MESSAGES.ERROR_INVALID_INPUT)
+            throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
 
         db = initDb()
@@ -276,7 +276,7 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
         await db.executeAsync(`BEGIN IMMEDIATE`)
         try {
             if (await isPurchaseLocked(db, id)) {
-                throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+                throw new DatabaseError(tMessage('ERROR_PURCHASE_LOCKED'))
             }
             const current = (await db.executeAsync(
                 `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,
@@ -339,7 +339,7 @@ export async function deletePurchase(id: number): Promise<void> {
         await db.executeAsync(`BEGIN IMMEDIATE`)
         try {
             if (await isPurchaseLocked(db, id)) {
-                throw new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+                throw new DatabaseError(tMessage('ERROR_PURCHASE_LOCKED'))
             }
             const current = (await db.executeAsync(
                 `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,

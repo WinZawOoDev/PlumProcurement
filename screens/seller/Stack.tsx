@@ -4,7 +4,8 @@ import SellerDetails from "./SellerDetails";
 import SellerPurchases from "./SellerPurchases";
 import SellerPayments from "./SellerPayments";
 import PurchaseSummary from "../purchasing/PurchaseSummary";
-import { ROUTES, UI_TEXT } from "../../constants";
+import { ROUTES } from "../../constants";
+import i18n from "../../i18n";
 
 
 const SellerStack = createNativeStackNavigator({
@@ -14,23 +15,23 @@ const SellerStack = createNativeStackNavigator({
   screens: {
     [ROUTES.SELLER]: {
       screen: Sellers,
-      options: { title: 'Sellers' }
+      options: { title: i18n.t('tabs.SELLERS') }
     },
     [ROUTES.SELLER_DETAILS]: {
       screen: SellerDetails,
-      options: { title: 'Seller Details' }
+      options: { title: i18n.t('uiText.SELLER_DETAILS') }
     },
     [ROUTES.PURCHASE_SUMMARY]: {
       screen: PurchaseSummary,
-      options: { title: UI_TEXT.PURCHASE_SUMMARY_TITLE }
+      options: { title: i18n.t('uiText.PURCHASE_SUMMARY_TITLE') }
     },
     [ROUTES.SELLER_PURCHASES]: {
       screen: SellerPurchases,
-      options: { title: UI_TEXT.PURCHASE_HISTORY_TITLE }
+      options: { title: i18n.t('uiText.PURCHASE_HISTORY_TITLE') }
     },
     [ROUTES.SELLER_PAYMENTS]: {
       screen: SellerPayments,
-      options: { title: UI_TEXT.PAYMENT_HISTORY }
+      options: { title: i18n.t('uiText.PAYMENT_HISTORY') }
     }
   }
 })
