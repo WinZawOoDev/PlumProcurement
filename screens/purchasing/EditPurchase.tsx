@@ -177,7 +177,7 @@ export default function EditPurchase() {
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.purchaseHistoryScreen}>
             <View style={[styles.purchaseHistoryContainer, styles.fillContainer]}>
                 <SectionHeader
-                    icon="create-outline"
+                    onBack={() => navigation.goBack()}
                     title={UI_TEXT.EDIT_PURCHASE}
                     description={UI_TEXT.EDIT_PURCHASE_DESCRIPTION}
                 />
@@ -201,7 +201,8 @@ export default function EditPurchase() {
                 <ScrollView
                     style={styles.editPurchaseList}
                     contentContainerStyle={styles.editPurchaseItemsContent}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator
+                    persistentScrollbar
                 >
                     {resolved.map(({ item, qty }) => (
                         <EditItemCard

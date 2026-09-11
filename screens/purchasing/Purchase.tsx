@@ -1,4 +1,5 @@
 import { FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
@@ -138,9 +139,17 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     const cardWidth = width - 78
 
     const [quantities, setQuantities] = useState<Record<string, number>>({})
+    const [activeCardIndex, setActiveCardIndex] = useState(0)
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const selectablePrices = prices
+
+    // pagingEnabled snaps by the viewport, which equals the card width here.
+    const handleCardsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const next = Math.round(event.nativeEvent.contentOffset.x / cardWidth)
+        const clamped = Math.min(selectablePrices.length - 1, Math.max(0, next))
+        setActiveCardIndex((prev) => (prev === clamped ? prev : clamped))
+    }
 
     const getQuantity = (priceId: string) => quantities[priceId] ?? 0
     const increment = (priceId: string) => {
@@ -235,27 +244,39 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                         <RNText style={styles.priceItemCount}>{formatNumber(selectablePrices.length, 0)}</RNText>
                     </View>
                     <ScrollView
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.priceItemCardScroll}
-                    contentContainerStyle={styles.priceItemCardList}
-                >
-                    {selectablePrices.map((price) => {
-                        const priceId = price.id.toString()
-                        const quantity = getQuantity(priceId)
-                        return (
-                            <PriceItemCard
-                                key={price.id}
-                                price={price}
-                                quantity={quantity}
-                                width={cardWidth}
-                                onIncrease={() => increment(priceId)}
-                                onDecrease={() => decrement(priceId)}
-                            />
-                        )
-                    })}
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        onScroll={handleCardsScroll}
+                        scrollEventThrottle={16}
+                        style={styles.priceItemCardScroll}
+                        contentContainerStyle={styles.priceItemCardList}
+                    >
+                        {selectablePrices.map((price) => {
+                            const priceId = price.id.toString()
+                            const quantity = getQuantity(priceId)
+                            return (
+                                <PriceItemCard
+                                    key={price.id}
+                                    price={price}
+                                    quantity={quantity}
+                                    width={cardWidth}
+                                    onIncrease={() => increment(priceId)}
+                                    onDecrease={() => decrement(priceId)}
+                                />
+                            )
+                        })}
                     </ScrollView>
+                    {selectablePrices.length > 1 && (
+                        <View style={styles.priceItemDotsRow}>
+                            {selectablePrices.map((price, index) => (
+                                <View
+                                    key={price.id}
+                                    style={[styles.priceItemDot, index === activeCardIndex && styles.priceItemDotActive]}
+                                />
+                            ))}
+                        </View>
+                    )}
                 </>
             )}
             {!allValid && (

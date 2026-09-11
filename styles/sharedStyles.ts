@@ -194,6 +194,29 @@ export const sharedStyles = (theme: ThemeOptions) => StyleSheet.create({
         marginBottom: 16,
         gap: 12,
     },
+    sectionHeaderContainerWithBack: {
+        marginBottom: 10,
+        gap: 6,
+    },
+    sectionHeaderBackButton: {
+        marginLeft: -8,
+        marginTop: -5,
+    },
+    sectionHeaderTitleWithBack: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
+        fontSize: 17,
+        fontWeight: '700',
+        color: theme.colors.primary,
+        letterSpacing: 0.2,
+        lineHeight: 22,
+    },
+    sectionHeaderDescriptionWithBack: {
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_SECONDARY,
+        fontSize: 12,
+        fontWeight: '400',
+        color: theme.colors.grey4,
+        lineHeight: 16,
+    },
     sectionHeaderTextBlock: {
         flex: 1,
         gap: 4,

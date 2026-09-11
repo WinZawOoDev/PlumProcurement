@@ -338,6 +338,25 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
     priceItemCardList: {
         paddingVertical: 4,
     },
+    priceItemDotsRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 8,
+    },
+    priceItemDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: theme.colors.grey2,
+        opacity: 0.45,
+    },
+    priceItemDotActive: {
+        width: 16,
+        backgroundColor: theme.colors.primary,
+        opacity: 1,
+    },
     priceItemCard: {
         borderRadius: 16,
         borderWidth: 1.5,
