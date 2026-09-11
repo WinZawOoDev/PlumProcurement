@@ -1,4 +1,4 @@
-import { ScrollView, Text as RNText, View } from 'react-native'
+import { Alert, ScrollView, Text as RNText, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -31,12 +31,26 @@ type PaymentReviewRouteProp = RouteProp<
     typeof ROUTES.PAYMENT_REVIEW
 >
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DashedDivider() {
     const styles = useStyles()
     return (
-        <View style={styles.purchaseSummaryRow}>
-            <RNText style={styles.purchaseSummaryLabel}>{label}</RNText>
-            <RNText style={styles.purchaseSummaryValue} numberOfLines={1}>
+        <View style={styles.paymentSlipDashes}>
+            {Array.from({ length: 22 }).map((_, index) => (
+                <View key={index} style={styles.paymentSlipDash} />
+            ))}
+        </View>
+    )
+}
+
+function SlipRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+    const styles = useStyles()
+    return (
+        <View style={styles.paymentSlipRow}>
+            <RNText style={styles.paymentSlipRowLabel}>{label}</RNText>
+            <RNText
+                style={strong ? styles.paymentSlipRowValueStrong : styles.paymentSlipRowValue}
+                numberOfLines={1}
+            >
                 {value}
             </RNText>
         </View>
@@ -56,7 +70,7 @@ export default function PaymentReview() {
         if (sellerId === undefined) return
         let cancelled = false
         purchaseService
-            .getUnpaidPurchasesBySeller(sellerId)
+            .getUnpaidPurchasesBySeller(sellerId, 20)
             .then((items) => {
                 if (!cancelled) setPurchases(items)
             })
@@ -83,7 +97,7 @@ export default function PaymentReview() {
         : '—'
     const balanceAfter = Math.max(0, balance - amount)
 
-    const handleProcess = async () => {
+    const performProcess = async () => {
         await withSaving(async () => {
             try {
                 await paymentService.recordPayment({
@@ -102,6 +116,13 @@ export default function PaymentReview() {
         })
     }
 
+    const handleProcess = () => {
+        Alert.alert(UI_TEXT.PAYMENT_CONFIRM_TITLE, UI_TEXT.PAYMENT_CONFIRM_MESSAGE, [
+            { text: UI_TEXT.CANCEL, style: 'cancel' },
+            { text: UI_TEXT.CONFIRM, onPress: performProcess },
+        ])
+    }
+
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.purchaseHistoryScreen}>
             <View style={[styles.purchaseHistoryContainer, styles.fillContainer]}>
@@ -110,60 +131,42 @@ export default function PaymentReview() {
                     title={UI_TEXT.PAYMENT_REVIEW_TITLE}
                     description={UI_TEXT.PAYMENT_REVIEW_DESCRIPTION}
                 />
-                <ScrollView
-                    style={styles.editPurchaseList}
-                    contentContainerStyle={styles.editPurchaseItemsContent}
-                    showsVerticalScrollIndicator
-                    persistentScrollbar
-                >
-                    <View style={styles.purchaseSummaryCard}>
-                        <View style={styles.purchaseSummaryHeroRow}>
-                            <View style={styles.purchaseSummaryAvatar}>
-                                <RNText style={styles.purchaseSummaryAvatarText}>
-                                    {(sellerName ?? UI_TEXT.NO_SELLER).charAt(0).toUpperCase()}
-                                </RNText>
-                            </View>
-                            <View style={styles.purchaseSummaryHeroText}>
-                                <RNText style={styles.paymentHeroLabel}>
-                                    {UI_TEXT.PAID_TO}
-                                </RNText>
-                                <RNText style={styles.purchaseSummarySellerName}>
-                                    {sellerName ?? UI_TEXT.NO_SELLER}
-                                </RNText>
-                                <RNText style={styles.purchaseSummaryDateText}>
-                                    {formatDateDisplay(new Date().toISOString())}
-                                </RNText>
+                <View style={styles.paymentFormBody}>
+                    <View style={styles.paymentSlip}>
+                        <RNText style={styles.paymentSlipEyebrow}>{UI_TEXT.PAYMENT}</RNText>
+                        <RNText style={styles.paymentSlipSeller}>
+                            {sellerName ?? UI_TEXT.NO_SELLER}
+                        </RNText>
+                        <RNText style={styles.paymentSlipDate}>
+                            {formatDateDisplay(new Date().toISOString())}
+                        </RNText>
+
+                        <DashedDivider />
+
+                        <View style={styles.paymentSlipAmountBlock}>
+                            <RNText style={styles.paymentSlipAmountLabel}>{UI_TEXT.AMOUNT}</RNText>
+                            <View style={styles.paymentSlipAmountRow}>
+                                <RNText style={styles.paymentSlipAmount}>{formatNumber(amount)}</RNText>
+                                <RNText style={styles.paymentSlipAmountCurrency}>{CURRENCY}</RNText>
                             </View>
                         </View>
-                    </View>
 
-                    <View style={styles.paymentAmountCard}>
-                        <RNText style={styles.paymentAmountLabel}>{UI_TEXT.AMOUNT}</RNText>
-                        <View style={styles.paymentAmountRow}>
-                            <RNText style={styles.paymentAmountHero}>{formatNumber(amount)}</RNText>
-                            <RNText style={styles.paymentAmountCurrency}>{CURRENCY}</RNText>
-                        </View>
-                    </View>
+                        <SlipRow label={UI_TEXT.PAYMENT_METHOD} value={methodLabel} />
+                        <SlipRow label={UI_TEXT.NOTE} value={note ?? '—'} />
 
-                    <View style={styles.purchaseSummaryCard}>
-                        <DetailRow label={UI_TEXT.PAYMENT_METHOD} value={methodLabel} />
-                        <DetailRow label={UI_TEXT.NOTE} value={note ?? '—'} />
-                        <View style={[styles.purchaseSummaryRow, styles.purchaseDetailsSummaryDivider]}>
-                            <RNText style={styles.purchaseSummaryLabel}>
-                                {UI_TEXT.OUTSTANDING_BALANCE}
-                            </RNText>
-                            <RNText style={styles.purchaseSummaryValue}>
-                                {formatNumber(balance)}{CURRENCY}
-                            </RNText>
-                        </View>
-                        <View style={styles.purchaseSummaryRow}>
-                            <RNText style={styles.purchaseSummaryLabel}>
-                                {UI_TEXT.BALANCE_AFTER_PAYMENT}
-                            </RNText>
-                            <RNText style={styles.purchaseTotalText}>
-                                {formatNumber(balanceAfter)}{CURRENCY}
-                            </RNText>
-                        </View>
+                        <DashedDivider />
+
+                        <SlipRow
+                            label={UI_TEXT.OUTSTANDING_BALANCE}
+                            value={`${formatNumber(balance)}${CURRENCY}`}
+                        />
+                        <SlipRow
+                            label={UI_TEXT.BALANCE_AFTER_PAYMENT}
+                            value={`${formatNumber(balanceAfter)}${CURRENCY}`}
+                            strong
+                        />
+
+                        <DashedDivider />
 
                         <View style={styles.paymentPurchasesBlock}>
                             <RNText style={styles.paymentPurchasesLabel}>
@@ -172,20 +175,27 @@ export default function PaymentReview() {
                             {purchases.length === 0 ? (
                                 <RNText style={styles.paymentPurchaseEmpty}>—</RNText>
                             ) : (
-                                purchases.map((purchase) => (
-                                    <View key={purchase.id} style={styles.paymentPurchaseRow}>
-                                        <RNText style={styles.paymentPurchaseDate}>
-                                            {formatDateDisplay(purchase.created_at)}
-                                        </RNText>
-                                        <RNText style={styles.paymentPurchaseTotal}>
-                                            {formatNumber(purchase.total)}{CURRENCY}
-                                        </RNText>
-                                    </View>
-                                ))
+                                <ScrollView
+                                    style={styles.paymentPurchasesScroll}
+                                    showsVerticalScrollIndicator
+                                    persistentScrollbar
+                                    nestedScrollEnabled
+                                >
+                                    {purchases.map((purchase) => (
+                                        <View key={purchase.id} style={styles.paymentPurchaseRow}>
+                                            <RNText style={styles.paymentPurchaseDate}>
+                                                {formatDateDisplay(purchase.created_at)}
+                                            </RNText>
+                                            <RNText style={styles.paymentPurchaseTotal}>
+                                                {formatNumber(purchase.total)}{CURRENCY}
+                                            </RNText>
+                                        </View>
+                                    ))}
+                                </ScrollView>
                             )}
                         </View>
                     </View>
-                </ScrollView>
+                </View>
                 <View style={styles.editPurchaseFooter}>
                     <PrimaryButton
                         title={UI_TEXT.PROCESS_PAYMENT}

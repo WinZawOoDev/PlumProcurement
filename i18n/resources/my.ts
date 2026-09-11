@@ -129,6 +129,8 @@ export const my: TranslationSchema = {
     PAID_TO: 'ငွေပေးချေသည့်သူ',
     PAYMENT_DATE: 'ရက်စွဲ',
     PAYMENT_FOR_PURCHASES: 'အဝယ်များအတွက်',
+    PAYMENT_CONFIRM_TITLE: 'ဤငွေပေးချေမှုကို ဆောင်ရွက်မည်လား?',
+    PAYMENT_CONFIRM_MESSAGE: 'ရောင်းချသူ၏ ကျန်ရှိသောလက်ကျန်ကို မွမ်းမံပါမည်။',
     PAYMENT_HISTORY: 'ငွေပေးချေမှုမှတ်တမ်း',
     PAYMENT_METHOD: 'ငွေပေးချေသည့်နည်းလမ်း',
     NOTE: 'မှတ်ချက် (ရွေးချယ်နိုင်)',

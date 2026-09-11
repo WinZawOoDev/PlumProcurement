@@ -121,6 +121,8 @@ export const UI_TEXT = {
   PAID_TO: 'Paid to',
   PAYMENT_DATE: 'Date',
   PAYMENT_FOR_PURCHASES: 'For purchases',
+  PAYMENT_CONFIRM_TITLE: 'Process this payment?',
+  PAYMENT_CONFIRM_MESSAGE: "This will update the seller's outstanding balance.",
   PAYMENT_HISTORY: 'Payment History',
   PAYMENT_METHOD: 'Payment Method',
   NOTE: 'Note (optional)',

@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
+import { Alert } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
 import PaymentReview from '../screens/seller/PaymentReview'
 import { PrimaryButton } from '../components/buttons/Button'
@@ -60,6 +61,9 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 
 beforeEach(() => {
     jest.clearAllMocks()
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+        buttons?.find((button) => button.style !== 'cancel')?.onPress?.()
+    })
     ;(paymentService.recordPayment as jest.Mock).mockResolvedValue(1)
     ;(purchaseService.getUnpaidPurchasesBySeller as jest.Mock).mockResolvedValue([
         { id: 11, seller_id: 2, total: 60, created_at: '2026-09-01', items: [] },
@@ -97,5 +101,22 @@ describe('PaymentReview screen', () => {
             note: 'advance',
         })
         expect(mockPopTo).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS)
+    })
+
+    test('asks for confirmation and does not process when cancelled', async () => {
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+        const root = await renderScreen()
+        await act(async () => {
+            root.root.findByType(PrimaryButton).props.onPress()
+            await flush()
+        })
+
+        expect(alertSpy).toHaveBeenCalledWith(
+            UI_TEXT.PAYMENT_CONFIRM_TITLE,
+            UI_TEXT.PAYMENT_CONFIRM_MESSAGE,
+            expect.any(Array)
+        )
+        expect(paymentService.recordPayment).not.toHaveBeenCalled()
+        expect(mockPopTo).not.toHaveBeenCalled()
     })
 })

@@ -219,7 +219,7 @@ export const sharedStyles = (theme: ThemeOptions) => StyleSheet.create({
     },
     sectionHeaderTextBlock: {
         flex: 1,
-        gap: 4,
+        gap: 8,
     },
     sectionHeaderTitle: {
         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRIMARY,
