@@ -100,7 +100,7 @@ describe('PaymentReview screen', () => {
             method: 'cash',
             note: 'advance',
         })
-        expect(mockPopTo).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS)
+        expect(mockPopTo).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS, { sellerId: 2 })
     })
 
     test('asks for confirmation and does not process when cancelled', async () => {

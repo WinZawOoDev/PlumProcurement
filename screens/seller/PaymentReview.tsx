@@ -109,7 +109,9 @@ export default function PaymentReview() {
                 })
                 showSuccess(MESSAGES.PAYMENT_RECORDED_SUCCESS)
                 // Land back on the seller details screen and refresh its stats.
-                navigation.popTo(ROUTES.SELLER_DETAILS)
+                // popTo replaces the target's params, so pass sellerId back or
+                // SellerDetails loses it and renders "seller not found".
+                navigation.popTo(ROUTES.SELLER_DETAILS, { sellerId })
             } catch (error) {
                 showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
             }
