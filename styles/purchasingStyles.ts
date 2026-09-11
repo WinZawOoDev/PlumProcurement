@@ -4,47 +4,11 @@ import { TYPOGRAPHY } from '../constants'
 
 export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
     // ===== PURCHASE =====
-    quantityRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        marginVertical: 16,
-        gap: 15,
-    },
-    quantityStepperButton: {
-        width: 44,
-        height: 44,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: theme.colors.secondary,
-        borderRadius: 22,
-        backgroundColor: theme.colors.secondary,
-    },
-    quantityStepperButtonText: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        color: theme.colors.primary,
-        textAlign: 'center',
-    },
-    quantityStepperButtonDisabled: {
-        opacity: 0.4,
-    },
-    quantityStepperTextDisabled: {
-        opacity: 0.4,
-    },
     quantityStepperHint: {
         marginTop: -8,
         paddingHorizontal: 10,
         fontSize: 12,
         color: theme.colors.grey2,
-    },
-    quantityValue: {
-        fontSize: 32,
-        fontWeight: '700',
-        minWidth: 56,
-        textAlign: 'center',
-        color: theme.colors.black,
     },
     purchaseSummaryRow: {
         flexDirection: 'row',
@@ -320,8 +284,26 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
     addItemButtonTitle: {
         fontSize: 13,
     },
-    editItemBlock: {
-        marginTop: 8,
+    editPurchaseList: {
+        flex: 1,
+        marginTop: 4,
+    },
+    editPurchaseItemsContent: {
+        gap: 12,
+        paddingBottom: 16,
+    },
+    editPurchaseFooter: {
+        gap: 10,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.grey1,
+        backgroundColor: theme.colors.background,
+    },
+    editPurchaseFooterTotal: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 4,
     },
     priceItemCardScroll: {
         marginTop: 8,

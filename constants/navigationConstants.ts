@@ -14,6 +14,7 @@ export const ROUTES = {
   CREATE_PRICE: 'CreatePrice',
   PURCHASE_DETAILS: 'PurchaseDetails',
   PURCHASE_SUMMARY: 'PurchaseSummary',
+  EDIT_PURCHASE: 'EditPurchase',
   SELECT_SELLER: 'SellerSelect',
   SELLERS: 'Sellers',
   SELLER_DETAILS: 'SellerDetails',

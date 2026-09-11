@@ -11,6 +11,7 @@ export const UI_TEXT = {
   DELETE: 'Delete',
   EDIT: 'Edit',
   ADD: 'Add New',
+  DISCARD: 'Discard',
   SOMETHING_WENT_WRONG: 'Something went wrong',
 
   // Specific buttons
@@ -88,6 +89,7 @@ export const UI_TEXT = {
   PURCHASE_SUMMARY_DESCRIPTION: 'Item details recorded in this purchase.',
   PURCHASE_DATE: 'Date',
   EDIT_PURCHASE: 'Edit Purchase',
+  EDIT_PURCHASE_DESCRIPTION: 'Adjust the quantity of each item in this purchase.',
   VIEW_HISTORY: 'View History',
   VIEW_ALL: 'View all',
   EXPORT_CSV: 'Export CSV',
@@ -163,6 +165,8 @@ export const UI_TEXT = {
     'Delete this price? This cannot be undone.',
   DELETE_SELLER_CONFIRM_MESSAGE: 'Delete this seller? This cannot be undone.',
   DELETE_PURCHASE_CONFIRM_MESSAGE: 'Delete this purchase? This cannot be undone.',
+  DISCARD_CHANGES_TITLE: 'Discard changes?',
+  DISCARD_CHANGES_MESSAGE: 'You have unsaved changes. Leave without saving?',
 } as const;
 
 // ===== ACCESSIBILITY LABELS =====

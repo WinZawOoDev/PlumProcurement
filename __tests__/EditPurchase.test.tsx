@@ -1,8 +1,8 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
+import { Alert } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
-import { EditPurchaseSheet } from '../screens/purchasing/EditPurchaseSheet'
-import { QuantityStepper } from '../components/QuantityStepper'
+import EditPurchase from '../screens/purchasing/EditPurchase'
 import { PrimaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
 import { A11Y_LABELS, UI_TEXT, CATEGORY_LABELS } from '../constants'
@@ -11,6 +11,17 @@ import { makeAppTheme } from '../theme'
 
 jest.mock('../services/purchaseService', () => ({
     purchaseService: { editPurchase: jest.fn() },
+}))
+
+const mockGoBack = jest.fn()
+const mockDispatch = jest.fn()
+const mockUnsubscribe = jest.fn()
+const mockAddListener = jest.fn((_event: string, _listener: (event: unknown) => void) => mockUnsubscribe)
+const mockNavigation = { goBack: mockGoBack, dispatch: mockDispatch, addListener: mockAddListener }
+
+jest.mock('@react-navigation/native', () => ({
+    useNavigation: () => mockNavigation,
+    useRoute: () => ({ params: { purchase: mockPurchase } }),
 }))
 
 const mockPurchase: IPurchaseDetail = {
@@ -32,20 +43,12 @@ const mockPurchase: IPurchaseDetail = {
     ],
 }
 
-const onClose = jest.fn()
-const onSaved = jest.fn()
-
-const renderSheet = async () => {
+const renderScreen = async () => {
     let root!: ReactTestRenderer.ReactTestRenderer
     await act(async () => {
         root = ReactTestRenderer.create(
             <ThemeProvider theme={makeAppTheme(false)}>
-                <EditPurchaseSheet
-                    visible={true}
-                    purchase={mockPurchase}
-                    onClose={onClose}
-                    onSaved={onSaved}
-                />
+                <EditPurchase />
             </ThemeProvider>
         )
     })
@@ -60,35 +63,39 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
         .join(' ')
 }
 
+const findIncrease = (root: ReactTestRenderer.ReactTestRenderer) =>
+    root.root.findAllByProps({
+        accessibilityLabel: `${A11Y_LABELS.INCREASE_QUANTITY} ${CATEGORY_LABELS.fruit}`,
+    })[0]
+
 beforeEach(() => {
     jest.clearAllMocks()
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {})
     ;(purchaseService.editPurchase as jest.Mock).mockResolvedValue(undefined)
 })
 
-describe('EditPurchaseSheet', () => {
+describe('EditPurchase screen', () => {
     test('shows item info, seller name and the pre-filled total', async () => {
-        const root = await renderSheet()
+        const root = await renderScreen()
         const text = textContent(root)
         expect(text).toContain(UI_TEXT.EDIT_PURCHASE)
-        expect(text).toContain(`${CATEGORY_LABELS.fruit} (CUP)`)
-        expect(text).toContain(`${UI_TEXT.SOLD_BY}: U Ba`)
+        expect(text).toContain(CATEGORY_LABELS.fruit)
+        expect(text).toContain('U Ba')
         expect(text).toContain('10.00$')
     })
 
-    test('recomputes the total preview from the quantity stepper', async () => {
-        const root = await renderSheet()
-        const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
+    test('recomputes the total preview from the quantity counter', async () => {
+        const root = await renderScreen()
         await act(async () => {
-            plus.props.onPress()
+            findIncrease(root).props.onPress()
         })
         expect(textContent(root)).toContain('15.00$')
     })
 
-    test('saves updated item quantities and closes', async () => {
-        const root = await renderSheet()
-        const plus = root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.INCREASE_QUANTITY })[0]
+    test('saves updated item quantities and goes back', async () => {
+        const root = await renderScreen()
         await act(async () => {
-            plus.props.onPress()
+            findIncrease(root).props.onPress()
         })
         await act(async () => {
             root.root.findByType(PrimaryButton).props.onPress()
@@ -105,22 +112,28 @@ describe('EditPurchaseSheet', () => {
                 },
             ],
         })
-        expect(onSaved).toHaveBeenCalledTimes(1)
-        expect(onClose).toHaveBeenCalledTimes(1)
+        expect(mockGoBack).toHaveBeenCalledTimes(1)
     })
 
-    test('rejects non-integer quantities without saving', async () => {
-        const root = await renderSheet()
-        const stepper = root.root.findByType(QuantityStepper)
+    test('warns before discarding unsaved quantity changes', async () => {
+        const root = await renderScreen()
         await act(async () => {
-            stepper.props.onChange('1.5')
-        })
-        await act(async () => {
-            root.root.findByType(PrimaryButton).props.onPress()
+            findIncrease(root).props.onPress()
         })
 
-        expect(purchaseService.editPurchase).not.toHaveBeenCalled()
-        expect(onSaved).not.toHaveBeenCalled()
-        expect(onClose).not.toHaveBeenCalled()
+        const beforeRemoveCall = mockAddListener.mock.calls.find(([event]) => event === 'beforeRemove')
+        expect(beforeRemoveCall).toBeDefined()
+        const beforeRemove = beforeRemoveCall![1]
+        const event = { preventDefault: jest.fn(), data: { action: {} } }
+        await act(async () => {
+            beforeRemove(event)
+        })
+
+        expect(event.preventDefault).toHaveBeenCalledTimes(1)
+        expect(Alert.alert).toHaveBeenCalledWith(
+            UI_TEXT.DISCARD_CHANGES_TITLE,
+            UI_TEXT.DISCARD_CHANGES_MESSAGE,
+            expect.any(Array)
+        )
     })
 })

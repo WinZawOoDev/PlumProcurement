@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,6 @@ import { PAGINATION_CONFIG } from '../../constants';
 import { SectionHeader } from '../../components/SectionHeader';
 import { EmptyState } from '../../components/EmptyState';
 import { CardSkeleton, Skeleton } from '../../components/Skeleton';
-import { EditPurchaseSheet } from './EditPurchaseSheet';
 
 function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
   const styles = useStyles();
@@ -233,12 +232,11 @@ export default function PurchaseDetails() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { UI_TEXT, MESSAGES } = useLocalizedConstants();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const { loading, withLoading } = useLoading(false);
-  const [editingPurchase, setEditingPurchase] =
-    useState<IPurchaseDetail | null>(null);
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Search here is server-side (paginated queries); only the shared
@@ -290,6 +288,30 @@ export default function PurchaseDetails() {
   useEffect(() => {
     loadPurchases(true, '');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh when returning from the Edit Purchase screen (or any child screen),
+  // skipping the initial focus since the mount effect above already loaded.
+  const hasFocusedRef = useRef(false);
+  const loadPurchasesRef = useRef(loadPurchases);
+  loadPurchasesRef.current = loadPurchases;
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedRef.current) {
+        hasFocusedRef.current = true;
+        return;
+      }
+      loadPurchasesRef.current(true, searchQueryRef.current || '');
+    }, [])
+  );
+
+  const handleEdit = useCallback(
+    (item: IPurchaseDetail) => {
+      navigation.navigate(ROUTES.EDIT_PURCHASE, { purchase: item });
+    },
+    [navigation]
+  );
 
   // Reload on search changes, but skip the mount-time run (initial load above)
   const searchEffectReady = useRef(false);
@@ -412,7 +434,7 @@ export default function PurchaseDetails() {
               <PurchaseRow
                 item={item}
                 locked={Number(item.has_payment) > 0}
-                onEdit={setEditingPurchase}
+                onEdit={handleEdit}
               />
             )}
             ListEmptyComponent={
@@ -445,13 +467,6 @@ export default function PurchaseDetails() {
           />
         )}
       </View>
-
-      <EditPurchaseSheet
-        visible={!!editingPurchase}
-        purchase={editingPurchase}
-        onClose={() => setEditingPurchase(null)}
-        onSaved={() => loadPurchases(true, searchQuery)}
-      />
     </SafeAreaView>
   );
 }

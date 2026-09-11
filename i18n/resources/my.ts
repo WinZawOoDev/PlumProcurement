@@ -19,6 +19,7 @@ export const my: TranslationSchema = {
     DELETE: 'ဖျက်ရန်',
     EDIT: 'ပြင်ဆင်ရန်',
     ADD: 'အသစ်ထည့်ရန်',
+    DISCARD: 'ပယ်လိုက်ရန်',
     SOMETHING_WENT_WRONG: 'တစ်ခုခု မှားယွင်းသွားပါသည်',
 
     // Specific buttons
@@ -96,6 +97,7 @@ export const my: TranslationSchema = {
     PURCHASE_SUMMARY_DESCRIPTION: 'ဤအဝယ်တွင် မှတ်တမ်းတင်ထားသော ပစ္စည်းအသေးစိတ်။',
     PURCHASE_DATE: 'ရက်စွဲ',
     EDIT_PURCHASE: 'အဝယ်ပြင်ဆင်ရန်',
+    EDIT_PURCHASE_DESCRIPTION: 'ဤအဝယ်ရှိ ပစ္စည်းတစ်ခုချင်းစီ၏ အရေအတွက်ကို ချိန်ညှိပါ။',
     VIEW_HISTORY: 'မှတ်တမ်းကြည့်ရန်',
     VIEW_ALL: 'အားလုံးကြည့်ရန်',
     EXPORT_CSV: 'CSV ထုတ်ယူရန်',
@@ -171,6 +173,8 @@ export const my: TranslationSchema = {
     DELETE_PRICE_CONFIRM_MESSAGE: 'ဤဈေးနှုန်းကို ဖျက်မည်လား? ဖျက်ပြီးပါက ပြန်လည်ရယူ၍ မရနိုင်ပါ။',
     DELETE_SELLER_CONFIRM_MESSAGE: 'ဤရောင်းချသူကို ဖျက်မည်လား? ဖျက်ပြီးပါက ပြန်လည်ရယူ၍ မရနိုင်ပါ။',
     DELETE_PURCHASE_CONFIRM_MESSAGE: 'ဤအဝယ်ကို ဖျက်မည်လား? ဖျက်ပြီးပါက ပြန်လည်ရယူ၍ မရနိုင်ပါ။',
+    DISCARD_CHANGES_TITLE: 'ပြောင်းလဲမှုများကို ပယ်မည်လား?',
+    DISCARD_CHANGES_MESSAGE: 'သိမ်းဆည်းမထားသော ပြောင်းလဲမှုများ ရှိနေပါသည်။ မသိမ်းဘဲ ထွက်မည်လား?',
   },
   messages: {
     PRICE_SAVED_SUCCESS: 'ဈေးနှုန်းကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ!',

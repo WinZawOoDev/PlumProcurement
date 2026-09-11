@@ -19,7 +19,7 @@ import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
-import { lightHaptic } from '../../utils/haptics'
+import { QuantityCounter } from '../../components/QuantityCounter'
 
 interface SelectedSeller {
     id: number
@@ -47,7 +47,7 @@ function PriceItemCard({
 }) {
     const styles = useStyles()
     const { t } = useTranslation()
-    const { A11Y_LABELS, UNITS, CURRENCY } = useLocalizedConstants()
+    const { UNITS, CURRENCY } = useLocalizedConstants()
     const selected = quantity > 0
     const lineTotal = price.price * quantity
     return (
@@ -62,39 +62,12 @@ function PriceItemCard({
                     <RNText style={styles.priceItemCardCurrency}>{CURRENCY}</RNText>
                 </View>
             </View>
-            <View style={[styles.priceItemCardCounter, selected && styles.priceItemCardCounterActive]}>
-                <TouchableOpacity
-                    style={[styles.priceItemCardStepperButton, !selected && styles.priceItemCardStepperButtonDisabled]}
-                    onPress={() => {
-                        lightHaptic()
-                        onDecrease()
-                    }}
-                    disabled={!selected}
-                    activeOpacity={0.6}
-                    accessible
-                    accessibilityRole="button"
-                    accessibilityLabel={`${A11Y_LABELS.DECREASE_QUANTITY} ${t(`categories.${price.category}`, { defaultValue: price.category })}`}
-                    accessibilityState={{ disabled: !selected }}
-                >
-                    <RNText style={styles.priceItemCardStepperButtonText}>−</RNText>
-                </TouchableOpacity>
-                <View style={styles.priceItemCardValueBubble}>
-                    <RNText style={[styles.priceItemCardValue, selected && styles.priceItemCardValueActive]}>{formatNumber(quantity, 0)}</RNText>
-                </View>
-                <TouchableOpacity
-                    style={[styles.priceItemCardStepperButton, styles.priceItemCardStepperButtonPlus]}
-                    onPress={() => {
-                        lightHaptic()
-                        onIncrease()
-                    }}
-                    activeOpacity={0.6}
-                    accessible
-                    accessibilityRole="button"
-                    accessibilityLabel={`${A11Y_LABELS.INCREASE_QUANTITY} ${t(`categories.${price.category}`, { defaultValue: price.category })}`}
-                >
-                    <RNText style={styles.priceItemCardStepperButtonTextPlus}>+</RNText>
-                </TouchableOpacity>
-            </View>
+            <QuantityCounter
+                value={quantity}
+                onIncrease={onIncrease}
+                onDecrease={onDecrease}
+                label={t(`categories.${price.category}`, { defaultValue: price.category })}
+            />
             {selected && (
                 <View style={styles.priceItemCardFooter}>
                     <RNText style={styles.priceItemCardFooterCalc}>
