@@ -46,7 +46,7 @@ function PriceItemCard({
 }) {
     const styles = useStyles()
     const { t } = useTranslation()
-    const { A11Y_LABELS } = useLocalizedConstants()
+    const { A11Y_LABELS, UNITS, CURRENCY } = useLocalizedConstants()
     const selected = quantity > 0
     const lineTotal = price.price * quantity
     return (
@@ -54,11 +54,11 @@ function PriceItemCard({
             <View style={styles.priceItemCardHeader}>
                 <View style={styles.priceItemCardHeaderText}>
                     <RNText style={styles.priceItemCardTitle}>{t(`categories.${price.category}`, { defaultValue: price.category })}</RNText>
-                    <RNText style={styles.priceItemCardUnit}>{price.unit}</RNText>
+                    <RNText style={styles.priceItemCardUnit}>{UNITS[price.unit] ?? price.unit}</RNText>
                 </View>
                 <View style={styles.priceItemCardPriceBlock}>
                     <RNText style={styles.priceItemCardPrice}>{price.price.toFixed(2)}</RNText>
-                    <RNText style={styles.priceItemCardCurrency}>$</RNText>
+                    <RNText style={styles.priceItemCardCurrency}>{CURRENCY}</RNText>
                 </View>
             </View>
             <View style={[styles.priceItemCardCounter, selected && styles.priceItemCardCounterActive]}>
@@ -97,9 +97,9 @@ function PriceItemCard({
             {selected && (
                 <View style={styles.priceItemCardFooter}>
                     <RNText style={styles.priceItemCardFooterCalc}>
-                        {quantity} × {price.price.toFixed(2)}$
+                        {quantity} × {price.price.toFixed(2)}{CURRENCY}
                     </RNText>
-                    <RNText style={styles.priceItemCardFooterTotal}>{lineTotal.toFixed(2)}$</RNText>
+                    <RNText style={styles.priceItemCardFooterTotal}>{lineTotal.toFixed(2)}{CURRENCY}</RNText>
                 </View>
             )}
         </View>
@@ -108,7 +108,7 @@ function PriceItemCard({
 
 function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; total: number; onPress: () => void }) {
     const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
     const hasItems = itemCount > 0
     return (
         <TouchableOpacity
@@ -126,7 +126,7 @@ function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; tot
             <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_AMOUNT}</Text>
                 <Text style={[styles.purchaseTotalText, total <= 0 && styles.purchaseSummaryValueMuted]}>
-                    {total > 0 ? `${total.toFixed(2)}$` : '—'}
+                    {total > 0 ? `${total.toFixed(2)}${CURRENCY}` : '—'}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -310,10 +310,10 @@ interface RecentPurchasesListProps {
 function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
     const { t } = useTranslation()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, UNITS, CURRENCY } = useLocalizedConstants()
     const single = item.items.length === 1 ? item.items[0] : null
     const title = single
-        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${single.quantity} (${single.unit})`
+        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${single.quantity} (${UNITS[single.unit] ?? single.unit})`
         : `${item.items.length} ${UI_TEXT.ITEMS.toLowerCase()}`
     return (
         <View style={styles.purchaseItemRow}>
@@ -321,7 +321,7 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
                 <RNText style={styles.purchaseItemTitle}>{title}</RNText>
                 {!!item.seller_name && <RNText style={styles.sellerPhoneText}>{UI_TEXT.SOLD_BY}: {item.seller_name}</RNText>}
             </View>
-            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}{CURRENCY}</RNText>
         </View>
     )
 }

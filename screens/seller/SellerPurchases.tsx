@@ -22,7 +22,7 @@ type SellerPurchasesRouteProp = RouteProp<Record<string, { sellerId: number }>, 
 
 function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
@@ -43,7 +43,7 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
-                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}$</RNText>
+                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}{CURRENCY}</RNText>
             </View>
         </Pressable>
     )
@@ -53,7 +53,7 @@ export default function SellerPurchases() {
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
-    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
+    const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPurchasesRouteProp>()
     const sellerId = route.params?.sellerId
@@ -148,7 +148,7 @@ export default function SellerPurchases() {
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
                     <RNText style={styles.recentPurchasesCount}>
-                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${total.toFixed(2)}$` : ''}
+                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${total.toFixed(2)}${CURRENCY}` : ''}
                     </RNText>
                 </View>
 

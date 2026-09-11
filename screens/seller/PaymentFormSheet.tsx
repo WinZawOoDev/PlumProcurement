@@ -26,7 +26,7 @@ interface PaymentFormSheetProps {
 
 export default function PaymentFormSheet({ visible, sellerId, balance, onClose, onSaved }: PaymentFormSheetProps) {
     const styles = useStyles()
-    const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS } = useLocalizedConstants()
+    const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS, CURRENCY } = useLocalizedConstants()
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({
         defaultValues: { amount: '', method: '', note: '' },
@@ -66,7 +66,7 @@ export default function PaymentFormSheet({ visible, sellerId, balance, onClose, 
             <View style={styles.bottomSheetContainer}>
                 <Text style={styles.bottomSheetTitle}>{UI_TEXT.RECORD_PAYMENT}</Text>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {UI_TEXT.OUTSTANDING_BALANCE}: {balance.toFixed(2)}$
+                    {UI_TEXT.OUTSTANDING_BALANCE}: {balance.toFixed(2)}{CURRENCY}
                 </RNText>
                 <FormInputField
                     name="amount"

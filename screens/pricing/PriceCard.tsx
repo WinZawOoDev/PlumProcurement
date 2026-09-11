@@ -12,6 +12,7 @@ function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
 
     const styles = useStyles()
     const { t } = useTranslation()
+    const unitLabel = t(`units.${unit}`, { defaultValue: unit })
 
     return (
         <Pressable
@@ -19,11 +20,11 @@ function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
             onPress={onPress}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={t('a11y.PRICE_CARD', { unit, price: price.toFixed(2) })}
+            accessibilityLabel={t('a11y.PRICE_CARD', { unit: unitLabel, price: price.toFixed(2) })}
         >
-            <Text style={styles.priceCardUnitText} numberOfLines={1}>{unit}</Text>
+            <Text style={styles.priceCardUnitText} numberOfLines={1}>{unitLabel}</Text>
             <Text style={styles.priceCardPriceValue}>
-                {price.toFixed(2)}<Text style={styles.priceCardCurrencySymbol}> $</Text>
+                {price.toFixed(2)}<Text style={styles.priceCardCurrencySymbol}> {t('currency')}</Text>
             </Text>
         </Pressable>
     )

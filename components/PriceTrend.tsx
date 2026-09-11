@@ -54,8 +54,8 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
                 })}
             </View>
             <View style={styles.priceTrendScaleRow}>
-                <RNText style={styles.priceTrendScaleText}>{stats.min.toFixed(2)}$</RNText>
-                <RNText style={styles.priceTrendScaleText}>{stats.max.toFixed(2)}$</RNText>
+                <RNText style={styles.priceTrendScaleText}>{stats.min.toFixed(2)}{t('currency')}</RNText>
+                <RNText style={styles.priceTrendScaleText}>{stats.max.toFixed(2)}{t('currency')}</RNText>
             </View>
         </View>
     )

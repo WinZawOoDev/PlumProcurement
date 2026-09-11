@@ -21,12 +21,12 @@ interface EditPurchaseSheetProps {
 
 function EditPurchaseSummary({ total }: { total: number }) {
     const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
     return (
         <View style={styles.purchaseSummaryCard}>
             <View style={styles.purchaseSummaryRow}>
                 <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
-                <RNText style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}$` : '—'}</RNText>
+                <RNText style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}${CURRENCY}` : '—'}</RNText>
             </View>
         </View>
     )
@@ -54,7 +54,7 @@ function EditPurchaseActions({
 export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditPurchaseSheetProps) {
     const styles = useStyles()
     const { t } = useTranslation()
-    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
+    const { UI_TEXT, MESSAGES, UNITS, CURRENCY } = useLocalizedConstants()
     const [quantities, setQuantities] = useState<Record<number, string>>({})
     const { loading: saving, withLoading: withSaving } = useLoading(false)
 
@@ -116,7 +116,7 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
                 {resolved.map(({ item, q }) => (
                     <View key={item.id} style={styles.editItemBlock}>
                         <RNText style={styles.purchaseItemSubtitle}>
-                            {t(`categories.${item.category}`, { defaultValue: item.category })} ({item.unit}) @ {item.unit_price.toFixed(2)}$
+                            {t(`categories.${item.category}`, { defaultValue: item.category })} ({UNITS[item.unit] ?? item.unit}) @ {item.unit_price.toFixed(2)}{CURRENCY}
                         </RNText>
                         <QuantityStepper
                             value={q}

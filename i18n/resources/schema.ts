@@ -2,12 +2,14 @@ import {
   A11Y_LABELS,
   MESSAGES,
   PRODUCT_CATEGORIES,
+  PRODUCT_UNITS,
   TAB_LABELS,
   UI_TEXT,
   VALIDATION_MESSAGES,
 } from '../../constants'
 
 type CategoryValue = (typeof PRODUCT_CATEGORIES)[keyof typeof PRODUCT_CATEGORIES]
+type UnitValue = (typeof PRODUCT_UNITS)[keyof typeof PRODUCT_UNITS]
 
 /**
  * Translation shape derived from the English source constants. Locale files
@@ -20,6 +22,8 @@ export interface TranslationSchema {
   validation: Record<keyof typeof VALIDATION_MESSAGES, string>
   a11y: Record<keyof typeof A11Y_LABELS, string>
   categories: Record<CategoryValue, string>
+  units: Record<UnitValue, string>
+  currency: string
   paymentMethods: {
     cash: string
     bank: string

@@ -20,7 +20,7 @@ interface SellerRowProps {
 function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal, balance }: SellerRowProps) {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
+    const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
         <Pressable onPress={onPress} style={styles.purchaseItemRow}>
@@ -45,13 +45,13 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                     <View
                         style={styles.sellerRowDotLegend}
                         accessible
-                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${(purchaseTotal ?? 0).toFixed(2)}$ ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${(balance ?? 0).toFixed(2)}$ ${UI_TEXT.BALANCE.toLowerCase()}`}
+                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${(purchaseTotal ?? 0).toFixed(2)}${CURRENCY} ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${(balance ?? 0).toFixed(2)}${CURRENCY} ${UI_TEXT.BALANCE.toLowerCase()}`}
                     >
                         {(purchaseCount ?? 0) > 0 && (
                             <>
                                 <Ionicons name="receipt-outline" size={12} color={theme.colors.primary} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {purchaseCount} · {(purchaseTotal ?? 0).toFixed(2)}$
+                                    {purchaseCount} · {(purchaseTotal ?? 0).toFixed(2)}{CURRENCY}
                                 </RNText>
                             </>
                         )}
@@ -59,7 +59,7 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                             <>
                                 <Ionicons name="wallet-outline" size={12} color={theme.colors.warning} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {(balance ?? 0).toFixed(2)}$
+                                    {(balance ?? 0).toFixed(2)}{CURRENCY}
                                 </RNText>
                             </>
                         )}

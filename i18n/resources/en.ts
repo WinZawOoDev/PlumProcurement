@@ -21,6 +21,12 @@ export const en: TranslationSchema = {
     fruit: 'Fruit',
     seed: 'Seed',
   },
+  units: {
+    CUP: 'CUP',
+    GALLON: 'GALLON',
+    BUSHELS: 'BUSHELS',
+  },
+  currency: '$',
   paymentMethods: {
     cash: 'Cash',
     bank: 'Bank transfer',

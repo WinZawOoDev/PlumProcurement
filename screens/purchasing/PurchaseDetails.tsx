@@ -42,7 +42,7 @@ import { EditPurchaseSheet } from './EditPurchaseSheet';
 
 function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
   const styles = useStyles();
-  const { UI_TEXT } = useLocalizedConstants();
+  const { UI_TEXT, CURRENCY } = useLocalizedConstants();
   return (
     <View style={styles.purchaseSummaryCard}>
       <View style={styles.purchaseSummaryRow}>
@@ -60,7 +60,7 @@ function PurchaseSummaryCard({ count, total }: { count: number; total: number })
         <RNText style={styles.purchaseSummaryLabel}>
           {UI_TEXT.TOTAL_VALUE}
         </RNText>
-        <RNText style={styles.purchaseTotalText}>{total.toFixed(2)}$</RNText>
+        <RNText style={styles.purchaseTotalText}>{total.toFixed(2)}{CURRENCY}</RNText>
       </View>
     </View>
   );
@@ -103,7 +103,7 @@ function PurchaseRow({
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
-  const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants();
+  const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   return (
     <Pressable
@@ -128,7 +128,7 @@ function PurchaseRow({
       </View>
       <View style={styles.purchaseItemActions}>
         <RNText style={styles.purchaseItemTotal}>
-          {item.total.toFixed(2)}$
+          {item.total.toFixed(2)}{CURRENCY}
         </RNText>
         <View style={styles.purchaseItemButtons}>
           {locked ? (

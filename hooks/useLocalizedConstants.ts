@@ -22,6 +22,8 @@ export interface LocalizedConstants {
   TAB_LABELS: typeof TAB_LABELS_EN
   PAYMENT_METHODS: typeof PAYMENT_METHODS_EN
   CATEGORY_LIST: typeof CATEGORY_LIST_EN
+  UNITS: Record<string, string>
+  CURRENCY: string
 }
 
 /**
@@ -51,6 +53,8 @@ export function useLocalizedConstants(): LocalizedConstants {
     value: item.value,
   })) as unknown as typeof CATEGORY_LIST_EN
 
+  const units = t('units', { returnObjects: true }) as Record<string, string>
+
   return {
     UI_TEXT: uiText as typeof UI_TEXT_EN,
     MESSAGES: messages as typeof MESSAGES_EN,
@@ -59,5 +63,7 @@ export function useLocalizedConstants(): LocalizedConstants {
     TAB_LABELS: tabLabels as typeof TAB_LABELS_EN,
     PAYMENT_METHODS: paymentMethods,
     CATEGORY_LIST: categoryList,
+    UNITS: units,
+    CURRENCY: t('currency'),
   }
 }

@@ -22,7 +22,7 @@ interface PriceDetailSheetProps {
 export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: PriceDetailSheetProps) {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, UNITS, CURRENCY } = useLocalizedConstants()
     if (!price) return null
     return (
         <DetailSheet visible={visible} onClose={onClose}>
@@ -33,8 +33,8 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
                     <RNText style={styles.priceDetailCategoryText} numberOfLines={1}>{price.category}</RNText>
                 </View>
                 <RNText style={styles.priceDetailPrice}>
-                    {price.price.toFixed(2)}<Text style={styles.priceDetailCurrency}> $</Text>
-                    <RNText style={styles.priceDetailUnit}>  / {price.unit}</RNText>
+                    {price.price.toFixed(2)}<Text style={styles.priceDetailCurrency}> {CURRENCY}</Text>
+                    <RNText style={styles.priceDetailUnit}>  / {UNITS[price.unit] ?? price.unit}</RNText>
                 </RNText>
             </View>
 

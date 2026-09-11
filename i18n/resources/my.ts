@@ -237,6 +237,12 @@ export const my: TranslationSchema = {
     fruit: 'ဇီးသီး',
     seed: 'ဇီးစေ့',
   },
+  units: {
+    CUP: 'ဗူး',
+    GALLON: 'ပြည်',
+    BUSHELS: 'တင်း',
+  },
+  currency: 'ကျပ်',
   onboarding: {
     pricesTitle: 'ဈေးနှုန်းများ စီမံပါ',
     pricesDescription: 'အမျိုးအစားနှင့် ယူနစ်အလိုက် ဈေးကွက်နှုန်းထားများကို စက္ကန့်ပိုင်းအတွင်း သတ်မှတ်ပါ။',

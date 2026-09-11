@@ -34,7 +34,7 @@ interface EditPriceProps {
 }
 
 function EditPriceFields({ control }: { control: Control<FormData> }) {
-    const { UI_TEXT, VALIDATION_MESSAGES, CATEGORY_LIST: categoryOptions } = useLocalizedConstants()
+    const { UI_TEXT, VALIDATION_MESSAGES, CATEGORY_LIST: categoryOptions, UNITS } = useLocalizedConstants()
     return (
         <>
             <FormSelectField
@@ -49,7 +49,7 @@ function EditPriceFields({ control }: { control: Control<FormData> }) {
                 name="unit"
                 control={control}
                 label={UI_TEXT.UNIT_SELECTION}
-                buttons={UNIT_LIST}
+                buttons={UNIT_LIST.map((unit) => UNITS[unit] ?? unit)}
                 required
                 rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
             />

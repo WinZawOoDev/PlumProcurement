@@ -22,6 +22,7 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
+    const { CURRENCY, UNITS } = useLocalizedConstants()
     return (
         <View style={styles.purchaseDetailItemRow}>
             <View style={styles.sellerInfo}>
@@ -35,10 +36,10 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
                     <RNText style={styles.purchaseItemTitle}>{t(`categories.${item.category}`, { defaultValue: item.category })}</RNText>
                 </View>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {item.unit_price.toFixed(2)}$ / {item.unit}
+                    {item.unit_price.toFixed(2)}{CURRENCY} / {UNITS[item.unit] ?? item.unit}
                 </RNText>
             </View>
-            <RNText style={styles.purchaseDetailItemTotal}>{item.line_total.toFixed(2)}$</RNText>
+            <RNText style={styles.purchaseDetailItemTotal}>{item.line_total.toFixed(2)}{CURRENCY}</RNText>
         </View>
     )
 }
@@ -57,7 +58,7 @@ function StatCell({ label, value, highlight }: { label: string; value: string; h
 
 export default function PurchaseSummary() {
     const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
+    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
     const route = useRoute<PurchaseSummaryRouteProp>()
     const purchase = route.params?.purchase
 
@@ -98,7 +99,7 @@ export default function PurchaseSummary() {
                     <View style={styles.purchaseSummaryStatsRow}>
                         <StatCell label={UI_TEXT.TOTAL_ITEMS} value={purchase.items.length.toString()} />
                         <View style={styles.purchaseSummaryStatDivider} />
-                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${purchase.total.toFixed(2)}$`} highlight />
+                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${purchase.total.toFixed(2)}${CURRENCY}`} highlight />
                     </View>
                 </View>
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>
