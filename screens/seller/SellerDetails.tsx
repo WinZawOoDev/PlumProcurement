@@ -13,7 +13,7 @@ import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
 import { ISeller, ISellerPaymentStat, IPayment, IPurchaseDetail } from '../../types/database'
-import { formatDate } from '../../utils'
+import { formatDate, formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -126,9 +126,9 @@ function PurchasesSection({
                 <View style={styles.sellerStatsRow}>
                     <StatCell label={UI_TEXT.PURCHASES_COUNT} value={String(count)} icon="receipt-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${total.toFixed(2)}${CURRENCY}`} icon="wallet-outline" />
+                    <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${formatNumber(total)}${CURRENCY}`} icon="wallet-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${average.toFixed(2)}${CURRENCY}`} icon="analytics-outline" />
+                    <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${formatNumber(average)}${CURRENCY}`} icon="analytics-outline" />
                 </View>
             </Pressable>
         </View>
@@ -151,7 +151,7 @@ function PaymentsSection({
                 title={UI_TEXT.PAYMENT_HISTORY}
                 description={
                     stat && stat.balance > 0
-                        ? `${UI_TEXT.BALANCE}: ${stat.balance.toFixed(2)}${CURRENCY}`
+                        ? `${UI_TEXT.BALANCE}: ${formatNumber(stat.balance)}${CURRENCY}`
                         : undefined
                 }
             />
@@ -162,11 +162,11 @@ function PaymentsSection({
                 accessibilityLabel={`${UI_TEXT.PAYMENT_HISTORY}: ${UI_TEXT.VIEW_ALL}`}
             >
                 <View style={styles.sellerStatsRow}>
-                    <StatCell label={UI_TEXT.OWED} value={`${(stat?.total_owed ?? 0).toFixed(2)}${CURRENCY}`} icon="cart-outline" />
+                    <StatCell label={UI_TEXT.OWED} value={`${formatNumber(stat?.total_owed ?? 0)}${CURRENCY}`} icon="cart-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.PAID} value={`${(stat?.total_paid ?? 0).toFixed(2)}${CURRENCY}`} icon="checkmark-circle-outline" />
+                    <StatCell label={UI_TEXT.PAID} value={`${formatNumber(stat?.total_paid ?? 0)}${CURRENCY}`} icon="checkmark-circle-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.BALANCE} value={`${(stat?.balance ?? 0).toFixed(2)}${CURRENCY}`} icon="wallet-outline" />
+                    <StatCell label={UI_TEXT.BALANCE} value={`${formatNumber(stat?.balance ?? 0)}${CURRENCY}`} icon="wallet-outline" />
                 </View>
             </Pressable>
         </View>
@@ -180,7 +180,7 @@ function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }
     return (
         <View style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}>
             <View style={styles.sellerInfo}>
-                <RNText style={styles.sellerRecentTitle}>{item.amount.toFixed(2)}{CURRENCY}</RNText>
+                <RNText style={styles.sellerRecentTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
                 <RNText style={styles.sellerRecentSubtitle}>
                     {formatDate(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
@@ -209,7 +209,7 @@ function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: b
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
-                <RNText style={styles.sellerRecentTotal}>{item.total.toFixed(2)}{CURRENCY}</RNText>
+                <RNText style={styles.sellerRecentTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
             </View>
         </Pressable>
     )

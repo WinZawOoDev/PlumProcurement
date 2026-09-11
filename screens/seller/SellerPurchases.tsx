@@ -11,7 +11,7 @@ import { PAGINATION_CONFIG, ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
-import { formatDate } from '../../utils'
+import { formatDate, formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { CardSkeleton } from '../../components/Skeleton'
@@ -43,7 +43,7 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
-                <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}{CURRENCY}</RNText>
+                <RNText style={styles.purchaseItemTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
             </View>
         </Pressable>
     )
@@ -148,7 +148,7 @@ export default function SellerPurchases() {
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
                     <RNText style={styles.recentPurchasesCount}>
-                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${total.toFixed(2)}${CURRENCY}` : ''}
+                        {sellerStats && sellerStats.count > 0 ? `${sellerStats.count} · ${formatNumber(total)}${CURRENCY}` : ''}
                     </RNText>
                 </View>
 

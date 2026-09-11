@@ -9,10 +9,14 @@ import {
     sleep,
     isEmpty,
     formatDate,
+    formatNumber,
+    toMyanmarDigits,
+    toWesternDigits,
     buildPurchasesCsv,
     buildPurchasesCsvWithBom,
     getCsvFilename,
 } from '../utils'
+import { changeLanguage } from '../i18n'
 
 describe('formatPrice', () => {
     test('formats number to 2 decimals', () => {
@@ -143,6 +147,38 @@ describe('formatDate', () => {
         expect(formatDate(null)).toBe('')
         expect(formatDate(undefined)).toBe('')
         expect(formatDate('')).toBe('')
+    })
+})
+
+describe('Myanmar digit helpers', () => {
+    test('toMyanmarDigits converts Western digits', () => {
+        expect(toMyanmarDigits('12.50')).toBe('၁၂.၅၀')
+        expect(toMyanmarDigits(0)).toBe('၀')
+    })
+
+    test('toWesternDigits normalizes Myanmar digits back', () => {
+        expect(toWesternDigits('၁၂.၅၀')).toBe('12.50')
+    })
+
+    test('round-trips a date string', () => {
+        expect(toWesternDigits(toMyanmarDigits('2026-09-11'))).toBe('2026-09-11')
+    })
+})
+
+describe('formatNumber', () => {
+    afterEach(async () => {
+        await changeLanguage('en')
+    })
+
+    test('uses Western digits in English', () => {
+        expect(formatNumber(12.5)).toBe('12.50')
+        expect(formatNumber(3, 0)).toBe('3')
+    })
+
+    test('uses Myanmar digits in Myanmar', async () => {
+        await changeLanguage('my')
+        expect(formatNumber(12.5)).toBe('၁၂.၅၀')
+        expect(formatNumber(3, 0)).toBe('၃')
     })
 })
 

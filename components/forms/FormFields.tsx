@@ -5,6 +5,7 @@ import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-h
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
+import { toWesternDigits } from '../../utils'
 
 interface FormSelectFieldProps<T extends FieldValues> {
     name: Path<T>
@@ -81,6 +82,9 @@ export function FormInputField<T extends FieldValues>({
     rules,
 }: FormInputFieldProps<T>) {
     const styles = useStyles()
+    // Numeric keyboards may emit Myanmar digits on a Myanmar device; normalize
+    // to Western digits so validation patterns and parseFloat work.
+    const isNumeric = keyboardType === 'numeric' || keyboardType === 'decimal-pad'
 
     return (
         <Controller
@@ -93,7 +97,7 @@ export function FormInputField<T extends FieldValues>({
                     labelStyle={styles.formInputLabel}
                     placeholder={placeholder}
                     onBlur={onBlur}
-                    onChangeText={onChange}
+                    onChangeText={(text) => onChange(isNumeric ? toWesternDigits(text) : text)}
                     value={value}
                     keyboardType={keyboardType}
                     inputContainerStyle={styles.formInputContainer}

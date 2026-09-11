@@ -9,6 +9,7 @@ import { AMOUNT_PATTERN } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { showSuccess, showError } from '../../utils/notifications'
+import { formatNumber } from '../../utils'
 
 type FormData = {
     amount: string
@@ -66,7 +67,7 @@ export default function PaymentFormSheet({ visible, sellerId, balance, onClose, 
             <View style={styles.bottomSheetContainer}>
                 <Text style={styles.bottomSheetTitle}>{UI_TEXT.RECORD_PAYMENT}</Text>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {UI_TEXT.OUTSTANDING_BALANCE}: {balance.toFixed(2)}{CURRENCY}
+                    {UI_TEXT.OUTSTANDING_BALANCE}: {formatNumber(balance)}{CURRENCY}
                 </RNText>
                 <FormInputField
                     name="amount"

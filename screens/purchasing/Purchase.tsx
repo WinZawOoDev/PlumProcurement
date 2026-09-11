@@ -15,6 +15,7 @@ import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
+import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
@@ -57,7 +58,7 @@ function PriceItemCard({
                     <RNText style={styles.priceItemCardUnit}>{UNITS[price.unit] ?? price.unit}</RNText>
                 </View>
                 <View style={styles.priceItemCardPriceBlock}>
-                    <RNText style={styles.priceItemCardPrice}>{price.price.toFixed(2)}</RNText>
+                    <RNText style={styles.priceItemCardPrice}>{formatNumber(price.price)}</RNText>
                     <RNText style={styles.priceItemCardCurrency}>{CURRENCY}</RNText>
                 </View>
             </View>
@@ -97,9 +98,9 @@ function PriceItemCard({
             {selected && (
                 <View style={styles.priceItemCardFooter}>
                     <RNText style={styles.priceItemCardFooterCalc}>
-                        {quantity} × {price.price.toFixed(2)}{CURRENCY}
+                        {quantity} × {formatNumber(price.price)}{CURRENCY}
                     </RNText>
-                    <RNText style={styles.priceItemCardFooterTotal}>{lineTotal.toFixed(2)}{CURRENCY}</RNText>
+                    <RNText style={styles.priceItemCardFooterTotal}>{formatNumber(lineTotal)}{CURRENCY}</RNText>
                 </View>
             )}
         </View>
@@ -126,7 +127,7 @@ function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; tot
             <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_AMOUNT}</Text>
                 <Text style={[styles.purchaseTotalText, total <= 0 && styles.purchaseSummaryValueMuted]}>
-                    {total > 0 ? `${total.toFixed(2)}${CURRENCY}` : '—'}
+                    {total > 0 ? `${formatNumber(total)}${CURRENCY}` : '—'}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -321,7 +322,7 @@ function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
                 <RNText style={styles.purchaseItemTitle}>{title}</RNText>
                 {!!item.seller_name && <RNText style={styles.sellerPhoneText}>{UI_TEXT.SOLD_BY}: {item.seller_name}</RNText>}
             </View>
-            <RNText style={styles.purchaseItemTotal}>{item.total.toFixed(2)}{CURRENCY}</RNText>
+            <RNText style={styles.purchaseItemTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
         </View>
     )
 }

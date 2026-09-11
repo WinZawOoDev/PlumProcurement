@@ -6,6 +6,7 @@ import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { DIMENSIONS } from '../../constants'
+import { formatNumber } from '../../utils'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
@@ -45,13 +46,13 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                     <View
                         style={styles.sellerRowDotLegend}
                         accessible
-                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${(purchaseTotal ?? 0).toFixed(2)}${CURRENCY} ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${(balance ?? 0).toFixed(2)}${CURRENCY} ${UI_TEXT.BALANCE.toLowerCase()}`}
+                        accessibilityLabel={`${purchaseCount ?? 0} ${UI_TEXT.PURCHASES_COUNT.toLowerCase()}, ${formatNumber(purchaseTotal ?? 0)}${CURRENCY} ${UI_TEXT.TOTAL_VALUE.toLowerCase()}, ${formatNumber(balance ?? 0)}${CURRENCY} ${UI_TEXT.BALANCE.toLowerCase()}`}
                     >
                         {(purchaseCount ?? 0) > 0 && (
                             <>
                                 <Ionicons name="receipt-outline" size={12} color={theme.colors.primary} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {purchaseCount} · {(purchaseTotal ?? 0).toFixed(2)}{CURRENCY}
+                                    {purchaseCount} · {formatNumber(purchaseTotal ?? 0)}{CURRENCY}
                                 </RNText>
                             </>
                         )}
@@ -59,7 +60,7 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                             <>
                                 <Ionicons name="wallet-outline" size={12} color={theme.colors.warning} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {(balance ?? 0).toFixed(2)}{CURRENCY}
+                                    {formatNumber(balance ?? 0)}{CURRENCY}
                                 </RNText>
                             </>
                         )}

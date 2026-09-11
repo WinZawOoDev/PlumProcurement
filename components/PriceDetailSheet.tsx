@@ -6,7 +6,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import FontAwesomeIcon from '@react-native-vector-icons/fontawesome-free-solid'
 import { useStyles } from '../styles'
 import { IPrice } from '../types/database'
-import { formatDate } from '../utils'
+import { formatDate, formatNumber } from '../utils'
 import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { DetailSheet } from './DetailSheet'
@@ -33,7 +33,7 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
                     <RNText style={styles.priceDetailCategoryText} numberOfLines={1}>{price.category}</RNText>
                 </View>
                 <RNText style={styles.priceDetailPrice}>
-                    {price.price.toFixed(2)}<Text style={styles.priceDetailCurrency}> {CURRENCY}</Text>
+                    {formatNumber(price.price)}<Text style={styles.priceDetailCurrency}> {CURRENCY}</Text>
                     <RNText style={styles.priceDetailUnit}>  / {UNITS[price.unit] ?? price.unit}</RNText>
                 </RNText>
             </View>

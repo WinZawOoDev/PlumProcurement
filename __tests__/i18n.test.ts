@@ -24,8 +24,13 @@ describe('i18n', () => {
         expect(i18n.t('messages.ERROR_GENERIC')).not.toBe(MESSAGES.ERROR_GENERIC)
     })
 
-    test('interpolates values in Myanmar', async () => {
+    test('interpolates values in Myanmar using Myanmar digits', async () => {
         await changeLanguage('my')
+        expect(i18n.t('uiText.TOTAL_COUNT', { count: 3 })).toContain('၃')
+        expect(i18n.t('uiText.TOTAL_COUNT', { count: 3 })).not.toContain('3')
+    })
+
+    test('keeps Western digits in English', () => {
         expect(i18n.t('uiText.TOTAL_COUNT', { count: 3 })).toContain('3')
     })
 

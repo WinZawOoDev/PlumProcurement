@@ -5,6 +5,7 @@ import { useTheme } from '@rneui/themed'
 import { useTranslation } from 'react-i18next'
 import { useStyles } from '../styles'
 import { IPrice } from '../types/database'
+import { formatNumber } from '../utils'
 
 interface PriceTrendProps {
     prices: IPrice[]
@@ -33,7 +34,7 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
     return (
         <View style={styles.priceTrendContainer}>
             <Text style={styles.priceTrendTitle}>
-                {t('uiText.PRICE_TREND_SUMMARY', { count: stats.count, avg: stats.avg.toFixed(2) })}
+                {t('uiText.PRICE_TREND_SUMMARY', { count: stats.count, avg: formatNumber(stats.avg) })}
             </Text>
             <View style={styles.priceTrendBarsRow}>
                 {stats.sorted.slice(-12).map((p) => {
@@ -54,8 +55,8 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
                 })}
             </View>
             <View style={styles.priceTrendScaleRow}>
-                <RNText style={styles.priceTrendScaleText}>{stats.min.toFixed(2)}{t('currency')}</RNText>
-                <RNText style={styles.priceTrendScaleText}>{stats.max.toFixed(2)}{t('currency')}</RNText>
+                <RNText style={styles.priceTrendScaleText}>{formatNumber(stats.min)}{t('currency')}</RNText>
+                <RNText style={styles.priceTrendScaleText}>{formatNumber(stats.max)}{t('currency')}</RNText>
             </View>
         </View>
     )

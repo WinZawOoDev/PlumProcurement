@@ -25,6 +25,7 @@ import { IPurchaseDetail } from '../../types/database';
 import {
   buildPurchasesCsvWithBom,
   formatDate,
+  formatNumber,
   getCsvFilename,
 } from '../../utils';
 import { shareOrSaveCsv } from '../../utils/csvExport';
@@ -60,7 +61,7 @@ function PurchaseSummaryCard({ count, total }: { count: number; total: number })
         <RNText style={styles.purchaseSummaryLabel}>
           {UI_TEXT.TOTAL_VALUE}
         </RNText>
-        <RNText style={styles.purchaseTotalText}>{total.toFixed(2)}{CURRENCY}</RNText>
+        <RNText style={styles.purchaseTotalText}>{formatNumber(total)}{CURRENCY}</RNText>
       </View>
     </View>
   );
@@ -128,7 +129,7 @@ function PurchaseRow({
       </View>
       <View style={styles.purchaseItemActions}>
         <RNText style={styles.purchaseItemTotal}>
-          {item.total.toFixed(2)}{CURRENCY}
+          {formatNumber(item.total)}{CURRENCY}
         </RNText>
         <View style={styles.purchaseItemButtons}>
           {locked ? (

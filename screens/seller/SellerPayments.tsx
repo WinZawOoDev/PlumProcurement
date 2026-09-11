@@ -12,6 +12,7 @@ import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
 import { formatDate } from '../../utils'
+import { formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -27,11 +28,11 @@ function PaymentStatsSection({ stat }: { stat: ISellerPaymentStat }) {
     const { UI_TEXT, CURRENCY } = useLocalizedConstants()
     return (
         <View style={styles.sellerStatsRow}>
-            <StatCell label={UI_TEXT.OWED} value={`${stat.total_owed.toFixed(2)}${CURRENCY}`} icon="cart-outline" />
+            <StatCell label={UI_TEXT.OWED} value={`${formatNumber(stat.total_owed)}${CURRENCY}`} icon="cart-outline" />
             <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.PAID} value={`${stat.total_paid.toFixed(2)}${CURRENCY}`} icon="checkmark-circle-outline" />
+            <StatCell label={UI_TEXT.PAID} value={`${formatNumber(stat.total_paid)}${CURRENCY}`} icon="checkmark-circle-outline" />
             <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.BALANCE} value={`${stat.balance.toFixed(2)}${CURRENCY}`} icon="wallet-outline" />
+            <StatCell label={UI_TEXT.BALANCE} value={`${formatNumber(stat.balance)}${CURRENCY}`} icon="wallet-outline" />
         </View>
     )
 }
@@ -44,7 +45,7 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
     return (
         <View style={styles.purchaseItemRow}>
             <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>{item.amount.toFixed(2)}{CURRENCY}</RNText>
+                <RNText style={styles.purchaseItemTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
                 <RNText style={styles.purchaseItemSubtitle}>
                     {formatDate(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}

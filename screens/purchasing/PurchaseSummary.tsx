@@ -9,7 +9,7 @@ import { useStyles } from '../../styles'
 import { ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { IPurchaseDetail } from '../../types/database'
-import { formatDate } from '../../utils'
+import { formatDate, formatNumber } from '../../utils'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 
@@ -36,10 +36,10 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
                     <RNText style={styles.purchaseItemTitle}>{t(`categories.${item.category}`, { defaultValue: item.category })}</RNText>
                 </View>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {item.unit_price.toFixed(2)}{CURRENCY} / {UNITS[item.unit] ?? item.unit}
+                    {formatNumber(item.unit_price)}{CURRENCY} / {UNITS[item.unit] ?? item.unit}
                 </RNText>
             </View>
-            <RNText style={styles.purchaseDetailItemTotal}>{item.line_total.toFixed(2)}{CURRENCY}</RNText>
+            <RNText style={styles.purchaseDetailItemTotal}>{formatNumber(item.line_total)}{CURRENCY}</RNText>
         </View>
     )
 }
@@ -99,7 +99,7 @@ export default function PurchaseSummary() {
                     <View style={styles.purchaseSummaryStatsRow}>
                         <StatCell label={UI_TEXT.TOTAL_ITEMS} value={purchase.items.length.toString()} />
                         <View style={styles.purchaseSummaryStatDivider} />
-                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${purchase.total.toFixed(2)}${CURRENCY}`} highlight />
+                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${formatNumber(purchase.total)}${CURRENCY}`} highlight />
                     </View>
                 </View>
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>

@@ -2,6 +2,7 @@ import { Pressable, Text } from 'react-native'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { IPrice } from '../../types/database'
+import { formatNumber } from '../../utils'
 import { useStyles } from '../../styles'
 
 interface PriceCardProps extends Omit<IPrice, 'id'> {
@@ -20,11 +21,11 @@ function PriceCardInner({ price, unit, onPress }: PriceCardProps) {
             onPress={onPress}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={t('a11y.PRICE_CARD', { unit: unitLabel, price: price.toFixed(2) })}
+            accessibilityLabel={t('a11y.PRICE_CARD', { unit: unitLabel, price: formatNumber(price) })}
         >
             <Text style={styles.priceCardUnitText} numberOfLines={1}>{unitLabel}</Text>
             <Text style={styles.priceCardPriceValue}>
-                {price.toFixed(2)}<Text style={styles.priceCardCurrencySymbol}> {t('currency')}</Text>
+                {formatNumber(price)}<Text style={styles.priceCardCurrencySymbol}> {t('currency')}</Text>
             </Text>
         </Pressable>
     )

@@ -2,6 +2,26 @@
  * Utility functions for common operations
  */
 
+import i18n from '../i18n'
+import { toMyanmarDigits, toWesternDigits } from './digits'
+
+export { toMyanmarDigits, toWesternDigits }
+
+/**
+ * Formats a number for display, using Myanmar digits when the active language
+ * is Myanmar. Arithmetic must always stay on `number` values — only call this
+ * at the rendering boundary, never feed its output back into calculations.
+ */
+export function formatNumber(value: number, fractionDigits = 2): string {
+    const formatted = value.toFixed(fractionDigits)
+    return i18n.language === 'my' ? toMyanmarDigits(formatted) : formatted
+}
+
+/** Formats a monetary value with the localized currency suffix. */
+export function formatCurrency(value: number, fractionDigits = 2): string {
+    return `${formatNumber(value, fractionDigits)}${i18n.t('currency')}`
+}
+
 /**
  * Format price value to 2 decimal places
  */

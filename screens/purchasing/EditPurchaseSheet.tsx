@@ -10,6 +10,7 @@ import { purchaseService } from '../../services/purchaseService'
 import { QuantityStepper } from '../../components/QuantityStepper'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { showSuccess, showError } from '../../utils/notifications'
+import { formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
 
 interface EditPurchaseSheetProps {
@@ -26,7 +27,7 @@ function EditPurchaseSummary({ total }: { total: number }) {
         <View style={styles.purchaseSummaryCard}>
             <View style={styles.purchaseSummaryRow}>
                 <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
-                <RNText style={styles.purchaseTotalText}>{total > 0 ? `${total.toFixed(2)}${CURRENCY}` : '—'}</RNText>
+                <RNText style={styles.purchaseTotalText}>{total > 0 ? `${formatNumber(total)}${CURRENCY}` : '—'}</RNText>
             </View>
         </View>
     )
@@ -116,7 +117,7 @@ export function EditPurchaseSheet({ visible, purchase, onClose, onSaved }: EditP
                 {resolved.map(({ item, q }) => (
                     <View key={item.id} style={styles.editItemBlock}>
                         <RNText style={styles.purchaseItemSubtitle}>
-                            {t(`categories.${item.category}`, { defaultValue: item.category })} ({UNITS[item.unit] ?? item.unit}) @ {item.unit_price.toFixed(2)}{CURRENCY}
+                            {t(`categories.${item.category}`, { defaultValue: item.category })} ({UNITS[item.unit] ?? item.unit}) @ {formatNumber(item.unit_price)}{CURRENCY}
                         </RNText>
                         <QuantityStepper
                             value={q}
