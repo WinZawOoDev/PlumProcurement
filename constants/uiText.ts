@@ -1,0 +1,150 @@
+/**
+ * UI copy and accessibility labels.
+ */
+
+// ===== UI TEXT =====
+export const UI_TEXT = {
+  // Common buttons
+  SAVE: 'Save',
+  CANCEL: 'Cancel',
+  UPDATE: 'Update',
+  DELETE: 'Delete',
+  EDIT: 'Edit',
+  ADD: 'Add New',
+
+  // Specific buttons
+  SAVE_PRICE: 'Save Price',
+  ADD_NEW_PRICE: 'Add New Price',
+  COUNT: 'count',
+
+  // Form labels
+  CATEGORY: 'Category',
+  UNIT_SELECTION: 'Unit',
+  PRICE: 'Price',
+
+  // Sections
+  PRICE_MANAGEMENT: 'Price Management',
+  PRICE_DESCRIPTION: 'Define and adjust market rates for plum varieties.',
+  EDIT_PRICE: 'Edit Price',
+
+  // Field names for display
+  UNIT: 'Unit',
+  STATUS: 'Status',
+  PLUM_COUNT_TITLE: "Let's count the Plums",
+  SELLERS: 'Sellers',
+  CURRENT_SELECTION: 'Current selection',
+
+  // Search & sort
+  SEARCH_PRICES_PLACEHOLDER: 'Search by category or unit',
+  SEARCH_PURCHASES_PLACEHOLDER: 'Search by category or seller',
+  SEARCH_SELLERS_PLACEHOLDER: 'Search by name or phone',
+  NO_MATCHING_RESULTS: 'No matching results',
+
+  // Purchasing
+  RECORD_PURCHASE: 'Record Purchase',
+  PURCHASE_DESCRIPTION: 'Select a price item and record purchased quantities.',
+  SELECT_PRICE_ITEM: 'Price Item',
+  PRICE_ITEMS: 'Price Items',
+  PRICE_ITEMS_HINT: 'Swipe to browse',
+  SELECT_SELLER: 'Seller',
+  SELECT_SELLER_PLACEHOLDER: 'Select seller',
+  SELECT_SELLER_AND_PRICE_FIRST: 'Select a seller and a price item to set the quantity',
+  NO_SELLER: 'No seller',
+  SOLD_BY: 'Sold by',
+  QUANTITY: 'Quantity',
+  UNIT_PRICE: 'Unit Price',
+  TOTAL: 'Total',
+  TOTAL_ITEMS: 'Total Items',
+  TOTAL_AMOUNT: 'Total Amount',
+  ITEMS: 'Items',
+  ADD_ITEM: 'Add Item',
+  REMOVE_ITEM: 'Remove',
+  RECENT_PURCHASES: 'Recent Purchases',
+  RECENT_PAYMENTS: 'Recent Payments',
+  PURCHASE_HISTORY_TITLE: 'Purchase History',
+  PURCHASE_HISTORY_DESCRIPTION: 'All recorded purchases with running totals.',
+  PURCHASE_SUMMARY_TITLE: 'Purchase Summary',
+  PURCHASE_SUMMARY_DESCRIPTION: 'Item details recorded in this purchase.',
+  PURCHASE_DATE: 'Date',
+  EDIT_PURCHASE: 'Edit Purchase',
+  VIEW_HISTORY: 'View History',
+  VIEW_ALL: 'View all',
+  EXPORT_CSV: 'Export CSV',
+  EMPTY_PURCHASE_LIST: 'No purchases recorded yet',
+  TOTAL_VALUE: 'Total',
+  PURCHASES_COUNT: 'Purchases',
+  AVERAGE_VALUE: 'Average',
+
+  // Payments
+  OWED: 'Owed',
+  PAID: 'Paid',
+  BALANCE: 'Balance',
+  RECORD_PAYMENT: 'Record Payment',
+  PAYMENT: 'Payment',
+  PAYMENT_HISTORY: 'Payment History',
+  PAYMENT_METHOD: 'Payment Method',
+  NOTE: 'Note (optional)',
+  AMOUNT: 'Amount',
+  OUTSTANDING_BALANCE: 'Outstanding Balance',
+  EMPTY_PAYMENT_LIST: 'No payments recorded yet',
+
+  // Sellers
+  SELLERS_DESCRIPTION: 'Manage the sellers you buy from.',
+  ADD_SELLER: 'Add Seller',
+  EDIT_SELLER: 'Edit Seller',
+  SELLER_NAME: 'Seller Name',
+  PHONE: 'Phone (optional)',
+  ADDRESS: 'Address (optional)',
+  EMPTY_SELLER_LIST: 'No sellers added yet',
+
+  // Settings
+  SETTINGS: 'Settings',
+  SETTINGS_DESCRIPTION: 'Personalize how the app looks and behaves.',
+  THEME: 'Theme',
+  THEME_MODE_SYSTEM: 'Match system',
+  THEME_MODE_LIGHT: 'Light',
+  THEME_MODE_DARK: 'Dark',
+  APPEARANCE: 'Appearance',
+  APPEARANCE_DESCRIPTION: 'Choose how the app looks on this device.',
+  THEME_MODE_SYSTEM_HINT: 'Follow system',
+  THEME_MODE_LIGHT_HINT: 'Always light',
+  THEME_MODE_DARK_HINT: 'Always dark',
+  THEME_PREVIEW_TITLE: 'Preview',
+  THEME_PREVIEW_DESCRIPTION: 'How the current theme looks.',
+  DATA_STORAGE: 'Data & storage',
+  DATA_STORAGE_DESCRIPTION: 'Your prices, purchases and sellers are stored locally on this device with SQLite. No account needed.',
+  ABOUT: 'About',
+  APP_NAME: 'Plum Procurement',
+  APP_VERSION: 'Version 0.1.0',
+  APP_TAGLINE: 'Manage market prices, record purchases and maintain your seller directory.',
+  SETTINGS_FOOTER_NOTE: 'Preferences are saved on this device.',
+
+  // Deletion confirmations
+  DELETE_CONFIRM_TITLE: 'Confirm deletion',
+  DELETE_PRICE_CONFIRM_MESSAGE:
+    'Delete this price? This cannot be undone.',
+  DELETE_SELLER_CONFIRM_MESSAGE: 'Delete this seller? This cannot be undone.',
+  DELETE_PURCHASE_CONFIRM_MESSAGE: 'Delete this purchase? This cannot be undone.',
+} as const;
+
+// ===== ACCESSIBILITY LABELS =====
+export const A11Y_LABELS = {
+  EDIT_PRICE: 'Edit price',
+  DELETE_PRICE: 'Delete price',
+  EDIT_SELLER: 'Edit seller',
+  DELETE_SELLER: 'Delete seller',
+  EDIT_PURCHASE: 'Edit purchase',
+  DELETE_PURCHASE: 'Delete purchase',
+  LOCKED_PURCHASE: 'Purchase locked: its seller has recorded payments',
+  RECORD_PAYMENT: 'Record payment',
+  EDIT_PAYMENT: 'Edit payment',
+  DELETE_PAYMENT: 'Delete payment',
+  ADD_PURCHASE_ITEM: 'Add purchase item',
+  REMOVE_PURCHASE_ITEM: 'Remove purchase item',
+  INCREASE_QUANTITY: 'Increase quantity',
+  DECREASE_QUANTITY: 'Decrease quantity',
+  CLEAR_SEARCH: 'Clear search',
+  TOGGLE_SEARCH: 'Toggle search',
+  GO_BACK: 'Go back',
+  SELECT_THEME_MODE: 'Select theme mode',
+} as const;
