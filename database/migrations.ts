@@ -21,7 +21,12 @@ const MIGRATIONS: Migration[] = [
             if (!columns.includes('seller_id')) {
                 await db.executeAsync(`ALTER TABLE purchases ADD COLUMN seller_id INTEGER`)
             }
-            await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_price_id ON purchases(price_id)`)
+            // price_id only exists on pre-normalization flat tables; on a fresh
+            // install purchases is already split, so indexing it would fail with
+            // "no such column". v3 indexes purchase_items(price_id) instead.
+            if (columns.includes('price_id')) {
+                await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_price_id ON purchases(price_id)`)
+            }
             await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_seller_id ON purchases(seller_id)`)
             await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_purchases_created_at ON purchases(created_at)`)
             await db.executeAsync(`CREATE INDEX IF NOT EXISTS idx_sellers_name ON sellers(name)`)

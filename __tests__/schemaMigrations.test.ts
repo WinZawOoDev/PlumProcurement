@@ -32,7 +32,9 @@ describe('initializeSchema', () => {
         expect(sql.filter((q) => q.includes('CREATE TABLE IF NOT EXISTS app_settings'))).toHaveLength(1)
         expect(sql).toContain('PRAGMA user_version')
         expect(sql).toContain('PRAGMA user_version = 1')
-        expect(sql.some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_purchases_price_id'))).toBe(true)
+        // A fresh install already has the normalized purchases table (no
+        // price_id column), so the legacy index must be skipped.
+        expect(sql.some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_purchases_price_id'))).toBe(false)
         expect(sql.some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_sellers_name'))).toBe(true)
     })
 
@@ -125,6 +127,20 @@ describe('initializeSchema', () => {
 
         await expect(initializeSchema()).resolves.toBeUndefined()
         expect(queries().some((q) => q.includes('ALTER TABLE purchases ADD COLUMN seller_id'))).toBe(true)
+    })
+
+    test('indexes purchases.price_id only on legacy flat tables', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA table_info(purchases)') {
+                return { results: [{ name: 'id' }, { name: 'price_id' }, { name: 'quantity' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+        expect(
+            queries().some((q) => q.includes('CREATE INDEX IF NOT EXISTS idx_purchases_price_id'))
+        ).toBe(true)
     })
 
     test('v3 normalizes legacy flat purchases into header + items', async () => {
