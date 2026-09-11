@@ -20,6 +20,8 @@ export const ROUTES = {
   SELLER_DETAILS: 'SellerDetails',
   SELLER_PURCHASES: 'SellerPurchases',
   SELLER_PAYMENTS: 'SellerPayments',
+  RECORD_PAYMENT: 'RecordPayment',
+  PAYMENT_REVIEW: 'PaymentReview',
   SETTINGS: 'Settings',
 } as const;
 

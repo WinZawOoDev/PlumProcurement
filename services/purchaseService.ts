@@ -6,6 +6,7 @@ import {
     fetchRecentPurchases,
     fetchRecentPurchasesBySeller,
     fetchSellerStats,
+    fetchUnpaidPurchasesBySeller,
     initializePurchases,
     updatePurchase,
     type NewPurchase,
@@ -79,6 +80,16 @@ export class PurchaseService {
         await initializeSellers()
         await initializePurchases()
         return fetchRecentPurchasesBySeller(sellerId, limit)
+    }
+
+    /**
+     * Seller purchases not yet linked to a payment, oldest first — the
+     * purchases a new payment is applied to.
+     */
+    async getUnpaidPurchasesBySeller(sellerId: number, limit = 5): Promise<IPurchaseDetail[]> {
+        await initializeSellers()
+        await initializePurchases()
+        return fetchUnpaidPurchasesBySeller(sellerId, limit)
     }
 }
 

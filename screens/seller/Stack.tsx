@@ -3,6 +3,8 @@ import Sellers from "./Sellers";
 import SellerDetails from "./SellerDetails";
 import SellerPurchases from "./SellerPurchases";
 import SellerPayments from "./SellerPayments";
+import RecordPayment from "./RecordPayment";
+import PaymentReview from "./PaymentReview";
 import PurchaseSummary from "../purchasing/PurchaseSummary";
 import { ROUTES } from "../../constants";
 import i18n from "../../i18n";
@@ -32,6 +34,14 @@ const SellerStack = createNativeStackNavigator({
     [ROUTES.SELLER_PAYMENTS]: {
       screen: SellerPayments,
       options: { title: i18n.t('uiText.PAYMENT_HISTORY') }
+    },
+    [ROUTES.RECORD_PAYMENT]: {
+      screen: RecordPayment,
+      options: { title: i18n.t('uiText.RECORD_PAYMENT') }
+    },
+    [ROUTES.PAYMENT_REVIEW]: {
+      screen: PaymentReview,
+      options: { title: i18n.t('uiText.PAYMENT_REVIEW_TITLE') }
     }
   }
 })

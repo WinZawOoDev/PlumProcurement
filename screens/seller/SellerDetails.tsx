@@ -1,7 +1,7 @@
 import { Pressable, RefreshControl, ScrollView, Text as RNText, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { ParamListBase, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useTheme } from '@rneui/themed'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +22,6 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
 import { StatCell } from '../../components/StatCell'
-import PaymentFormSheet from './PaymentFormSheet'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -320,7 +319,6 @@ export default function SellerDetails() {
     const [paymentStat, setPaymentStat] = useState<ISellerPaymentStat | null>(null)
     const [recentPurchases, setRecentPurchases] = useState<IPurchaseDetail[]>([])
     const [recentPayments, setRecentPayments] = useState<IPayment[]>([])
-    const [paymentSheetVisible, setPaymentSheetVisible] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const { loading, withLoading } = useLoading(false)
 
@@ -369,6 +367,18 @@ export default function SellerDetails() {
     useEffect(() => {
         loadDetails()
     }, [loadDetails])
+
+    // Refresh stats/recent payments when returning from the Record Payment screen.
+    const hasFocusedRef = useRef(false)
+    useFocusEffect(
+        useCallback(() => {
+            if (!hasFocusedRef.current) {
+                hasFocusedRef.current = true
+                return
+            }
+            loadDetails()
+        }, [loadDetails])
+    )
 
     const headerDescription: React.ReactNode | undefined = seller
         ? (() => {
@@ -482,7 +492,14 @@ export default function SellerDetails() {
 
                         <PrimaryButton
                             title={UI_TEXT.PAYMENT}
-                            onPress={() => setPaymentSheetVisible(true)}
+                            onPress={() =>
+                                navigation.navigate(ROUTES.RECORD_PAYMENT, {
+                                    sellerId: seller.id,
+                                    sellerName: seller.name,
+                                    sellerPhone: seller.phone,
+                                    balance: paymentStat?.balance ?? 0,
+                                })
+                            }
                             containerStyle={styles.recordPaymentButton}
                         />
 
@@ -521,16 +538,6 @@ export default function SellerDetails() {
                     <SellerDetailsSkeleton />
                 )}
             </View>
-
-            {seller && (
-                <PaymentFormSheet
-                    visible={paymentSheetVisible}
-                    sellerId={seller.id}
-                    balance={paymentStat?.balance ?? 0}
-                    onClose={() => setPaymentSheetVisible(false)}
-                    onSaved={loadDetails}
-                />
-            )}
         </SafeAreaView>
     )
 }

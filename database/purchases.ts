@@ -383,3 +383,30 @@ export async function fetchRecentPurchasesBySeller(sellerId: number, limit = 3):
     const { items } = await fetchPurchasesPage({ limit, sellerId })
     return items
 }
+
+/**
+ * Seller purchases that no payment has been linked to yet, oldest first (the
+ * order payments settle them). Used to show what a payment is being made for.
+ */
+export async function fetchUnpaidPurchasesBySeller(sellerId: number, limit = 5): Promise<IPurchaseDetail[]> {
+    let db;
+    try {
+        db = initDb()
+        const { results } = await db.executeAsync(
+            `
+            SELECT p.*, s.name AS seller_name,
+                   EXISTS (SELECT 1 FROM payments py WHERE py.purchase_id = p.id) AS has_payment
+            FROM purchases p
+            LEFT JOIN sellers s ON s.id = p.seller_id
+            WHERE p.seller_id = ?
+              AND NOT EXISTS (SELECT 1 FROM payments py WHERE py.purchase_id = p.id)
+            ORDER BY p.id ASC
+            LIMIT ?
+            `,
+            [sellerId, limit]
+        )
+        return attachItems(db, results as unknown as IPurchaseWithSeller[])
+    } catch (error) {
+        throw new DatabaseError('Failed to fetch unpaid purchases', error)
+    }
+}
