@@ -80,25 +80,24 @@ describe('createPayment overpayment guard', () => {
 })
 
 describe('deletePayment FIFO rebalance', () => {
-    test('reassigns remaining payments to the oldest purchases', async () => {
+    test('reassigns remaining payments to the oldest purchases in a single statement', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
             .mockResolvedValueOnce({}) // DELETE payment
-            .mockResolvedValueOnce({}) // UPDATE payments SET purchase_id = NULL
-            .mockResolvedValueOnce({ results: [{ id: 10 }, { id: 11 }] }) // purchases oldest-first
-            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // remaining payments oldest-first
-            .mockResolvedValueOnce({}) // UPDATE link
+            .mockResolvedValueOnce({}) // reallocation UPDATE
 
         await expect(deletePayment(4)).resolves.toBeUndefined()
 
-        expect(executeAsync).toHaveBeenCalledWith(
-            'UPDATE payments SET purchase_id = NULL WHERE seller_id = ?',
-            [2]
-        )
-        expect(executeAsync).toHaveBeenLastCalledWith(
-            'UPDATE payments SET purchase_id = ? WHERE id = ?',
-            [10, 1]
-        )
+        expect(executeAsync).toHaveBeenCalledTimes(3)
+        const [sql, params] = executeAsync.mock.calls[2]
+        expect(sql).toContain('UPDATE payments')
+        expect(sql).toContain('LIMIT 1 OFFSET')
+        expect(sql).toContain('earlier.id < payments.id')
+        expect(params).toEqual([2])
+        // No per-payment update loop (N+1).
+        expect(
+            executeAsync.mock.calls.filter(([q]) => String(q).includes('SET purchase_id = ?'))
+        ).toHaveLength(0)
     })
 })
 

@@ -30,29 +30,33 @@ async function fetchOwedAndPaid(db: DbExecutor, sellerId: number, excludePayment
 
 /**
  * Rebuilds a seller's payment -> purchase links using the canonical FIFO rule
- * (oldest payment settles the oldest purchase, 1:1). Must be called inside a
- * transaction whenever a payment is removed, otherwise the deleted payment's
- * purchase stays linked — leaving the wrong purchase locked against edit/delete.
+ * (oldest payment settles the oldest purchase, 1:1; payments beyond the
+ * purchase count are left unlinked). Must be called inside a transaction
+ * whenever a payment is removed, otherwise the deleted payment's purchase
+ * stays linked — leaving the wrong purchase locked against edit/delete.
  */
 async function reallocateSellerPayments(db: DbExecutor, sellerId: number): Promise<void> {
-    await db.executeAsync(`UPDATE payments SET purchase_id = NULL WHERE seller_id = ?`, [sellerId])
-    const { results: purchaseRows } = await db.executeAsync(
-        `SELECT id FROM purchases WHERE seller_id = ? ORDER BY id ASC`,
+    // One statement for the whole seller: for each payment, the offset is the
+    // number of older payments, so it maps onto the purchase at that offset
+    // (or NULL when out of range). Avoids the previous N+1 of one UPDATE per
+    // payment link.
+    await db.executeAsync(
+        `UPDATE payments
+         SET purchase_id = (
+             SELECT p.id
+             FROM purchases p
+             WHERE p.seller_id = payments.seller_id
+             ORDER BY p.id ASC
+             LIMIT 1 OFFSET (
+                 SELECT COUNT(*)
+                 FROM payments earlier
+                 WHERE earlier.seller_id = payments.seller_id
+                   AND earlier.id < payments.id
+             )
+         )
+         WHERE seller_id = ?`,
         [sellerId]
     )
-    const { results: paymentRows } = await db.executeAsync(
-        `SELECT id FROM payments WHERE seller_id = ? ORDER BY id ASC`,
-        [sellerId]
-    )
-    const purchaseIds = (purchaseRows as unknown as Array<{ id: number }>).map((row) => row.id)
-    const paymentIds = (paymentRows as unknown as Array<{ id: number }>).map((row) => row.id)
-    const pairs = Math.min(purchaseIds.length, paymentIds.length)
-    for (let i = 0; i < pairs; i++) {
-        await db.executeAsync(
-            `UPDATE payments SET purchase_id = ? WHERE id = ?`,
-            [purchaseIds[i], paymentIds[i]]
-        )
-    }
 }
 
 export interface PaymentsPage {
