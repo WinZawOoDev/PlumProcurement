@@ -46,6 +46,9 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         return insertId as number;
     } catch (error) {
         if (error instanceof DatabaseError) throw error
+        if (isUniqueViolation(error)) {
+            throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'), error)
+        }
         throw new DatabaseError('Failed to create price', error)
     }
 }
@@ -87,6 +90,9 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         `, values)
     } catch (error) {
         if (error instanceof DatabaseError) throw error
+        if (isUniqueViolation(error)) {
+            throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'), error)
+        }
         throw new DatabaseError('Failed to update price', error)
     }
 }
@@ -122,4 +128,9 @@ export async function deletePrice(id: number): Promise<void> {
 function isForeignKeyViolation(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error ?? '')
     return /foreign key|FOREIGN KEY|constraint failed/i.test(message)
+}
+
+function isUniqueViolation(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? '')
+    return /unique constraint failed/i.test(message)
 }

@@ -17,6 +17,7 @@ export const MESSAGES = {
   SELLER_UPDATE_SUCCESS: 'Seller updated successfully!',
   SELLER_DELETE_SUCCESS: 'Seller deleted successfully!',
   ERROR_PRICE_IN_USE: 'Cannot delete this price because purchases reference it.',
+  ERROR_PRICE_EXISTS: 'A price for this category, unit and amount already exists.',
   ERROR_SELLER_IN_USE: 'Cannot delete this seller because purchases reference it.',
   ERROR_SELLER_HAS_PAYMENTS: 'Cannot delete this seller because payments reference it.',
   ERROR_SELECT_PRICE: 'Please select a price item first.',

@@ -70,7 +70,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 5 }] }
+                return { results: [{ user_version: 6 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -92,6 +92,29 @@ describe('initializeSchema', () => {
 
         await expect(initializeSchema()).resolves.toBeUndefined()
         expect(queries().some((q) => q.includes('idx_payments_purchase_id'))).toBe(true)
+    })
+
+    test('v6 collapses duplicate prices and creates the unique (category, unit, price) index', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 5 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('CREATE TEMP TABLE price_dupes'))).toBe(true)
+        expect(sql.some((q) => q.includes('UPDATE purchase_items'))).toBe(true)
+        expect(sql.some((q) => q.includes('DELETE FROM prices WHERE id IN'))).toBe(true)
+        expect(
+            sql.some(
+                (q) =>
+                    q.includes('CREATE UNIQUE INDEX IF NOT EXISTS idx_prices_category_unit_price') &&
+                    q.includes('ON prices(category, unit, price)')
+            )
+        ).toBe(true)
     })
 
     test('v4 backfills payment -> purchase links oldest-first', async () => {

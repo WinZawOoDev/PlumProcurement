@@ -168,6 +168,38 @@ const MIGRATIONS: Migration[] = [
             )
         },
     },
+    {
+        version: 6,
+        up: async () => {
+            const db = initDb()
+            // A price is unique per (category, unit, price). Collapse any
+            // pre-existing duplicates first, re-pointing their purchase line
+            // items to the kept (lowest id) row, so the unique index can be
+            // created. Runs as one transaction so the dedupe + index are atomic.
+            await db.transaction(async (tx) => {
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(`CREATE TEMP TABLE price_dupes AS
+                    SELECT p.id AS dup_id, k.keep_id AS keep_id
+                    FROM prices p
+                    JOIN (
+                        SELECT category, unit, price, MIN(id) AS keep_id
+                        FROM prices
+                        GROUP BY category, unit, price
+                        HAVING COUNT(*) > 1
+                    ) k ON k.category = p.category AND k.unit = p.unit AND k.price = p.price
+                    WHERE p.id <> k.keep_id`)
+                await tx.executeAsync(`UPDATE purchase_items
+                    SET price_id = (SELECT keep_id FROM price_dupes WHERE dup_id = purchase_items.price_id)
+                    WHERE price_id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DELETE FROM prices WHERE id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(
+                    `CREATE UNIQUE INDEX IF NOT EXISTS idx_prices_category_unit_price
+                     ON prices(category, unit, price)`
+                )
+            })
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null
