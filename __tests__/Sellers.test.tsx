@@ -1,13 +1,11 @@
 import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
-import { Text as RNText } from 'react-native'
+import { FlatList, Text as RNText } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
 import Sellers from '../screens/seller/Sellers'
 import { sellerService } from '../services/sellerService'
-import { purchaseService } from '../services/purchaseService'
-import { paymentService } from '../services/paymentService'
-import { A11Y_LABELS, ROUTES } from '../constants'
-import { ISeller, ISellerStat } from '../types/database'
+import { A11Y_LABELS, PAGINATION_CONFIG, ROUTES } from '../constants'
+import { ISellerWithStats } from '../types/database'
 import { makeAppTheme } from '../theme'
 
 const mockNavigate = jest.fn()
@@ -21,28 +19,15 @@ jest.mock('@react-navigation/native', () => {
 
 jest.mock('../services/sellerService', () => ({
     sellerService: {
-        getSellers: jest.fn(),
+        getSellersPage: jest.fn(),
+        getSellerCount: jest.fn(),
         removeSeller: jest.fn(),
     },
 }))
-jest.mock('../services/purchaseService', () => ({
-    purchaseService: {
-        getSellerStats: jest.fn(),
-    },
-}))
-jest.mock('../services/paymentService', () => ({
-    paymentService: {
-        getPaymentSummaries: jest.fn(),
-    },
-}))
 
-const mockSellers: ISeller[] = [
-    { id: 1, name: 'U Ba', phone: '09-123', address: null },
-    { id: 2, name: 'Daw Mya', phone: null, address: 'Main Road' },
-]
-
-const mockStats: ISellerStat[] = [
-    { seller_id: 1, purchase_count: 2, total_spent: 15 },
+const mockSellers: ISellerWithStats[] = [
+    { id: 1, name: 'U Ba', phone: '09-123', address: null, purchase_count: 2, total_spent: 15, balance: 10 },
+    { id: 2, name: 'Daw Mya', phone: null, address: 'Main Road', purchase_count: 0, total_spent: 0, balance: 0 },
 ]
 
 const flush = async () => {
@@ -90,22 +75,26 @@ const findRowPressable = (root: ReactTestRenderer.ReactTestRenderer, name: strin
 beforeEach(() => {
     jest.clearAllMocks()
     mockNavigate.mockClear()
-    ;(sellerService.getSellers as jest.Mock).mockResolvedValue(mockSellers)
-    ;(purchaseService.getSellerStats as jest.Mock).mockResolvedValue(mockStats)
-    ;(paymentService.getPaymentSummaries as jest.Mock).mockResolvedValue([])
+    ;(sellerService.getSellersPage as jest.Mock).mockResolvedValue({ items: mockSellers, nextCursor: null })
+    ;(sellerService.getSellerCount as jest.Mock).mockResolvedValue(mockSellers.length)
     ;(sellerService.removeSeller as jest.Mock).mockResolvedValue(undefined)
 })
 
 describe('Sellers screen', () => {
-    test('renders seller rows with SQL-aggregated stats', async () => {
+    test('renders seller rows with stats and balance from the page query', async () => {
         const root = await renderScreen()
         const text = textContent(root)
         expect(text).toContain('U Ba')
         expect(text).toContain('09-123')
         expect(text).toContain('Main Road')
         expect(text).toContain('2 · 15.00$')
-        expect(sellerService.getSellers).toHaveBeenCalledTimes(1)
-        expect(purchaseService.getSellerStats).toHaveBeenCalledTimes(1)
+        expect(text).toContain('10.00$')
+        expect(sellerService.getSellersPage).toHaveBeenCalledWith({
+            limit: PAGINATION_CONFIG.SELLER_PAGE_SIZE,
+            cursor: undefined,
+            query: undefined,
+        })
+        expect(sellerService.getSellerCount).toHaveBeenCalledWith(undefined)
     })
 
     test('row shows edit action', async () => {
@@ -125,13 +114,28 @@ describe('Sellers screen', () => {
         expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SELLER_DETAILS, { sellerId: 1 })
     })
 
-    test('shows outstanding balance on seller rows', async () => {
-        ;(paymentService.getPaymentSummaries as jest.Mock).mockResolvedValue([
-            { seller_id: 1, seller_name: 'U Ba', total_owed: 15, total_paid: 5, balance: 10 },
-        ])
+    test('load-more continues from the previous page cursor', async () => {
+        const page2: ISellerWithStats[] = [
+            { id: 3, name: 'U Hla', phone: null, address: null, purchase_count: 1, total_spent: 5, balance: 5 },
+        ]
+        ;(sellerService.getSellersPage as jest.Mock)
+            .mockResolvedValueOnce({ items: mockSellers, nextCursor: { name: 'Daw Mya', id: 2 } })
+            .mockResolvedValueOnce({ items: page2, nextCursor: null })
 
         const root = await renderScreen()
+        expect(textContent(root)).not.toContain('U Hla')
 
-        expect(textContent(root)).toContain('10.00$')
+        const list = root.root.findAllByType(FlatList)[0]
+        await act(async () => {
+            list.props.onEndReached()
+            await flush()
+        })
+
+        expect(sellerService.getSellersPage).toHaveBeenLastCalledWith({
+            limit: PAGINATION_CONFIG.SELLER_PAGE_SIZE,
+            cursor: { name: 'Daw Mya', id: 2 },
+            query: undefined,
+        })
+        expect(textContent(root)).toContain('U Hla')
     })
 })

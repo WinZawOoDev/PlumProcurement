@@ -1,16 +1,20 @@
 import { sellerService } from '../services/sellerService'
 import {
+    countSellers,
     createSeller,
     deleteSeller,
     fetchSellers,
+    fetchSellersPage,
     initializeSellers,
     updateSeller,
 } from '../database/sellers'
-import { ISeller } from '../types/database'
+import { ISeller, ISellerWithStats } from '../types/database'
 
 jest.mock('../database/sellers', () => ({
     initializeSellers: jest.fn(),
     fetchSellers: jest.fn(),
+    fetchSellersPage: jest.fn(),
+    countSellers: jest.fn(),
     createSeller: jest.fn(),
     updateSeller: jest.fn(),
     deleteSeller: jest.fn(),
@@ -34,6 +38,51 @@ describe('SellerService.getSellers', () => {
         expect(initializeSellers).toHaveBeenCalledTimes(1)
         expect(fetchSellers).toHaveBeenCalledTimes(1)
         expect(result).toEqual(mockSellers)
+    })
+})
+
+describe('SellerService paginated search', () => {
+    const page: { items: ISellerWithStats[]; nextCursor: { name: string; id: number } | null } = {
+        items: [
+            {
+                id: 2,
+                name: 'Daw Mya',
+                phone: null,
+                address: null,
+                purchase_count: 3,
+                total_spent: 30,
+                balance: 10,
+            },
+        ],
+        nextCursor: null,
+    }
+
+    test('initializes then returns a seller page with stats + balance', async () => {
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
+        ;(fetchSellersPage as jest.Mock).mockResolvedValue(page)
+
+        const result = await sellerService.getSellersPage({ limit: 20, query: 'mya' })
+
+        expect(initializeSellers).toHaveBeenCalledTimes(1)
+        expect(fetchSellersPage).toHaveBeenCalledWith({ limit: 20, query: 'mya' })
+        expect(result).toEqual(page)
+    })
+
+    test('passes the keyset cursor through', async () => {
+        ;(fetchSellersPage as jest.Mock).mockResolvedValue({ items: [], nextCursor: null })
+        const cursor = { name: 'U Ba', id: 1 }
+
+        await sellerService.getSellersPage({ limit: 20, cursor })
+
+        expect(fetchSellersPage).toHaveBeenCalledWith({ limit: 20, cursor })
+    })
+
+    test('getSellerCount initializes then counts matches', async () => {
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
+        ;(countSellers as jest.Mock).mockResolvedValue(7)
+
+        await expect(sellerService.getSellerCount('ba')).resolves.toBe(7)
+        expect(countSellers).toHaveBeenCalledWith('ba')
     })
 })
 

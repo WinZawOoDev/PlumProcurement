@@ -1,6 +1,7 @@
 import { tMessage } from '../i18n'
-import type { ISeller } from '../types/database'
+import type { ISeller, ISellerWithStats } from '../types/database'
 import { DatabaseError, initDb } from './connection'
+import { escapeLikePattern } from './purchases'
 import { initializeSchema } from './schema'
 
 export async function initializeSellers(): Promise<void> {
@@ -35,6 +36,109 @@ export async function fetchSellerById(id: number): Promise<ISeller | null> {
         return rows[0] ?? null
     } catch (error) {
         throw new DatabaseError('Failed to fetch seller', error)
+    }
+}
+
+/** Keyset cursor over sellers ordered by (name, id). */
+export interface SellersCursor {
+    name: string
+    id: number
+}
+
+export interface SellersPage {
+    items: ISellerWithStats[]
+    /** last row of this page; null when there are no more rows */
+    nextCursor: SellersCursor | null
+}
+
+/**
+ * Search predicate shared by the page + count queries. Matches, case
+ * insensitively, the seller name or phone.
+ */
+function buildSellerFilters(query?: string): { clauses: string[]; params: string[] } {
+    const clauses: string[] = []
+    const params: string[] = []
+    const q = query?.trim()
+    if (q) {
+        const like = `%${escapeLikePattern(q)}%`
+        clauses.push(
+            `(s.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR s.phone LIKE ? ESCAPE '\\' COLLATE NOCASE)`
+        )
+        params.push(like, like)
+    }
+    return { clauses, params }
+}
+
+/**
+ * Keyset pagination over sellers (name ASC, id ASC) with their purchase
+ * aggregate and outstanding balance rolled in, so the list screen no longer
+ * loads every seller + every stat + every payment summary.
+ */
+export async function fetchSellersPage(options: {
+    limit: number
+    cursor?: SellersCursor
+    query?: string
+}): Promise<SellersPage> {
+    let db;
+    try {
+        db = initDb()
+        const { limit, cursor, query } = options
+        const filters = buildSellerFilters(query)
+        const where = [...filters.clauses]
+        const params: Array<string | number> = [...filters.params]
+        if (cursor) {
+            // Composite cursor keeps the name ordering stable across pages.
+            where.push('(s.name > ? OR (s.name = ? AND s.id > ?))')
+            params.push(cursor.name, cursor.name, cursor.id)
+        }
+        const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
+        const { results } = await db.executeAsync(
+            `
+            SELECT s.*,
+                   COALESCE(pc.purchase_count, 0) AS purchase_count,
+                   COALESCE(pc.total_spent, 0) AS total_spent,
+                   COALESCE(pc.total_spent, 0) - COALESCE(pd.total_paid, 0) AS balance
+            FROM sellers s
+            LEFT JOIN (
+                SELECT seller_id, COUNT(*) AS purchase_count, SUM(total) AS total_spent
+                FROM purchases WHERE seller_id IS NOT NULL GROUP BY seller_id
+            ) pc ON pc.seller_id = s.id
+            LEFT JOIN (
+                SELECT seller_id, SUM(amount) AS total_paid
+                FROM payments GROUP BY seller_id
+            ) pd ON pd.seller_id = s.id
+            ${whereSql}
+            ORDER BY s.name ASC, s.id ASC
+            LIMIT ?
+            `,
+            [...params, limit + 1]
+        )
+        const rows = results as unknown as ISellerWithStats[]
+        const hasMore = rows.length > limit
+        const items = hasMore ? rows.slice(0, limit) : rows
+        const last = items[items.length - 1]
+        return {
+            items,
+            nextCursor: hasMore && last ? { name: last.name, id: last.id } : null,
+        }
+    } catch (error) {
+        throw new DatabaseError('Failed to fetch sellers', error)
+    }
+}
+
+export async function countSellers(query?: string): Promise<number> {
+    let db;
+    try {
+        db = initDb()
+        const { clauses, params } = buildSellerFilters(query)
+        const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : ''
+        const { results } = await db.executeAsync(
+            `SELECT COUNT(*) AS count FROM sellers s ${whereSql}`,
+            params
+        )
+        return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
+    } catch (error) {
+        throw new DatabaseError('Failed to count sellers', error)
     }
 }
 

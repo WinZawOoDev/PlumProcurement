@@ -59,6 +59,13 @@ export interface ISeller {
     address: string | null
 }
 
+/** A seller joined with their purchase aggregate and outstanding balance. */
+export interface ISellerWithStats extends ISeller {
+    purchase_count: number
+    total_spent: number
+    balance: number
+}
+
 export interface ISellerStat {
     seller_id: number
     purchase_count: number
