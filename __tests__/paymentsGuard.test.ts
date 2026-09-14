@@ -1,5 +1,5 @@
 import { open } from 'react-native-nitro-sqlite'
-import { createPayment, fetchPaymentsPage } from '../database/payments'
+import { createPayment, deletePayment, fetchPaymentsPage } from '../database/payments'
 import { __resetDbForTests } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
@@ -7,70 +7,67 @@ jest.mock('react-native-nitro-sqlite', () => ({
 }))
 
 const executeAsync = jest.fn()
+const transaction = jest.fn()
 const close = jest.fn()
 
 beforeEach(() => {
     jest.clearAllMocks()
     __resetDbForTests()
-    ;(open as jest.Mock).mockReturnValue({ executeAsync, close })
+    transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({ executeAsync, commit: jest.fn(), rollback: jest.fn() })
+    )
+    ;(open as jest.Mock).mockReturnValue({ executeAsync, transaction, close })
 })
 
 describe('createPayment overpayment guard', () => {
-    test('blocks a payment that exceeds the outstanding balance (rolls back)', async () => {
+    test('blocks a payment that exceeds the outstanding balance', async () => {
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
-            .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(
             createPayment({ seller_id: 5, purchase_id: null, amount: 60, method: null, note: null })
         ).rejects.toThrow('Payment exceeds the outstanding balance.')
 
-        expect(executeAsync).toHaveBeenCalledTimes(4)
-        expect(executeAsync).toHaveBeenNthCalledWith(1, 'BEGIN IMMEDIATE')
-        expect(executeAsync).toHaveBeenNthCalledWith(4, 'ROLLBACK')
+        expect(executeAsync).toHaveBeenCalledTimes(2)
+        expect(executeAsync).not.toHaveBeenCalledWith(
+            expect.stringContaining('INSERT INTO payments'),
+            expect.anything()
+        )
     })
 
     test('records a payment within the balance and auto-links the oldest unlinked purchase', async () => {
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({ results: [{ id: 7 }] }) // oldest unlinked purchase
             .mockResolvedValueOnce({ insertId: 9 }) // INSERT
-            .mockResolvedValueOnce({}) // COMMIT
 
         await expect(
             createPayment({ seller_id: 5, purchase_id: null, amount: 50, method: 'cash', note: null })
         ).resolves.toBe(9)
 
-        expect(executeAsync).toHaveBeenNthCalledWith(
-            5,
+        expect(executeAsync).toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO payments'),
             [5, 7, 50, 'cash', null]
         )
-        expect(executeAsync).toHaveBeenLastCalledWith('COMMIT')
     })
 
     test('keeps an explicit purchase link and skips the FIFO lookup', async () => {
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({ insertId: 4 }) // INSERT
-            .mockResolvedValueOnce({}) // COMMIT
 
         await expect(
             createPayment({ seller_id: 5, purchase_id: 3, amount: 20, method: null, note: null })
         ).resolves.toBe(4)
 
-        expect(executeAsync).toHaveBeenNthCalledWith(
-            4,
+        expect(executeAsync).toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO payments'),
             [5, 3, 20, null, null]
         )
-        expect(executeAsync).toHaveBeenCalledTimes(5)
+        expect(executeAsync).toHaveBeenCalledTimes(3)
     })
 
     test('rejects non-positive amounts before touching the database', async () => {
@@ -79,6 +76,29 @@ describe('createPayment overpayment guard', () => {
         ).rejects.toThrow('Amount must be greater than zero.')
 
         expect(executeAsync).not.toHaveBeenCalled()
+    })
+})
+
+describe('deletePayment FIFO rebalance', () => {
+    test('reassigns remaining payments to the oldest purchases', async () => {
+        executeAsync
+            .mockResolvedValueOnce({ results: [{ seller_id: 2 }] }) // SELECT seller_id
+            .mockResolvedValueOnce({}) // DELETE payment
+            .mockResolvedValueOnce({}) // UPDATE payments SET purchase_id = NULL
+            .mockResolvedValueOnce({ results: [{ id: 10 }, { id: 11 }] }) // purchases oldest-first
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // remaining payments oldest-first
+            .mockResolvedValueOnce({}) // UPDATE link
+
+        await expect(deletePayment(4)).resolves.toBeUndefined()
+
+        expect(executeAsync).toHaveBeenCalledWith(
+            'UPDATE payments SET purchase_id = NULL WHERE seller_id = ?',
+            [2]
+        )
+        expect(executeAsync).toHaveBeenLastCalledWith(
+            'UPDATE payments SET purchase_id = ? WHERE id = ?',
+            [10, 1]
+        )
     })
 })
 

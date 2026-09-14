@@ -79,27 +79,33 @@ const MIGRATIONS: Migration[] = [
             if (legacyFlat) {
                 // Recreate purchases with the normalized header shape while
                 // preserving ids, totals and timestamps for existing history.
+                // foreign_keys is toggled outside the transaction (SQLite makes
+                // the pragma a no-op inside one); the rebuild itself is atomic,
+                // so a failure can never leave purchase_items without its
+                // purchases table.
                 await db.executeAsync(`PRAGMA foreign_keys = OFF`)
                 try {
-                    await db.executeAsync(`CREATE TABLE purchases_new (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
-                        total REAL NOT NULL,
-                        purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                    )`)
-                    await db.executeAsync(
-                        `INSERT INTO purchases_new (id, seller_id, total, purchased_at, created_at, updated_at)
-                         SELECT id, seller_id, total, created_at, created_at, created_at FROM purchases`
-                    )
-                    // Each legacy row becomes one line item.
-                    await db.executeAsync(
-                        `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
-                         SELECT id, price_id, category, unit, unit_price, quantity, total FROM purchases`
-                    )
-                    await db.executeAsync(`DROP TABLE purchases`)
-                    await db.executeAsync(`ALTER TABLE purchases_new RENAME TO purchases`)
+                    await db.transaction(async (tx) => {
+                        await tx.executeAsync(`CREATE TABLE purchases_new (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
+                            total REAL NOT NULL,
+                            purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                        )`)
+                        await tx.executeAsync(
+                            `INSERT INTO purchases_new (id, seller_id, total, purchased_at, created_at, updated_at)
+                             SELECT id, seller_id, total, created_at, created_at, created_at FROM purchases`
+                        )
+                        // Each legacy row becomes one line item.
+                        await tx.executeAsync(
+                            `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
+                             SELECT id, price_id, category, unit, unit_price, quantity, total FROM purchases`
+                        )
+                        await tx.executeAsync(`DROP TABLE purchases`)
+                        await tx.executeAsync(`ALTER TABLE purchases_new RENAME TO purchases`)
+                    })
                 } finally {
                     await db.executeAsync(`PRAGMA foreign_keys = ON`)
                 }
@@ -149,6 +155,17 @@ const MIGRATIONS: Migration[] = [
                     )
                 }
             }
+        },
+    },
+    {
+        version: 5,
+        up: async () => {
+            const db = initDb()
+            // `payments.purchase_id` is the hot column for the purchase-lock
+            // flag and FIFO lookups but was never indexed.
+            await db.executeAsync(
+                `CREATE INDEX IF NOT EXISTS idx_payments_purchase_id ON payments(purchase_id)`
+            )
         },
     },
 ]

@@ -8,6 +8,7 @@ jest.mock('react-native-nitro-sqlite', () => ({
 }))
 
 const executeAsync = jest.fn()
+const transaction = jest.fn()
 const close = jest.fn()
 
 const queries = () => executeAsync.mock.calls.map((call) => String(call[0]))
@@ -15,10 +16,13 @@ const queries = () => executeAsync.mock.calls.map((call) => String(call[0]))
 beforeEach(() => {
     jest.clearAllMocks()
     executeAsync.mockResolvedValue({ results: [], insertId: 1 })
+    transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({ executeAsync, commit: jest.fn(), rollback: jest.fn() })
+    )
     __resetDbForTests()
     __resetSchemaForTests()
     __resetMigrationsForTests()
-    ;(open as jest.Mock).mockReturnValue({ executeAsync, close })
+    ;(open as jest.Mock).mockReturnValue({ executeAsync, transaction, close })
 })
 
 describe('initializeSchema', () => {
@@ -66,7 +70,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 4 }] }
+                return { results: [{ user_version: 5 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -76,6 +80,18 @@ describe('initializeSchema', () => {
         expect(queries().some((q) => q.includes('ALTER TABLE purchases'))).toBe(false)
         // user_version already applied — no migration statements, no version bump
         expect(queries().some((q) => q.includes('PRAGMA user_version ='))).toBe(false)
+    })
+
+    test('v5 indexes payments.purchase_id', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 4 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+        expect(queries().some((q) => q.includes('idx_payments_purchase_id'))).toBe(true)
     })
 
     test('v4 backfills payment -> purchase links oldest-first', async () => {

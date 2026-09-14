@@ -5,7 +5,7 @@ import type {
     IPurchaseWithSeller,
     ISellerStat,
 } from '../types/database'
-import { DatabaseError, initDb } from './connection'
+import { DatabaseError, DbExecutor, initDb } from './connection'
 import { initializeSchema } from './schema'
 
 export async function initializePurchases(): Promise<void> {
@@ -171,7 +171,7 @@ export async function countPurchases(query?: string): Promise<number> {
  * locked ones and the remaining still-owed purchases stay editable.
  * Must be called inside a transaction.
  */
-async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: number): Promise<boolean> {
+async function isPurchaseLocked(db: DbExecutor, purchaseId: number): Promise<boolean> {
     const { results } = await db.executeAsync(
         `SELECT 1 FROM payments WHERE purchase_id = ? LIMIT 1`,
         [purchaseId]
@@ -185,7 +185,7 @@ async function isPurchaseLocked(db: ReturnType<typeof initDb>, purchaseId: numbe
  * Must be called inside a transaction.
  */
 async function assertSellerNotOverpaid(
-    db: ReturnType<typeof initDb>,
+    db: DbExecutor,
     sellerId: number,
     oldTotal: number,
     newTotal: number
@@ -235,15 +235,14 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
         }
 
         db = initDb()
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
-            const { insertId } = await db.executeAsync(
+        return await db.transaction(async (tx) => {
+            const { insertId } = await tx.executeAsync(
                 `INSERT INTO purchases (seller_id, total) VALUES (?, ?)`,
                 [seller_id ?? null, total]
             )
             const purchaseId = insertId as number
             for (const item of items) {
-                await db.executeAsync(
+                await tx.executeAsync(
                     `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
@@ -257,12 +256,8 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
                     ]
                 )
             }
-            await db.executeAsync(`COMMIT`)
             return purchaseId
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to create purchase', error)
@@ -273,12 +268,11 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
     let db;
     try {
         db = initDb()
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
-            if (await isPurchaseLocked(db, id)) {
+        await db.transaction(async (tx) => {
+            if (await isPurchaseLocked(tx, id)) {
                 throw new DatabaseError(tMessage('ERROR_PURCHASE_LOCKED'))
             }
-            const current = (await db.executeAsync(
+            const current = (await tx.executeAsync(
                 `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,
                 [id]
             )).results as unknown as Array<{ seller_id: number | null; total: number }>
@@ -287,10 +281,10 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                 ? existing?.total ?? 0
                 : updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
             if (existing?.seller_id != null) {
-                await assertSellerNotOverpaid(db, existing.seller_id, existing.total, newTotal)
+                await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, newTotal)
             }
             if (updates.seller_id !== undefined) {
-                await db.executeAsync(
+                await tx.executeAsync(
                     `UPDATE purchases SET seller_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                     [updates.seller_id ?? null, id]
                 )
@@ -298,9 +292,9 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
             if (updates.items !== undefined) {
                 validateItems(updates.items)
                 const total = updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
-                await db.executeAsync(`DELETE FROM purchase_items WHERE purchase_id = ?`, [id])
+                await tx.executeAsync(`DELETE FROM purchase_items WHERE purchase_id = ?`, [id])
                 for (const item of updates.items) {
-                    await db.executeAsync(
+                    await tx.executeAsync(
                         `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
                          VALUES (?, ?, ?, ?, ?, ?, ?)`,
                         [
@@ -314,16 +308,12 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                         ]
                     )
                 }
-                await db.executeAsync(
+                await tx.executeAsync(
                     `UPDATE purchases SET total = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                     [total, id]
                 )
             }
-            await db.executeAsync(`COMMIT`)
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to update purchase', error)
@@ -334,28 +324,23 @@ export async function deletePurchase(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        // Guard + delete in a transaction so a payment recorded concurrently
-        // cannot slip in between the check and the delete.
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
-            if (await isPurchaseLocked(db, id)) {
+        // Guard + delete in a queued transaction so a payment recorded
+        // concurrently cannot slip in between the check and the delete.
+        await db.transaction(async (tx) => {
+            if (await isPurchaseLocked(tx, id)) {
                 throw new DatabaseError(tMessage('ERROR_PURCHASE_LOCKED'))
             }
-            const current = (await db.executeAsync(
+            const current = (await tx.executeAsync(
                 `SELECT seller_id, total FROM purchases WHERE id = ? LIMIT 1`,
                 [id]
             )).results as unknown as Array<{ seller_id: number | null; total: number }>
             const existing = current[0]
             // Deleting removes this purchase's total from what the seller is owed.
             if (existing?.seller_id != null) {
-                await assertSellerNotOverpaid(db, existing.seller_id, existing.total, 0)
+                await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, 0)
             }
-            await db.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])
-            await db.executeAsync(`COMMIT`)
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+            await tx.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete purchase', error)

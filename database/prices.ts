@@ -95,11 +95,11 @@ export async function deletePrice(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        // Guard + delete in a transaction so a concurrent purchase referencing
-        // this price cannot slip in between the count check and the delete.
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
-            const { results } = await db.executeAsync(
+        // Guard + delete in a queued transaction so a concurrent purchase
+        // referencing this price cannot slip in between the count check and
+        // the delete.
+        await db.transaction(async (tx) => {
+            const { results } = await tx.executeAsync(
                 `SELECT COUNT(*) AS count FROM purchase_items WHERE price_id = ?`,
                 [id]
             );
@@ -108,12 +108,8 @@ export async function deletePrice(id: number): Promise<void> {
             if (referencedCount > 0) {
                 throw new DatabaseError(tMessage('ERROR_PRICE_IN_USE'))
             }
-            await db.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
-            await db.executeAsync(`COMMIT`)
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+            await tx.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isForeignKeyViolation(error)) {

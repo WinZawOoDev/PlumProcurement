@@ -1,6 +1,6 @@
 import { tMessage } from '../i18n'
 import type { IPayment, ISellerPaymentStat } from '../types/database'
-import { DatabaseError, initDb } from './connection'
+import { DatabaseError, DbExecutor, initDb } from './connection'
 import { initializeSchema } from './schema'
 
 export async function initializePayments(): Promise<void> {
@@ -11,7 +11,7 @@ export async function initializePayments(): Promise<void> {
     }
 }
 
-async function fetchOwedAndPaid(db: ReturnType<typeof initDb>, sellerId: number, excludePaymentId?: number): Promise<{ owed: number; paid: number }> {
+async function fetchOwedAndPaid(db: DbExecutor, sellerId: number, excludePaymentId?: number): Promise<{ owed: number; paid: number }> {
     const owedResults = await db.executeAsync(
         `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ?`,
         [sellerId]
@@ -26,6 +26,33 @@ async function fetchOwedAndPaid(db: ReturnType<typeof initDb>, sellerId: number,
     )
     const paid = (paidResults.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
     return { owed, paid }
+}
+
+/**
+ * Rebuilds a seller's payment -> purchase links using the canonical FIFO rule
+ * (oldest payment settles the oldest purchase, 1:1). Must be called inside a
+ * transaction whenever a payment is removed, otherwise the deleted payment's
+ * purchase stays linked — leaving the wrong purchase locked against edit/delete.
+ */
+async function reallocateSellerPayments(db: DbExecutor, sellerId: number): Promise<void> {
+    await db.executeAsync(`UPDATE payments SET purchase_id = NULL WHERE seller_id = ?`, [sellerId])
+    const { results: purchaseRows } = await db.executeAsync(
+        `SELECT id FROM purchases WHERE seller_id = ? ORDER BY id ASC`,
+        [sellerId]
+    )
+    const { results: paymentRows } = await db.executeAsync(
+        `SELECT id FROM payments WHERE seller_id = ? ORDER BY id ASC`,
+        [sellerId]
+    )
+    const purchaseIds = (purchaseRows as unknown as Array<{ id: number }>).map((row) => row.id)
+    const paymentIds = (paymentRows as unknown as Array<{ id: number }>).map((row) => row.id)
+    const pairs = Math.min(purchaseIds.length, paymentIds.length)
+    for (let i = 0; i < pairs; i++) {
+        await db.executeAsync(
+            `UPDATE payments SET purchase_id = ? WHERE id = ?`,
+            [purchaseIds[i], paymentIds[i]]
+        )
+    }
 }
 
 export interface PaymentsPage {
@@ -124,9 +151,8 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
         }
 
         db = initDb()
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
-            const { owed, paid } = await fetchOwedAndPaid(db, seller_id)
+        return await db.transaction(async (tx) => {
+            const { owed, paid } = await fetchOwedAndPaid(tx, seller_id)
             if (amount > owed - paid) {
                 throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
             }
@@ -134,7 +160,7 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
             // that no payment has been linked to yet (FIFO).
             let linkedPurchaseId = purchase_id ?? null
             if (linkedPurchaseId === null) {
-                const { results } = await db.executeAsync(
+                const { results } = await tx.executeAsync(
                     `SELECT p.id FROM purchases p
                      WHERE p.seller_id = ?
                        AND NOT EXISTS (SELECT 1 FROM payments pay WHERE pay.purchase_id = p.id)
@@ -143,16 +169,12 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
                 )
                 linkedPurchaseId = (results as unknown as Array<{ id: number }>)[0]?.id ?? null
             }
-            const { insertId } = await db.executeAsync(
+            const { insertId } = await tx.executeAsync(
                 `INSERT INTO payments (seller_id, purchase_id, amount, method, note) VALUES (?, ?, ?, ?, ?)`,
                 [seller_id, linkedPurchaseId, amount, method ?? null, note ?? null]
             )
-            await db.executeAsync(`COMMIT`)
             return insertId as number
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to create payment', error)
@@ -186,31 +208,26 @@ export async function updatePayment(
         if (setClauses.length === 0) return
 
         db = initDb()
-        await db.executeAsync(`BEGIN IMMEDIATE`)
-        try {
+        await db.transaction(async (tx) => {
             if (updates.amount !== undefined) {
-                const { results } = await db.executeAsync(
+                const { results } = await tx.executeAsync(
                     `SELECT seller_id, amount FROM payments WHERE id = ? LIMIT 1`,
                     [id]
                 )
                 const existing = (results as unknown as Array<{ seller_id: number; amount: number }>)[0]
                 if (existing) {
-                    const { owed, paid } = await fetchOwedAndPaid(db, existing.seller_id, id)
+                    const { owed, paid } = await fetchOwedAndPaid(tx, existing.seller_id, id)
                     const balanceWithoutThis = owed - paid
                     if (updates.amount > balanceWithoutThis) {
                         throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
                     }
                 }
             }
-            await db.executeAsync(
+            await tx.executeAsync(
                 `UPDATE payments SET ${setClauses.join(', ')} WHERE id = ?`,
                 [...values, id]
             )
-            await db.executeAsync(`COMMIT`)
-        } catch (innerError) {
-            await db.executeAsync(`ROLLBACK`).catch(() => undefined)
-            throw innerError
-        }
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to update payment', error)
@@ -221,8 +238,22 @@ export async function deletePayment(id: number): Promise<void> {
     let db;
     try {
         db = initDb()
-        await db.executeAsync(`DELETE FROM payments WHERE id = ?`, [id])
+        await db.transaction(async (tx) => {
+            const { results } = await tx.executeAsync(
+                `SELECT seller_id FROM payments WHERE id = ? LIMIT 1`,
+                [id]
+            )
+            const sellerId = (results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
+            await tx.executeAsync(`DELETE FROM payments WHERE id = ?`, [id])
+            // Removing a payment shifts every later payment one purchase
+            // earlier under FIFO — rebuild the links so the correct purchases
+            // stay locked.
+            if (sellerId != null) {
+                await reallocateSellerPayments(tx, sellerId)
+            }
+        })
     } catch (error) {
+        if (error instanceof DatabaseError) throw error
         throw new DatabaseError('Failed to delete payment', error)
     }
 }

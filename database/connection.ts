@@ -8,8 +8,16 @@ export class DatabaseError extends Error {
     }
 }
 
-let _cachedDb: ReturnType<typeof open> | null = null
-export const initDb = () => {
+export type DbConnection = ReturnType<typeof open>
+/**
+ * Minimal surface shared by the connection and a transaction handle. Helpers
+ * that must run inside a transaction accept this so they work whether they are
+ * handed the raw connection or the `tx` from `db.transaction()`.
+ */
+export type DbExecutor = Pick<DbConnection, 'executeAsync'>
+
+let _cachedDb: DbConnection | null = null
+export const initDb = (): DbConnection => {
     if (_cachedDb) return _cachedDb
     _cachedDb = open({ name: DATABASE_CONFIG.NAME })
     return _cachedDb

@@ -7,72 +7,64 @@ jest.mock('react-native-nitro-sqlite', () => ({
 }))
 
 const executeAsync = jest.fn()
+const transaction = jest.fn()
 const close = jest.fn()
 
 beforeEach(() => {
     jest.clearAllMocks()
     __resetDbForTests()
-    ;(open as jest.Mock).mockReturnValue({ executeAsync, close })
+    transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({ executeAsync, commit: jest.fn(), rollback: jest.fn() })
+    )
+    ;(open as jest.Mock).mockReturnValue({ executeAsync, transaction, close })
 })
 
 describe('deleteSeller referential guard', () => {
-    test('blocks deletion when purchases reference the seller (rolls back)', async () => {
-        // Call order: BEGIN, SELECT purchases count, ROLLBACK
-        executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
-            .mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT purchases
-            .mockResolvedValueOnce({}) // ROLLBACK
+    test('blocks deletion when purchases reference the seller (no delete issued)', async () => {
+        executeAsync.mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT purchases
 
         await expect(deleteSeller(5)).rejects.toThrow(
             'Cannot delete this seller because purchases reference it.'
         )
-        expect(executeAsync).toHaveBeenCalledTimes(3)
-        expect(executeAsync).toHaveBeenNthCalledWith(1, 'BEGIN IMMEDIATE')
-        expect(executeAsync).toHaveBeenNthCalledWith(3, 'ROLLBACK')
+        expect(transportCalls()).toEqual([])
         expect(open).toHaveBeenCalledTimes(1)
     })
 
-    test('blocks deletion when payments reference the seller (rolls back)', async () => {
-        // Call order: BEGIN, SELECT purchases count (0), SELECT payments count (2), ROLLBACK
+    test('blocks deletion when payments reference the seller (no delete issued)', async () => {
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
             .mockResolvedValueOnce({ results: [{ count: 2 }] }) // SELECT COUNT payments
-            .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(deleteSeller(5)).rejects.toThrow(
             'Cannot delete this seller because payments reference it.'
         )
-        expect(executeAsync).toHaveBeenCalledTimes(4)
-        expect(executeAsync).toHaveBeenNthCalledWith(1, 'BEGIN IMMEDIATE')
-        expect(executeAsync).toHaveBeenNthCalledWith(4, 'ROLLBACK')
-        expect(open).toHaveBeenCalledTimes(1)
+        expect(transportCalls()).toEqual([])
     })
 
     test('deletes the seller when it has no purchases or payments (commits)', async () => {
-        // Call order: BEGIN, SELECT purchases (0), SELECT payments (0), DELETE, COMMIT
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT payments
             .mockResolvedValueOnce({}) // DELETE
-            .mockResolvedValueOnce({}) // COMMIT
 
         await expect(deleteSeller(5)).resolves.toBeUndefined()
-        expect(executeAsync).toHaveBeenCalledTimes(5)
-        expect(executeAsync).toHaveBeenNthCalledWith(5, 'COMMIT')
+        expect(executeAsync).toHaveBeenLastCalledWith(
+            'DELETE FROM sellers WHERE id = ?',
+            [5]
+        )
         expect(open).toHaveBeenCalledTimes(1)
     })
 
-    test('rolls back when the delete fails', async () => {
+    test('surfaces a delete failure (the library rolls the transaction back)', async () => {
         executeAsync
-            .mockResolvedValueOnce({}) // BEGIN IMMEDIATE
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT purchases
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT payments
             .mockRejectedValueOnce(new Error('disk error')) // DELETE
-            .mockResolvedValueOnce({}) // ROLLBACK
 
         await expect(deleteSeller(5)).rejects.toThrow('Failed to delete seller')
-        expect(executeAsync).toHaveBeenNthCalledWith(5, 'ROLLBACK')
     })
 })
+
+function transportCalls() {
+    return executeAsync.mock.calls.filter(([sql]) => String(sql).startsWith('DELETE'))
+}
