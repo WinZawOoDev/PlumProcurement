@@ -1,4 +1,4 @@
-import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleProp, Text as RNText, TextStyle, View } from 'react-native';
 import React, {
   useCallback,
   useEffect,
@@ -33,7 +33,6 @@ import { IconButton, SecondaryButton } from '../../components/buttons/Button';
 import { SearchBar } from '../../components/SearchBar';
 import { SearchIconButton } from '../../components/SearchIconButton';
 import { showError, showSuccess } from '../../utils/notifications';
-import { useLoading } from '../../hooks/useAsync';
 import { useSearchFilter } from '../../hooks/useSearchFilter';
 import { PAGINATION_CONFIG } from '../../constants';
 import { SectionHeader } from '../../components/SectionHeader';
@@ -92,13 +91,54 @@ function PurchaseSummarySkeleton() {
   );
 }
 
+function HighlightedText({
+  text,
+  query,
+  style,
+  highlightStyle,
+}: {
+  text: string;
+  query: string;
+  style: StyleProp<TextStyle>;
+  highlightStyle: StyleProp<TextStyle>;
+}) {
+  const q = query.trim();
+  if (!q) {
+    return <RNText style={style}>{text}</RNText>;
+  }
+  const lowerText = text.toLowerCase();
+  const lowerQuery = q.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let index = 0;
+  let key = 0;
+  while (index < text.length) {
+    const match = lowerText.indexOf(lowerQuery, index);
+    if (match === -1) {
+      parts.push(text.slice(index));
+      break;
+    }
+    if (match > index) {
+      parts.push(text.slice(index, match));
+    }
+    parts.push(
+      <RNText key={key++} style={highlightStyle}>
+        {text.slice(match, match + q.length)}
+      </RNText>
+    );
+    index = match + q.length;
+  }
+  return <RNText style={style}>{parts}</RNText>;
+}
+
 function PurchaseRow({
   item,
   locked,
+  query,
   onEdit,
 }: {
   item: IPurchaseDetail;
   locked: boolean;
+  query: string;
   onEdit: (item: IPurchaseDetail) => void;
 }) {
   const styles = useStyles();
@@ -116,9 +156,12 @@ function PurchaseRow({
       accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
     >
       <View style={styles.sellerInfo}>
-        <RNText style={styles.purchaseItemTitle}>
-          {item.seller_name ?? UI_TEXT.NO_SELLER}
-        </RNText>
+        <HighlightedText
+          text={item.seller_name ?? UI_TEXT.NO_SELLER}
+          query={query}
+          style={styles.purchaseItemTitle}
+          highlightStyle={styles.purchaseItemTitleHighlight}
+        />
         <RNText style={styles.purchaseItemSubtitle}>
           {formatDateDisplay(item.created_at)}
         </RNText>
@@ -234,11 +277,22 @@ export default function PurchaseDetails() {
   const { UI_TEXT, MESSAGES } = useLocalizedConstants();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
+  const [summary, setSummary] = useState<{ count: number; total: number } | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const { loading, withLoading } = useLoading(false);
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
+  // Monotonic token: only the latest load may commit, so an in-flight page
+  // (search / refresh / load-more overlapping) cannot overwrite newer results.
+  const requestTokenRef = useRef(0);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   // Search here is server-side (paginated queries); only the shared
   // visibility/query/toggle state comes from the hook, so no predicate.
   const {
@@ -252,37 +306,43 @@ export default function PurchaseDetails() {
   const loadPurchases = useCallback(
     async (reset = true, queryOverride?: string) => {
       const query = queryOverride !== undefined ? queryOverride : searchQuery;
+      const trimmed = query.trim() || undefined;
       const cursor = reset ? undefined : cursorRef.current;
-      const loader = reset
-        ? withLoading
-        : async (fn: () => Promise<void>) => {
-            setLoadingMore(true);
-            try {
-              await fn();
-            } finally {
-              setLoadingMore(false);
-            }
-          };
-      await loader(async () => {
-        try {
-          const { items, nextCursor } = await purchaseService.getPurchasesPage({
+      const token = ++requestTokenRef.current;
+      if (reset) setLoading(true);
+      else setLoadingMore(true);
+      try {
+        const [page, nextSummary] = await Promise.all([
+          purchaseService.getPurchasesPage({
             limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
             cursor,
-            query: query.trim() || undefined,
-          });
-          if (reset) {
-            setPurchases(items);
-          } else {
-            setPurchases(prev => [...prev, ...items]);
-          }
-          cursorRef.current = nextCursor ?? undefined;
-          setHasMore(nextCursor !== null);
-        } catch (error) {
-          showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'));
+            query: trimmed,
+          }),
+          reset
+            ? purchaseService.getPurchasesSummary({ query: trimmed })
+            : Promise.resolve(null),
+        ]);
+        if (!mountedRef.current || token !== requestTokenRef.current) return;
+        const { items, nextCursor } = page;
+        if (reset) {
+          setPurchases(items);
+          if (nextSummary) setSummary(nextSummary);
+        } else {
+          setPurchases(prev => [...prev, ...items]);
         }
-      });
+        cursorRef.current = nextCursor ?? undefined;
+        setHasMore(nextCursor !== null);
+      } catch (error) {
+        if (!mountedRef.current || token !== requestTokenRef.current) return;
+        showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'));
+      } finally {
+        if (mountedRef.current && token === requestTokenRef.current) {
+          if (reset) setLoading(false);
+          else setLoadingMore(false);
+        }
+      }
     },
-    [withLoading, searchQuery, t],
+    [searchQuery, t],
   );
 
   useEffect(() => {
@@ -342,6 +402,8 @@ export default function PurchaseDetails() {
   const isInitialLoading = loading && purchases.length === 0;
 
   const grandTotal = visiblePurchases.reduce((sum, p) => sum + p.total, 0);
+  const summaryCount = summary?.count ?? visiblePurchases.length;
+  const summaryTotal = summary?.total ?? grandTotal;
 
   // Flatten each purchase into one CSV row per line item.
   const csvRows = useMemo(
@@ -407,7 +469,7 @@ export default function PurchaseDetails() {
         {isInitialLoading ? (
           <PurchaseSummarySkeleton />
         ) : (
-          <PurchaseSummaryCard count={visiblePurchases.length} total={grandTotal} />
+          <PurchaseSummaryCard count={summaryCount} total={summaryTotal} />
         )}
 
         <PurchaseActions
@@ -423,6 +485,15 @@ export default function PurchaseDetails() {
           onChangeText={setSearchQuery}
         />
 
+        {hasQuery && !isInitialLoading ? (
+          <RNText style={styles.purchaseResultsCount}>
+            {t('uiText.SHOWING_COUNT', {
+              filtered: visiblePurchases.length,
+              total: summaryCount,
+            })}
+          </RNText>
+        ) : null}
+
         {isInitialLoading ? (
           <PurchaseListSkeleton />
         ) : (
@@ -434,6 +505,7 @@ export default function PurchaseDetails() {
               <PurchaseRow
                 item={item}
                 locked={Number(item.has_payment) > 0}
+                query={hasQuery ? searchQuery : ''}
                 onEdit={handleEdit}
               />
             )}

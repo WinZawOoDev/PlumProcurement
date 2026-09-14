@@ -1,5 +1,5 @@
 import { open } from 'react-native-nitro-sqlite'
-import { fetchPurchasesPage, fetchRecentPurchases } from '../database/purchases'
+import { fetchPurchasesPage, fetchPurchasesSummary, fetchRecentPurchases } from '../database/purchases'
 import { __resetDbForTests } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
@@ -49,8 +49,19 @@ describe('fetchPurchasesPage (keyset pagination over normalized purchases)', () 
         expect(headerSql).toContain('p.id < ?')
         expect(headerSql).toContain('s.name LIKE ?')
         expect(headerSql).toContain('EXISTS')
+        // Query also matches purchase total and created_at date.
+        expect(headerSql).toContain('CAST(p.total AS TEXT) LIKE ?')
+        expect(headerSql).toContain('p.created_at LIKE ?')
         expect(headerSql).toContain('ORDER BY p.id DESC LIMIT ?')
-        expect(headerParams).toEqual([40, '%fruit%', '%fruit%', '%fruit%', 3])
+        expect(headerParams).toEqual([
+            40,
+            '%fruit%',
+            '%fruit%',
+            '%fruit%',
+            '%fruit%',
+            '%fruit%',
+            3,
+        ])
 
         expect(items.map((i) => i.id)).toEqual([30, 20])
         expect(items[0].items).toHaveLength(1)
@@ -148,5 +159,32 @@ describe('fetchRecentPurchases', () => {
         expect(headerParams).toEqual([3])
         expect(items.map((i) => i.id)).toEqual([30, 20])
         expect(items[0].items).toHaveLength(1)
+    })
+})
+
+describe('fetchPurchasesSummary', () => {
+    test('aggregates count + total over all matching purchases (filters shared with the page)', async () => {
+        executeAsync.mockResolvedValueOnce({ results: [{ count: 3, total: 42 }] })
+
+        const result = await fetchPurchasesSummary({ query: 'fruit', sellerId: 2 })
+
+        const [sql, params] = executeAsync.mock.calls[0]
+        expect(sql).toContain('COUNT(*) AS count')
+        expect(sql).toContain('COALESCE(SUM(p.total), 0) AS total')
+        expect(sql).toContain('p.seller_id = ?')
+        expect(sql).toContain('CAST(p.total AS TEXT) LIKE ?')
+        expect(sql).toContain('p.created_at LIKE ?')
+        expect(params).toEqual([2, '%fruit%', '%fruit%', '%fruit%', '%fruit%', '%fruit%'])
+        expect(result).toEqual({ count: 3, total: 42 })
+    })
+
+    test('has no WHERE clause when no filters are supplied', async () => {
+        executeAsync.mockResolvedValueOnce({ results: [{ count: 0, total: 0 }] })
+
+        await fetchPurchasesSummary()
+
+        const [sql, params] = executeAsync.mock.calls[0]
+        expect(sql).not.toContain('WHERE')
+        expect(params).toEqual([])
     })
 })

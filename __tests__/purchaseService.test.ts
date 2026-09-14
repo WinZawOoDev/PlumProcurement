@@ -4,6 +4,7 @@ import {
     createPurchase,
     deletePurchase,
     fetchPurchasesPage,
+    fetchPurchasesSummary,
     fetchRecentPurchases,
     fetchRecentPurchasesBySeller,
     fetchSellerStats,
@@ -17,6 +18,7 @@ jest.mock('../database/purchases', () => ({
     initializePurchases: jest.fn(),
     fetchRecentPurchases: jest.fn(),
     fetchPurchasesPage: jest.fn(),
+    fetchPurchasesSummary: jest.fn(),
     countPurchases: jest.fn(),
     createPurchase: jest.fn(),
     updatePurchase: jest.fn(),
@@ -76,7 +78,21 @@ describe('PurchaseService.getPurchaseCount', () => {
         ;(countPurchases as jest.Mock).mockResolvedValue(12)
 
         await expect(purchaseService.getPurchaseCount()).resolves.toBe(12)
-        expect(countPurchases).toHaveBeenCalledWith(undefined)
+        expect(countPurchases).toHaveBeenCalledWith(undefined, undefined)
+    })
+})
+
+describe('PurchaseService.getPurchasesSummary', () => {
+    test('initializes tables then returns the aggregate summary', async () => {
+        const summary = { count: 5, total: 1200 }
+        ;(initializePurchases as jest.Mock).mockResolvedValue(undefined)
+        ;(initializeSellers as jest.Mock).mockResolvedValue(undefined)
+        ;(fetchPurchasesSummary as jest.Mock).mockResolvedValue(summary)
+
+        await expect(purchaseService.getPurchasesSummary({ query: 'fruit' })).resolves.toEqual(summary)
+        expect(fetchPurchasesSummary).toHaveBeenCalledWith({ query: 'fruit' })
+        expect(initializePurchases).toHaveBeenCalledTimes(1)
+        expect(initializeSellers).toHaveBeenCalledTimes(1)
     })
 })
 

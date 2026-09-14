@@ -64,24 +64,38 @@ export function toTitleCase(str: string): string {
 }
 
 /**
- * Debounce function calls
+ * Debounce function calls. The returned function exposes `cancel()` so callers
+ * (e.g. inputs unmounting) can drop a pending invocation.
  */
+export interface DebouncedFunction<T extends (...args: any[]) => any> {
+    (...args: Parameters<T>): void
+    cancel: () => void
+}
+
 export function debounce<T extends (...args: any[]) => any>(
     func: T,
     wait: number
-): (...args: Parameters<T>) => void {
+): DebouncedFunction<T> {
     let timeout: ReturnType<typeof setTimeout> | null = null
 
-    return function executedFunction(...args: Parameters<T>) {
+    const executedFunction = (...args: Parameters<T>) => {
         const later = () => {
-            if (timeout !== null) clearTimeout(timeout)
-            func(...args)
             timeout = null
+            func(...args)
         }
 
         if (timeout !== null) clearTimeout(timeout)
         timeout = setTimeout(later, wait)
     }
+
+    executedFunction.cancel = () => {
+        if (timeout !== null) {
+            clearTimeout(timeout)
+            timeout = null
+        }
+    }
+
+    return executedFunction
 }
 
 /**

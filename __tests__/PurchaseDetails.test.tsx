@@ -4,6 +4,8 @@ import { FlatList } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
 import PurchaseDetails from '../screens/purchasing/PurchaseDetails'
 import { SecondaryButton } from '../components/buttons/Button'
+import { SearchBar } from '../components/SearchBar'
+import { SearchIconButton } from '../components/SearchIconButton'
 import { purchaseService } from '../services/purchaseService'
 import { A11Y_LABELS, PAGINATION_CONFIG, UI_TEXT } from '../constants'
 import { IPurchaseDetail } from '../types/database'
@@ -13,6 +15,7 @@ import { shareOrSaveCsv } from '../utils/csvExport'
 jest.mock('../services/purchaseService', () => ({
     purchaseService: {
         getPurchasesPage: jest.fn(),
+        getPurchasesSummary: jest.fn(),
         editPurchase: jest.fn(),
     },
 }))
@@ -99,6 +102,7 @@ const textContent = (root: ReactTestRenderer.ReactTestRenderer) => {
 beforeEach(() => {
     jest.clearAllMocks()
     ;(shareOrSaveCsv as jest.Mock).mockResolvedValue('shared')
+    ;(purchaseService.getPurchasesSummary as jest.Mock).mockResolvedValue({ count: 1, total: 10 })
 })
 
 describe('PurchaseDetails screen', () => {
@@ -112,6 +116,7 @@ describe('PurchaseDetails screen', () => {
             cursor: undefined,
             query: undefined,
         })
+        expect(purchaseService.getPurchasesSummary).toHaveBeenCalledWith({ query: undefined })
         const text = textContent(root)
         expect(text).toContain(UI_TEXT.PURCHASE_HISTORY_TITLE)
         expect(text).toContain(`1 ${UI_TEXT.ITEMS.toLowerCase()}`)
@@ -184,5 +189,71 @@ describe('PurchaseDetails screen', () => {
         const root = await renderScreen()
 
         expect(root.root.findAllByProps({ accessibilityLabel: A11Y_LABELS.EDIT_PURCHASE }).length).toBeGreaterThan(0)
+    })
+
+    test('summary reflects all matching purchases, not just the loaded page', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: 20 })
+        ;(purchaseService.getPurchasesSummary as jest.Mock).mockResolvedValue({ count: 57, total: 570 })
+
+        const root = await renderScreen()
+
+        const text = textContent(root)
+        expect(text).toContain('57')
+        expect(text).toContain('570.00$')
+    })
+
+    test('searching re-queries the server and shows the result count', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
+
+        const root = await renderScreen()
+
+        await act(async () => {
+            root.root.findByType(SearchIconButton).props.onPress()
+            await flush()
+        })
+
+        await act(async () => {
+            root.root.findByType(SearchBar).props.onChangeText('U Ba')
+            await flush()
+        })
+
+        expect(purchaseService.getPurchasesPage).toHaveBeenLastCalledWith({
+            limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+            cursor: undefined,
+            query: 'U Ba',
+        })
+        expect(purchaseService.getPurchasesSummary).toHaveBeenLastCalledWith({ query: 'U Ba' })
+        expect(textContent(root)).toContain('1 of 1')
+    })
+
+    test('discards a stale in-flight response (race guard)', async () => {
+        let resolveFirst!: (value: { items: IPurchaseDetail[]; nextCursor: number | null }) => void
+        const firstResponse = new Promise<{ items: IPurchaseDetail[]; nextCursor: number | null }>(
+            (resolve) => {
+                resolveFirst = resolve
+            }
+        )
+        ;(purchaseService.getPurchasesSummary as jest.Mock).mockResolvedValue({ count: 6, total: 66 })
+        ;(purchaseService.getPurchasesPage as jest.Mock)
+            .mockReturnValueOnce(firstResponse) // initial mount load (stays pending)
+            .mockResolvedValueOnce({ items: page2, nextCursor: null }) // newer load wins
+
+        const root = await renderScreen()
+
+        // Kick off a newer load while the initial one is still in flight.
+        await act(async () => {
+            root.root.findByType(SearchIconButton).props.onPress()
+            await flush()
+        })
+
+        // The stale initial load resolves last — it must be ignored.
+        await act(async () => {
+            resolveFirst({ items: page1, nextCursor: null })
+            await flush()
+        })
+
+        const text = textContent(root)
+        expect(text).toContain('2.00$') // page2 committed
+        expect(text).not.toContain('10.00$') // stale page1 discarded
     })
 })

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Input, useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../styles'
@@ -22,10 +22,22 @@ export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }
         setLocalValue(value)
     }, [value])
 
+    // Keep the latest callback in a ref so the debounced wrapper is stable even
+    // when the parent passes an inline handler (otherwise every parent render
+    // would recreate the debouncer and drop a pending keystroke).
+    const onChangeRef = useRef(onChangeText)
+    useEffect(() => {
+        onChangeRef.current = onChangeText
+    }, [onChangeText])
+
     const debouncedOnChange = React.useMemo(
-        () => debounce((text: string) => onChangeText(text), debounceMs),
-        [onChangeText, debounceMs]
+        () => debounce((text: string) => onChangeRef.current(text), debounceMs),
+        [debounceMs]
     )
+
+    // Drop any pending invocation on unmount so it can't fire setState on the
+    // parent after this input is gone.
+    useEffect(() => () => debouncedOnChange.cancel(), [debouncedOnChange])
 
     const handleChange = (text: string) => {
         setLocalValue(text)
@@ -33,6 +45,7 @@ export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }
     }
 
     const handleClear = () => {
+        debouncedOnChange.cancel()
         setLocalValue('')
         onChangeText('')
     }

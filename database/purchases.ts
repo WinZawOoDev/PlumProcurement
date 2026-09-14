@@ -48,6 +48,42 @@ export function escapeLikePattern(value: string): string {
     return value.replace(/[\\%_]/g, (char) => `\\${char}`)
 }
 
+/**
+ * Builds the shared filter predicate for purchase queries (page + summary so
+ * they can never drift). `query` matches, case-insensitively: seller name, any
+ * line-item category/unit, the purchase total, or the created_at date.
+ */
+function buildPurchaseFilters(options: { sellerId?: number; query?: string }): {
+    clauses: string[]
+    params: Array<string | number>
+} {
+    const clauses: string[] = []
+    const params: Array<string | number> = []
+
+    if (options.sellerId !== undefined) {
+        clauses.push('p.seller_id = ?')
+        params.push(options.sellerId)
+    }
+
+    const q = options.query?.trim()
+    if (q) {
+        const like = `%${escapeLikePattern(q)}%`
+        clauses.push(
+            `(s.name LIKE ? ESCAPE '\\' COLLATE NOCASE
+              OR EXISTS (
+                  SELECT 1 FROM purchase_items i
+                  WHERE i.purchase_id = p.id
+                    AND (i.category LIKE ? ESCAPE '\\' COLLATE NOCASE OR i.unit LIKE ? ESCAPE '\\' COLLATE NOCASE)
+              )
+              OR CAST(p.total AS TEXT) LIKE ? ESCAPE '\\'
+              OR p.created_at LIKE ? ESCAPE '\\')`
+        )
+        params.push(like, like, like, like, like)
+    }
+
+    return { clauses, params }
+}
+
 /** Loads the line items for a page of purchase headers and assembles details. */
 async function attachItems(db: ReturnType<typeof initDb>, purchases: IPurchaseWithSeller[]): Promise<IPurchaseDetail[]> {
     if (purchases.length === 0) return []
@@ -87,29 +123,14 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
     try {
         db = initDb()
         const { limit, cursor, query, sellerId } = options
-        const q = query?.trim()
 
-        const where: string[] = []
-        const params: Array<string | number> = []
+        const filters = buildPurchaseFilters({ sellerId, query })
+        const where = [...filters.clauses]
+        const params = [...filters.params]
         if (cursor !== undefined) {
-            where.push('p.id < ?')
-            params.push(cursor)
-        }
-        if (sellerId !== undefined) {
-            where.push('p.seller_id = ?')
-            params.push(sellerId)
-        }
-        if (q) {
-            const like = `%${escapeLikePattern(q)}%`
-            // Search by seller name or any line item category/unit.
-            where.push(
-                `(s.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR EXISTS (
-                    SELECT 1 FROM purchase_items i
-                    WHERE i.purchase_id = p.id
-                      AND (i.category LIKE ? ESCAPE '\\' COLLATE NOCASE OR i.unit LIKE ? ESCAPE '\\' COLLATE NOCASE)
-                ))`
-            )
-            params.push(like, like, like)
+            // Cursor is prepended so it leads predicate evaluation.
+            where.unshift('p.id < ?')
+            params.unshift(cursor)
         }
         const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
@@ -137,31 +158,38 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
     }
 }
 
-export async function countPurchases(query?: string): Promise<number> {
+export interface PurchasesSummary {
+    count: number
+    total: number
+}
+
+/**
+ * Aggregate over all purchases matching the same filters as `fetchPurchasesPage`
+ * (independent of pagination), so the history header can show accurate totals.
+ */
+export async function fetchPurchasesSummary(options: { query?: string; sellerId?: number } = {}): Promise<PurchasesSummary> {
     let db;
     try {
         db = initDb()
-        const q = query?.trim()
-        if (q) {
-            const like = `%${escapeLikePattern(q)}%`
-            const { results } = await db.executeAsync(
-                `SELECT COUNT(*) as count
-                 FROM purchases p
-                 LEFT JOIN sellers s ON s.id = p.seller_id
-                 WHERE s.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR EXISTS (
-                     SELECT 1 FROM purchase_items i
-                     WHERE i.purchase_id = p.id
-                       AND (i.category LIKE ? ESCAPE '\\' COLLATE NOCASE OR i.unit LIKE ? ESCAPE '\\' COLLATE NOCASE)
-                 )`,
-                [like, like, like]
-            );
-            return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
-        }
-        const { results } = await db.executeAsync(`SELECT COUNT(*) as count FROM purchases`);
-        return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
+        const { clauses, params } = buildPurchaseFilters(options)
+        const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : ''
+        const { results } = await db.executeAsync(
+            `SELECT COUNT(*) AS count, COALESCE(SUM(p.total), 0) AS total
+             FROM purchases p
+             LEFT JOIN sellers s ON s.id = p.seller_id
+             ${whereSql}`,
+            params
+        );
+        const row = (results as unknown as Array<{ count: number; total: number }>)[0]
+        return { count: row?.count ?? 0, total: row?.total ?? 0 }
     } catch (error) {
-        throw new DatabaseError('Failed to count purchases', error)
+        throw new DatabaseError('Failed to summarize purchases', error)
     }
+}
+
+export async function countPurchases(query?: string, sellerId?: number): Promise<number> {
+    const { count } = await fetchPurchasesSummary({ query, sellerId })
+    return count
 }
 
 /**

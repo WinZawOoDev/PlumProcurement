@@ -91,6 +91,29 @@ describe('debounce', () => {
         jest.advanceTimersByTime(100)
         expect(fn).toHaveBeenCalledTimes(1)
     })
+
+    test('cancel drops a pending invocation', () => {
+        const fn = jest.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('first')
+        debounced.cancel()
+        jest.advanceTimersByTime(100)
+
+        expect(fn).not.toHaveBeenCalled()
+    })
+
+    test('invokes with the latest arguments', () => {
+        const fn = jest.fn()
+        const debounced = debounce(fn, 100)
+
+        debounced('a')
+        debounced('b')
+        jest.advanceTimersByTime(100)
+
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith('b')
+    })
 })
 
 describe('throttle', () => {

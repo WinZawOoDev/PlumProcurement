@@ -228,6 +228,11 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
     purchaseHistoryItems: {
         marginBottom: 25,
     },
+    purchaseResultsCount: {
+        fontSize: 12,
+        color: theme.colors.grey4,
+        marginBottom: 8,
+    },
     purchaseItemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -242,6 +247,10 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         fontWeight: '600',
         fontSize: 15,
         color: theme.colors.black,
+    },
+    purchaseItemTitleHighlight: {
+        color: theme.colors.primary,
+        fontWeight: '700',
     },
     purchaseItemSubtitle: {
         fontSize: 13,

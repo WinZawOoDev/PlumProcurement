@@ -3,6 +3,7 @@ import {
     createPurchase,
     deletePurchase,
     fetchPurchasesPage,
+    fetchPurchasesSummary,
     fetchRecentPurchases,
     fetchRecentPurchasesBySeller,
     fetchSellerStats,
@@ -13,11 +14,12 @@ import {
     type NewPurchaseItem,
     type PurchaseUpdates,
     type PurchasesPage,
+    type PurchasesSummary,
 } from '../database/purchases'
 import { initializeSellers } from '../database/sellers'
 import { IPurchaseDetail, ISellerStat } from '../types/database'
 
-export type { NewPurchase, NewPurchaseItem, PurchaseUpdates, PurchasesPage }
+export type { NewPurchase, NewPurchaseItem, PurchaseUpdates, PurchasesPage, PurchasesSummary }
 
 /**
  * Abstraction layer over the purchases database.
@@ -34,10 +36,20 @@ export class PurchaseService {
         return fetchRecentPurchases(limit)
     }
 
-    async getPurchaseCount(query?: string): Promise<number> {
+    async getPurchaseCount(query?: string, sellerId?: number): Promise<number> {
         await initializeSellers()
         await initializePurchases()
-        return countPurchases(query)
+        return countPurchases(query, sellerId)
+    }
+
+    /**
+     * Aggregate (count + total value) across all purchases matching the same
+     * filters as `getPurchasesPage`, independent of pagination.
+     */
+    async getPurchasesSummary(options: { query?: string; sellerId?: number } = {}): Promise<PurchasesSummary> {
+        await initializeSellers()
+        await initializePurchases()
+        return fetchPurchasesSummary(options)
     }
 
     /**
