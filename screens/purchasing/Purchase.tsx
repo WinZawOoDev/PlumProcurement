@@ -287,7 +287,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                     <View style={styles.priceItemCardScrollWrapper}>
                         <FlatList
                             style={styles.priceItemCardScroll}
-                            contentContainerStyle={styles.priceItemCardList}
+                            contentContainerStyle={[styles.priceItemCardList, styles.scrollContentGutter]}
                             data={selectablePrices}
                             keyExtractor={(price) => price.id.toString()}
                             showsVerticalScrollIndicator

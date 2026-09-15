@@ -313,6 +313,10 @@ export const sharedStyles = (theme: ThemeOptions) => StyleSheet.create({
     fillContainer: {
         flex: 1,
     },
+    // Leaves a small gap between scrollable content and the vertical scrollbar.
+    scrollContentGutter: {
+        paddingRight: 8,
+    },
     sectionHeaderTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',

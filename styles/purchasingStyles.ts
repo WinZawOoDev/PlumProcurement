@@ -365,7 +365,6 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         gap: 12,
         paddingVertical: 4,
         paddingBottom: 12,
-        paddingRight: 8,
     },
     priceItemCard: {
         borderRadius: 16,

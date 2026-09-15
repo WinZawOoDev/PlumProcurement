@@ -117,6 +117,7 @@ export default function SellerSelect() {
                 ) : (
                     <FlatList
                         style={styles.recentPurchasesList}
+                        contentContainerStyle={styles.scrollContentGutter}
                         data={filtered}
                         keyExtractor={(item) => item.id.toString()}
                         keyboardShouldPersistTaps="handled"

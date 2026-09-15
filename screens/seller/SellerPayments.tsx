@@ -159,6 +159,7 @@ export default function SellerPayments() {
                 ) : (
                     <FlatList
                         style={styles.recentPurchasesList}
+                        contentContainerStyle={styles.scrollContentGutter}
                         data={payments}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => (

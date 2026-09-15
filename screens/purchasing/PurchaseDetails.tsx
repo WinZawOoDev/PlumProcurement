@@ -499,6 +499,7 @@ export default function PurchaseDetails() {
         ) : (
           <FlatList
             style={styles.purchaseHistoryItems}
+            contentContainerStyle={styles.scrollContentGutter}
             data={visiblePurchases}
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (

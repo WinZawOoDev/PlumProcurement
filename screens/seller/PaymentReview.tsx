@@ -179,6 +179,7 @@ export default function PaymentReview() {
                             ) : (
                                 <ScrollView
                                     style={styles.paymentPurchasesScroll}
+                                    contentContainerStyle={styles.scrollContentGutter}
                                     showsVerticalScrollIndicator
                                     persistentScrollbar
                                     nestedScrollEnabled

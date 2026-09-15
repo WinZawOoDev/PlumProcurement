@@ -211,7 +211,7 @@ export default function EditPurchase() {
                 </View>
                 <ScrollView
                     style={styles.editPurchaseList}
-                    contentContainerStyle={styles.editPurchaseItemsContent}
+                    contentContainerStyle={[styles.editPurchaseItemsContent, styles.scrollContentGutter]}
                     showsVerticalScrollIndicator
                     persistentScrollbar
                 >
