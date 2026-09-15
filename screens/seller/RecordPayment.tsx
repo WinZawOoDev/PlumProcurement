@@ -1,4 +1,4 @@
-import { Pressable, Text as RNText, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text as RNText, TextInput, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
@@ -102,7 +102,13 @@ export default function RecordPayment() {
                             )
                         }
                     />
-                    <View style={styles.paymentFormBody}>
+                    <ScrollView
+                        style={styles.paymentFormScroll}
+                        contentContainerStyle={styles.paymentFormScrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                        showsVerticalScrollIndicator={false}
+                    >
                         <View style={styles.paymentBalanceRow}>
                             <RNText style={styles.paymentBalanceLabel}>
                                 {UI_TEXT.OUTSTANDING_BALANCE}
@@ -208,7 +214,7 @@ export default function RecordPayment() {
                                 )}
                             />
                         </View>
-                    </View>
+                    </ScrollView>
                     <View style={styles.editPurchaseFooter}>
                         <PrimaryButton title={UI_TEXT.CONTINUE} onPress={handleSubmit(handleContinue)} />
                         <SecondaryButton title={UI_TEXT.CANCEL} onPress={() => navigation.goBack()} />

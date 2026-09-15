@@ -412,6 +412,12 @@ export const sellerStyles = (theme: ThemeOptions) => StyleSheet.create({
     paymentFormBody: {
         flex: 1,
     },
+    paymentFormScroll: {
+        flex: 1,
+    },
+    paymentFormScrollContent: {
+        paddingBottom: 8,
+    },
     paymentBalanceRow: {
         flexDirection: 'row',
         alignItems: 'center',

@@ -18,7 +18,7 @@ export function KeyboardAvoid({ children, style }: KeyboardAvoidProps) {
     return (
         <KeyboardAvoidingView
             style={style}
-            behavior={Platform.OS === 'ios' ? ANIMATIONS.KEYBOARD_AVOID_BEHAVIOR : 'height'}
+            behavior={Platform.OS === 'ios' ? ANIMATIONS.KEYBOARD_AVOID_BEHAVIOR : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
         >
             {children}
