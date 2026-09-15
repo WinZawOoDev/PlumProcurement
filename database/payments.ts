@@ -101,19 +101,31 @@ export async function fetchRecentPaymentsBySeller(sellerId: number, limit = 3): 
     return items
 }
 
+/**
+ * Shared projection for seller balance reporting. The purchase/payment totals
+ * are pre-aggregated in grouped subqueries and joined once, instead of running
+ * two correlated subqueries for every seller row (an N+1 per result).
+ */
+const SELLER_BALANCE_SELECT = `
+    SELECT s.id AS seller_id, s.name AS seller_name,
+        COALESCE(pc.total_owed, 0) AS total_owed,
+        COALESCE(pay.total_paid, 0) AS total_paid
+    FROM sellers s
+    LEFT JOIN (
+        SELECT seller_id, SUM(total) AS total_owed
+        FROM purchases GROUP BY seller_id
+    ) pc ON pc.seller_id = s.id
+    LEFT JOIN (
+        SELECT seller_id, SUM(amount) AS total_paid
+        FROM payments GROUP BY seller_id
+    ) pay ON pay.seller_id = s.id
+`
+
 export async function fetchPaymentSummaries(): Promise<ISellerPaymentStat[]> {
     let db;
     try {
         db = initDb()
-        const { results } = await db.executeAsync(
-            `
-            SELECT s.id AS seller_id, s.name AS seller_name,
-                COALESCE((SELECT SUM(p.total) FROM purchases p WHERE p.seller_id = s.id), 0) AS total_owed,
-                COALESCE((SELECT SUM(py.amount) FROM payments py WHERE py.seller_id = s.id), 0) AS total_paid
-            FROM sellers s
-            ORDER BY s.name ASC
-            `
-        )
+        const { results } = await db.executeAsync(`${SELLER_BALANCE_SELECT} ORDER BY s.name ASC`)
         const rows = results as unknown as Array<Omit<ISellerPaymentStat, 'balance'>>
         return rows.map((row) => ({ ...row, balance: row.total_owed - row.total_paid }))
     } catch (error) {
@@ -126,13 +138,7 @@ export async function fetchSellerPaymentStat(sellerId: number): Promise<ISellerP
     try {
         db = initDb()
         const { results } = await db.executeAsync(
-            `
-            SELECT s.id AS seller_id, s.name AS seller_name,
-                COALESCE((SELECT SUM(p.total) FROM purchases p WHERE p.seller_id = s.id), 0) AS total_owed,
-                COALESCE((SELECT SUM(py.amount) FROM payments py WHERE py.seller_id = s.id), 0) AS total_paid
-            FROM sellers s
-            WHERE s.id = ?
-            `,
+            `${SELLER_BALANCE_SELECT} WHERE s.id = ?`,
             [sellerId]
         )
         const rows = results as unknown as Array<Omit<ISellerPaymentStat, 'balance'>>

@@ -5,6 +5,7 @@ import type {
     IPurchaseWithSeller,
     ISellerStat,
 } from '../types/database'
+import { insertMany } from './batch'
 import { DatabaseError, DbExecutor, initDb } from './connection'
 import { initializeSchema } from './schema'
 
@@ -235,6 +236,29 @@ async function assertSellerNotOverpaid(
     }
 }
 
+const PURCHASE_ITEM_COLUMNS = [
+    'purchase_id',
+    'price_id',
+    'category',
+    'unit',
+    'unit_price',
+    'quantity',
+    'line_total',
+]
+
+/** Maps validated line items into bound-parameter tuples for a bulk insert. */
+function toPurchaseItemRows(purchaseId: number, items: NewPurchaseItem[]) {
+    return items.map((item) => [
+        purchaseId,
+        item.price_id ?? null,
+        item.category,
+        item.unit,
+        item.unit_price,
+        item.quantity,
+        item.unit_price * item.quantity,
+    ])
+}
+
 function validateItems(items: NewPurchaseItem[]): void {
     if (!Array.isArray(items) || items.length === 0) {
         throw new DatabaseError(tMessage('ERROR_NO_ITEMS'))
@@ -269,21 +293,7 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
                 [seller_id ?? null, total]
             )
             const purchaseId = insertId as number
-            for (const item of items) {
-                await tx.executeAsync(
-                    `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        purchaseId,
-                        item.price_id ?? null,
-                        item.category,
-                        item.unit,
-                        item.unit_price,
-                        item.quantity,
-                        item.unit_price * item.quantity,
-                    ]
-                )
-            }
+            await insertMany(tx, 'purchase_items', PURCHASE_ITEM_COLUMNS, toPurchaseItemRows(purchaseId, items))
             return purchaseId
         })
     } catch (error) {
@@ -321,21 +331,7 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                 validateItems(updates.items)
                 const total = updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
                 await tx.executeAsync(`DELETE FROM purchase_items WHERE purchase_id = ?`, [id])
-                for (const item of updates.items) {
-                    await tx.executeAsync(
-                        `INSERT INTO purchase_items (purchase_id, price_id, category, unit, unit_price, quantity, line_total)
-                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [
-                            id,
-                            item.price_id ?? null,
-                            item.category,
-                            item.unit,
-                            item.unit_price,
-                            item.quantity,
-                            item.unit_price * item.quantity,
-                        ]
-                    )
-                }
+                await insertMany(tx, 'purchase_items', PURCHASE_ITEM_COLUMNS, toPurchaseItemRows(id, updates.items))
                 await tx.executeAsync(
                     `UPDATE purchases SET total = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                     [total, id]
