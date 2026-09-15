@@ -1,4 +1,5 @@
 import { Alert, FlatList, Pressable, Text as RNText, TouchableOpacity, View } from 'react-native'
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
@@ -134,12 +135,46 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     const { prices } = usePrices()
 
     const [quantities, setQuantities] = useState<Record<string, number>>({})
+    const [hasMorePricesBelow, setHasMorePricesBelow] = useState(false)
     // Synchronous mirror so quick repeated taps accumulate correctly (state
     // updates are async) and so undo can restore the exact previous value.
     const quantitiesRef = useRef<Record<string, number>>({})
+    // Tracks the price list viewport/content so the bottom fade can hide once
+    // the user reaches the end of the list.
+    const priceListMetrics = useRef({ viewport: 0, content: 0, offset: 0 })
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const selectablePrices = prices
+
+    const syncPriceListOverflow = useCallback(() => {
+        const { viewport, content, offset } = priceListMetrics.current
+        const more = content - (offset + viewport) > 4
+        setHasMorePricesBelow((prev) => (prev === more ? prev : more))
+    }, [])
+
+    const handlePriceListScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            priceListMetrics.current.offset = event.nativeEvent.contentOffset.y
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
+
+    const handlePriceListLayout = useCallback(
+        (event: LayoutChangeEvent) => {
+            priceListMetrics.current.viewport = event.nativeEvent.layout.height
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
+
+    const handlePriceListContentSize = useCallback(
+        (_width: number, height: number) => {
+            priceListMetrics.current.content = height
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
 
     const getQuantity = (priceId: string) => quantities[priceId] ?? 0
     const applyQuantities = (next: Record<string, number>) => {
@@ -249,25 +284,39 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                         <RNText style={styles.priceItemListTitle}>{UI_TEXT.PRICE_ITEMS}</RNText>
                         <RNText style={styles.priceItemCount}>{formatNumber(selectablePrices.length, 0)}</RNText>
                     </View>
-                    <FlatList
-                        style={styles.priceItemCardScroll}
-                        contentContainerStyle={styles.priceItemCardList}
-                        data={selectablePrices}
-                        keyExtractor={(price) => price.id.toString()}
-                        showsVerticalScrollIndicator
-                        renderItem={({ item: price }) => {
-                            const priceId = price.id.toString()
-                            const quantity = getQuantity(priceId)
-                            return (
-                                <PriceItemCard
-                                    price={price}
-                                    quantity={quantity}
-                                    onIncrease={() => increment(priceId)}
-                                    onDecrease={() => decrement(priceId)}
-                                />
-                            )
-                        }}
-                    />
+                    <View style={styles.priceItemCardScrollWrapper}>
+                        <FlatList
+                            style={styles.priceItemCardScroll}
+                            contentContainerStyle={styles.priceItemCardList}
+                            data={selectablePrices}
+                            keyExtractor={(price) => price.id.toString()}
+                            showsVerticalScrollIndicator
+                            persistentScrollbar
+                            onScroll={handlePriceListScroll}
+                            scrollEventThrottle={16}
+                            onLayout={handlePriceListLayout}
+                            onContentSizeChange={handlePriceListContentSize}
+                            renderItem={({ item: price }) => {
+                                const priceId = price.id.toString()
+                                const quantity = getQuantity(priceId)
+                                return (
+                                    <PriceItemCard
+                                        price={price}
+                                        quantity={quantity}
+                                        onIncrease={() => increment(priceId)}
+                                        onDecrease={() => decrement(priceId)}
+                                    />
+                                )
+                            }}
+                        />
+                        {hasMorePricesBelow && (
+                            <View pointerEvents="none" style={styles.priceItemScrollFade}>
+                                <View style={styles.priceItemScrollFadeTop} />
+                                <View style={styles.priceItemScrollFadeMid} />
+                                <View style={styles.priceItemScrollFadeBottom} />
+                            </View>
+                        )}
+                    </View>
                 </>
             )}
             {!allValid && (

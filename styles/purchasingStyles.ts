@@ -305,10 +305,35 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 4,
     },
-    priceItemCardScroll: {
+    priceItemCardScrollWrapper: {
         flex: 1,
         marginTop: 8,
         marginBottom: 4,
+    },
+    priceItemCardScroll: {
+        flex: 1,
+    },
+    priceItemScrollFade: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 20,
+    },
+    priceItemScrollFadeTop: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        opacity: 0.15,
+    },
+    priceItemScrollFadeMid: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        opacity: 0.5,
+    },
+    priceItemScrollFadeBottom: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        opacity: 0.9,
     },
     priceItemListHeader: {
         flexDirection: 'row',
