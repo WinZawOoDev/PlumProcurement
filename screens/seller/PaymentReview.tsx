@@ -1,8 +1,9 @@
-import { Alert, ScrollView, Text as RNText, View } from 'react-native'
+import { ActivityIndicator, Alert, ScrollView, Text as RNText, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
@@ -59,6 +60,7 @@ function SlipRow({ label, value, strong = false }: { label: string; value: strin
 
 export default function PaymentReview() {
     const styles = useStyles()
+    const { theme } = useTheme()
     const { UI_TEXT, MESSAGES, PAYMENT_METHODS, CURRENCY } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<PaymentReviewRouteProp>()
@@ -209,6 +211,14 @@ export default function PaymentReview() {
                     <SecondaryButton title={UI_TEXT.EDIT} onPress={() => navigation.goBack()} />
                 </View>
             </View>
+            {saving && (
+                <View style={styles.paymentProcessingOverlay} accessibilityLiveRegion="polite">
+                    <View style={styles.paymentProcessingCard}>
+                        <ActivityIndicator size="large" color={theme.colors.primary} />
+                        <RNText style={styles.paymentProcessingText}>{UI_TEXT.PROCESSING_PAYMENT}</RNText>
+                    </View>
+                </View>
+            )}
         </SafeAreaView>
     )
 }
