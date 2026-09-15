@@ -169,17 +169,8 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         gap: 10,
         marginTop: 12,
     },
-    formCard: {
-        backgroundColor: theme.colors.surface ?? theme.colors.white,
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 12,
-        borderWidth: 0,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 1,
+    purchaseFormContainer: {
+        flex: 1,
         gap: 2,
     },
     exportButton: {
@@ -315,6 +306,7 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         paddingHorizontal: 4,
     },
     priceItemCardScroll: {
+        flex: 1,
         marginTop: 8,
         marginBottom: 4,
     },
@@ -345,26 +337,9 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         overflow: 'hidden',
     },
     priceItemCardList: {
+        gap: 12,
         paddingVertical: 4,
-    },
-    priceItemDotsRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 6,
-        marginTop: 8,
-    },
-    priceItemDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: theme.colors.grey2,
-        opacity: 0.45,
-    },
-    priceItemDotActive: {
-        width: 16,
-        backgroundColor: theme.colors.primary,
-        opacity: 1,
+        paddingBottom: 12,
     },
     priceItemCard: {
         borderRadius: 16,
