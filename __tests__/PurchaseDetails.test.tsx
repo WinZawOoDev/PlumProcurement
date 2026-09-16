@@ -146,28 +146,25 @@ describe('PurchaseDetails screen', () => {
         expect(textContent(root)).toContain('2.00$')
     })
 
-    test('exports the loaded purchases as CSV', async () => {
+    // CSV export disabled — the button is commented out in PurchaseDetails.
+    test('does not render the CSV export button while export is disabled', async () => {
         ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
 
         const root = await renderScreen()
         await act(async () => {
-            root.root.findByType(SecondaryButton).props.onPress()
             await flush()
         })
 
-        expect(shareOrSaveCsv).toHaveBeenCalledWith(
-            expect.stringContaining('fruit'),
-            expect.any(String),
-            expect.stringContaining(UI_TEXT.EXPORT_CSV)
-        )
+        expect(root.root.findAllByType(SecondaryButton)).toHaveLength(0)
+        expect(shareOrSaveCsv).not.toHaveBeenCalled()
     })
 
-    test('export button is disabled when the list is empty', async () => {
+    test('shows the empty state without a CSV export button', async () => {
         ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: [], nextCursor: null })
 
         const root = await renderScreen()
 
-        expect(root.root.findByType(SecondaryButton).props.disabled).toBe(true)
+        expect(root.root.findAllByType(SecondaryButton)).toHaveLength(0)
         expect(textContent(root)).toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
     })
 

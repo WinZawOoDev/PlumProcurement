@@ -2,7 +2,8 @@ import { FlatList, Pressable, RefreshControl, StyleProp, Text as RNText, TextSty
 import React, {
   useCallback,
   useEffect,
-  useMemo,
+  // CSV export disabled — re-enable with the EXPORT_CSV button below.
+  // useMemo,
   useRef,
   useState,
 } from 'react';
@@ -23,16 +24,17 @@ import { useLocalizedConstants } from '../../hooks/useLocalizedConstants';
 import { purchaseService } from '../../services/purchaseService';
 import { IPurchaseDetail } from '../../types/database';
 import {
-  buildPurchasesCsvWithBom,
+  // CSV export disabled — re-enable with the EXPORT_CSV button below.
+  // buildPurchasesCsvWithBom,
   formatDateDisplay,
   formatNumber,
-  getCsvFilename,
+  // getCsvFilename,
 } from '../../utils';
-import { shareOrSaveCsv } from '../../utils/csvExport';
-import { IconButton, SecondaryButton } from '../../components/buttons/Button';
+// import { shareOrSaveCsv } from '../../utils/csvExport';
+import { IconButton /* , SecondaryButton */ } from '../../components/buttons/Button';
 import { SearchBar } from '../../components/SearchBar';
 import { SearchIconButton } from '../../components/SearchIconButton';
-import { showError, showSuccess } from '../../utils/notifications';
+import { showError /* , showSuccess */ } from '../../utils/notifications';
 import { useSearchFilter } from '../../hooks/useSearchFilter';
 import { PAGINATION_CONFIG } from '../../constants';
 import { SectionHeader } from '../../components/SectionHeader';
@@ -223,26 +225,29 @@ function LoadMoreSkeleton() {
 }
 
 function PurchaseActions({
-  canExport,
-  onExport,
+  // CSV export disabled — re-enable with the EXPORT_CSV button below.
+  // canExport,
+  // onExport,
   searchVisible,
   onToggleSearch,
 }: {
-  canExport: boolean;
-  onExport: () => void;
+  // canExport: boolean;
+  // onExport: () => void;
   searchVisible: boolean;
   onToggleSearch: () => void;
 }) {
   const styles = useStyles();
-  const { UI_TEXT } = useLocalizedConstants();
+  // const { UI_TEXT } = useLocalizedConstants();
   return (
     <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
+      {/* CSV export disabled
       <SecondaryButton
         title={UI_TEXT.EXPORT_CSV}
         disabled={!canExport}
         onPress={onExport}
         buttonStyle={styles.exportButton}
       />
+      */}
       <SearchIconButton active={searchVisible} onPress={onToggleSearch} />
     </View>
   );
@@ -274,7 +279,7 @@ export default function PurchaseDetails() {
   const styles = useStyles();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const { UI_TEXT, MESSAGES } = useLocalizedConstants();
+  const { UI_TEXT /* , MESSAGES */ } = useLocalizedConstants();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [summary, setSummary] = useState<{ count: number; total: number } | null>(null);
@@ -405,57 +410,58 @@ export default function PurchaseDetails() {
   const summaryCount = summary?.count ?? visiblePurchases.length;
   const summaryTotal = summary?.total ?? grandTotal;
 
+  // CSV export disabled — re-enable with the EXPORT_CSV button above.
   // Flatten each purchase into one CSV row per line item.
-  const csvRows = useMemo(
-    () =>
-      visiblePurchases.flatMap((p) => {
-        if (p.items.length === 0) {
-          return [
-            {
-              id: p.id,
-              created_at: p.created_at,
-              seller_name: p.seller_name,
-              category: '',
-              unit: '',
-              unit_price: 0,
-              quantity: 0,
-              total: p.total,
-            },
-          ];
-        }
-        return p.items.map((line) => ({
-          id: p.id,
-          created_at: p.created_at,
-          seller_name: p.seller_name,
-          category: line.category,
-          unit: line.unit,
-          unit_price: line.unit_price,
-          quantity: line.quantity,
-          total: line.line_total,
-        }));
-      }),
-    [visiblePurchases],
-  );
+  // const csvRows = useMemo(
+  //   () =>
+  //     visiblePurchases.flatMap((p) => {
+  //       if (p.items.length === 0) {
+  //         return [
+  //           {
+  //             id: p.id,
+  //             created_at: p.created_at,
+  //             seller_name: p.seller_name,
+  //             category: '',
+  //             unit: '',
+  //             unit_price: 0,
+  //             quantity: 0,
+  //             total: p.total,
+  //           },
+  //         ];
+  //       }
+  //       return p.items.map((line) => ({
+  //         id: p.id,
+  //         created_at: p.created_at,
+  //         seller_name: p.seller_name,
+  //         category: line.category,
+  //         unit: line.unit,
+  //         unit_price: line.unit_price,
+  //         quantity: line.quantity,
+  //         total: line.line_total,
+  //       }));
+  //     }),
+  //   [visiblePurchases],
+  // );
 
-  const csv = useMemo(
-    () => buildPurchasesCsvWithBom(csvRows),
-    [csvRows],
-  );
+  // const csv = useMemo(
+  //   () => buildPurchasesCsvWithBom(csvRows),
+  //   [csvRows],
+  // );
 
-  const handleExport = async () => {
-    if (csvRows.length === 0) {
-      showError(UI_TEXT.EMPTY_PURCHASE_LIST);
-      return;
-    }
-    const filename = getCsvFilename();
-    const result = await shareOrSaveCsv(
-      csv,
-      filename,
-      `${UI_TEXT.EXPORT_CSV}: ${filename}`,
-    );
-    if (result === 'failed') showError(MESSAGES.ERROR_GENERIC);
-    else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${t('uiText.EXPORT_ROWS', { count: csvRows.length })}`);
-  };
+  // const handleExport = async () => {
+  //   if (csvRows.length === 0) {
+  //     showError(UI_TEXT.EMPTY_PURCHASE_LIST);
+  //     return;
+  //   }
+  //   const filename = getCsvFilename();
+  //   const result = await shareOrSaveCsv(
+  //     csv,
+  //     filename,
+  //     `${UI_TEXT.EXPORT_CSV}: ${filename}`,
+  //   );
+  //   if (result === 'failed') showError(MESSAGES.ERROR_GENERIC);
+  //   else showSuccess(`${UI_TEXT.EXPORT_CSV} — ${t('uiText.EXPORT_ROWS', { count: csvRows.length })}`);
+  // };
 
   return (
     <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.purchaseHistoryScreen}>
@@ -473,8 +479,9 @@ export default function PurchaseDetails() {
         )}
 
         <PurchaseActions
-          canExport={purchases.length > 0}
-          onExport={handleExport}
+          // CSV export disabled — re-enable with the EXPORT_CSV button above.
+          // canExport={purchases.length > 0}
+          // onExport={handleExport}
           searchVisible={searchVisible}
           onToggleSearch={handleToggleSearch}
         />
