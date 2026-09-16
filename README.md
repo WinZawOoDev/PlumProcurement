@@ -141,6 +141,12 @@ maestro test .maestro/ # Maestro
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
 
+### 2026-09-16
+
+**Database**
+- Prices unique compound key narrowed from `(category, unit, price)` to `(category, unit)` — a category+unit now has a single price (the amount is a mutable value). Migration v8 collapses duplicates (keeping the most recent row, re-pointing purchase line items) and swaps `idx_prices_category_unit_price` for `idx_prices_category_unit`.
+- `createPrice`/`updatePrice` duplicate guards and `ERROR_PRICE_EXISTS` message updated to the new key.
+
 ### 2026-09-10 (VI)
 
 **Features**

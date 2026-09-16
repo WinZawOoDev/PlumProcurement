@@ -39,13 +39,13 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
 
         db = initDb()
         // Check + insert in one queued transaction. The unique index created by
-        // migration v6 enforces this at the storage layer, but an existing
-        // install can be left without that index, so the duplicate check is also
-        // performed here to guarantee the constraint for every install.
+        // migration v8 enforces (category, unit) at the storage layer, but an
+        // existing install can be left without that index, so the duplicate
+        // check is also performed here to guarantee the constraint everywhere.
         return await db.transaction(async (tx) => {
             const { results } = await tx.executeAsync(
-                `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND price IS ? LIMIT 1`,
-                [category, unit, price]
+                `SELECT id FROM prices WHERE category IS ? AND unit IS ? LIMIT 1`,
+                [category, unit]
             );
             if ((results as unknown as Array<{ id: number }>).length > 0) {
                 throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
@@ -102,21 +102,19 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
             // against colliding with another price, mirroring createPrice so the
             // rule holds even when the unique index is absent.
             const { results } = await tx.executeAsync(
-                `SELECT category, unit, price FROM prices WHERE id = ?`,
+                `SELECT category, unit FROM prices WHERE id = ?`,
                 [id]
             );
             const current = (results as unknown as Array<{
                 category: string
                 unit: string
-                price: number
             }>)[0];
             if (current) {
                 const nextCategory = priceData.category ?? current.category
                 const nextUnit = priceData.unit ?? current.unit
-                const nextPrice = priceData.price ?? current.price
                 const { results: duplicates } = await tx.executeAsync(
-                    `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND price IS ? AND id <> ? LIMIT 1`,
-                    [nextCategory, nextUnit, nextPrice, id]
+                    `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND id <> ? LIMIT 1`,
+                    [nextCategory, nextUnit, id]
                 );
                 if ((duplicates as unknown as Array<{ id: number }>).length > 0) {
                     throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))

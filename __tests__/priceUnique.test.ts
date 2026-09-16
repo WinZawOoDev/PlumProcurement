@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 const uniqueError = () =>
-    new Error('UNIQUE constraint failed: prices.category, prices.unit, prices.price')
+    new Error('UNIQUE constraint failed: prices.category, prices.unit')
 
 describe('price uniqueness', () => {
     test('createPrice rejects when an identical price already exists', async () => {
@@ -34,7 +34,7 @@ describe('price uniqueness', () => {
         expect(executeAsync).toHaveBeenCalledTimes(1)
         expect(executeAsync).toHaveBeenCalledWith(
             expect.stringContaining('SELECT id FROM prices WHERE category IS ?'),
-            ['fruit', 'CUP', 5]
+            ['fruit', 'CUP']
         )
     })
 
@@ -60,10 +60,10 @@ describe('price uniqueness', () => {
 
     test('updatePrice rejects when the merged row matches another price', async () => {
         executeAsync
-            .mockResolvedValueOnce({ results: [{ category: 'fruit', unit: 'CUP', price: 5 }] })
+            .mockResolvedValueOnce({ results: [{ category: 'fruit', unit: 'CUP' }] })
             .mockResolvedValueOnce({ results: [{ id: 9 }] }) // duplicate SELECT
 
-        await expect(updatePrice(1, { price: 5 })).rejects.toThrow(
+        await expect(updatePrice(1, { unit: 'GALLON' })).rejects.toThrow(
             MESSAGES.ERROR_PRICE_EXISTS
         )
     })

@@ -234,6 +234,42 @@ const MIGRATIONS: Migration[] = [
             })
         },
     },
+    {
+        version: 8,
+        up: async () => {
+            const db = initDb()
+            // The prices compound key is now (category, unit): a category+unit
+            // has exactly one price row, the amount being a mutable value rather
+            // than part of the key. Collapse any pre-existing duplicates by
+            // keeping the most recent row and re-pointing their purchase line
+            // items (each item keeps its own unit_price snapshot), then swap the
+            // old (category, unit, price) unique index for the compound one.
+            // Runs as one transaction so the dedupe + index swap are atomic.
+            await db.transaction(async (tx) => {
+                await tx.executeAsync(`DROP INDEX IF EXISTS idx_prices_category_unit_price`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(`CREATE TEMP TABLE price_dupes AS
+                    SELECT p.id AS dup_id, k.keep_id AS keep_id
+                    FROM prices p
+                    JOIN (
+                        SELECT category, unit, MAX(id) AS keep_id
+                        FROM prices
+                        GROUP BY category, unit
+                        HAVING COUNT(*) > 1
+                    ) k ON k.category IS p.category AND k.unit IS p.unit
+                    WHERE p.id <> k.keep_id`)
+                await tx.executeAsync(`UPDATE purchase_items
+                    SET price_id = (SELECT keep_id FROM price_dupes WHERE dup_id = purchase_items.price_id)
+                    WHERE price_id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DELETE FROM prices WHERE id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(
+                    `CREATE UNIQUE INDEX idx_prices_category_unit
+                     ON prices(category, unit)`
+                )
+            })
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null
