@@ -21,20 +21,45 @@ const createStyles = (theme: ThemeOptions) => ({
 type Styles = ReturnType<typeof createStyles>
 
 /**
+ * Stacked Burmese glyphs need extra vertical room; 18% matches the
+ * Noto Sans Myanmar metrics gap over the Latin faces it replaces.
+ */
+const MYANMAR_LINE_HEIGHT_SCALE = 1.18
+
+/**
  * Swaps the (unbundled) Latin font families for the bundled Noto Sans Myanmar
  * face so Burmese text renders correctly. Bold styles pick the bold face.
+ * Spacing is adjusted alongside the swap: letter-spacing is dropped (it breaks
+ * Myanmar shaping) and explicit line-heights are scaled up for the taller
+ * stacked glyphs. Only text styles (those declaring a fontFamily) are touched.
  */
-const withMyanmarFont = (styles: Styles): Styles => {
+const withMyanmarTypography = (styles: Styles): Styles => {
     const result: Record<string, unknown> = {}
     for (const key of Object.keys(styles)) {
         const value = (styles as Record<string, unknown>)[key]
-        if (value && typeof value === 'object' && 'fontFamily' in value) {
-            result[key] = {
-                ...(value as Record<string, unknown>),
-                fontFamily: isBoldWeight((value as Record<string, unknown>).fontWeight)
-                    ? MYANMAR_FONT_FAMILY_BOLD
-                    : MYANMAR_FONT_FAMILY,
+        if (value && typeof value === 'object') {
+            const base = value as Record<string, unknown>
+            // letterSpacing/lineHeight only affect Text, so any style declaring
+            // them is a text style — even when it inherits (rather than sets)
+            // its fontFamily from the RNEUI theme.
+            const isTextStyle = 'fontFamily' in base || 'letterSpacing' in base || 'lineHeight' in base
+            if (!isTextStyle) {
+                result[key] = value
+                continue
             }
+            const next: Record<string, unknown> = { ...base }
+            if ('fontFamily' in next) {
+                next.fontFamily = isBoldWeight(base.fontWeight)
+                    ? MYANMAR_FONT_FAMILY_BOLD
+                    : MYANMAR_FONT_FAMILY
+            }
+            if ('letterSpacing' in next) {
+                next.letterSpacing = 0
+            }
+            if (typeof next.lineHeight === 'number') {
+                next.lineHeight = Math.round(next.lineHeight * MYANMAR_LINE_HEIGHT_SCALE)
+            }
+            result[key] = next
         } else {
             result[key] = value
         }
@@ -52,6 +77,6 @@ export const useStyles = () => {
     const { language } = useLanguage()
     return useMemo(() => {
         const styles = createStyles(theme)
-        return language === 'my' ? withMyanmarFont(styles) : styles
+        return language === 'my' ? withMyanmarTypography(styles) : styles
     }, [theme, language])
 }
