@@ -79,11 +79,11 @@ describe('PaymentReview screen', () => {
         expect(text).toContain('U Ba')
         expect(text).toContain('Cash')
         expect(text).toContain('advance')
-        expect(text).toContain('120.00$')
-        expect(text).toContain('70.00$')
+        expect(text).toContain('120.00')
+        expect(text).toContain('70.00')
         expect(text).toContain(UI_TEXT.PAYMENT_FOR_PURCHASES)
         expect(text).toContain('2026-09-01')
-        expect(text).toContain('60.00$')
+        expect(text).toContain('60.00')
     })
 
     test('processes the payment and returns to the seller details', async () => {

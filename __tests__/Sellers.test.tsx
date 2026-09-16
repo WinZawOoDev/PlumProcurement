@@ -87,8 +87,9 @@ describe('Sellers screen', () => {
         expect(text).toContain('U Ba')
         expect(text).toContain('09-123')
         expect(text).toContain('Main Road')
-        expect(text).toContain('2 · 15.00$')
-        expect(text).toContain('10.00$')
+        expect(text).toContain('2 ·')
+        expect(text).toContain('15.00')
+        expect(text).toContain('10.00')
         expect(sellerService.getSellersPage).toHaveBeenCalledWith({
             limit: PAGINATION_CONFIG.SELLER_PAGE_SIZE,
             cursor: undefined,

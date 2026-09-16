@@ -120,7 +120,7 @@ describe('PurchaseDetails screen', () => {
         const text = textContent(root)
         expect(text).toContain(UI_TEXT.PURCHASE_HISTORY_TITLE)
         expect(text).toContain(`1 ${UI_TEXT.ITEMS.toLowerCase()}`)
-        expect(text).toContain('10.00$')
+        expect(text).toContain('10.00')
         expect(text).toContain('U Ba')
     })
 
@@ -130,7 +130,7 @@ describe('PurchaseDetails screen', () => {
             .mockResolvedValueOnce({ items: page2, nextCursor: null })
 
         const root = await renderScreen()
-        expect(textContent(root)).not.toContain('2.00$')
+        expect(textContent(root)).not.toContain('2.00')
 
         const list = root.root.findAllByType(FlatList)[0]
         await act(async () => {
@@ -143,7 +143,7 @@ describe('PurchaseDetails screen', () => {
             cursor: 20,
             query: undefined,
         })
-        expect(textContent(root)).toContain('2.00$')
+        expect(textContent(root)).toContain('2.00')
     })
 
     // CSV export disabled — the button is commented out in PurchaseDetails.
@@ -196,7 +196,7 @@ describe('PurchaseDetails screen', () => {
 
         const text = textContent(root)
         expect(text).toContain('57')
-        expect(text).toContain('570.00$')
+        expect(text).toContain('570.00')
     })
 
     test('searching re-queries the server and shows the result count', async () => {
@@ -250,7 +250,7 @@ describe('PurchaseDetails screen', () => {
         })
 
         const text = textContent(root)
-        expect(text).toContain('2.00$') // page2 committed
-        expect(text).not.toContain('10.00$') // stale page1 discarded
+        expect(text).toContain('2.00') // page2 committed
+        expect(text).not.toContain('10.00') // stale page1 discarded
     })
 })

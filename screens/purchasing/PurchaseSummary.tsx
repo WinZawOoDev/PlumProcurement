@@ -12,6 +12,7 @@ import { IPurchaseDetail } from '../../types/database'
 import { formatDateDisplay, formatNumber } from '../../utils'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
+import { MoneyText } from '../../components/MoneyText'
 
 type PurchaseSummaryRouteProp = RouteProp<
     Record<string, { purchase: IPurchaseDetail }>,
@@ -22,7 +23,7 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
-    const { CURRENCY, UNITS } = useLocalizedConstants()
+    const { UNITS } = useLocalizedConstants()
     return (
         <View style={styles.purchaseDetailItemRow}>
             <View style={styles.sellerInfo}>
@@ -36,15 +37,15 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
                     <RNText style={styles.purchaseItemTitle}>{t(`categories.${item.category}`, { defaultValue: item.category })}</RNText>
                 </View>
                 <RNText style={styles.purchaseItemSubtitle}>
-                    {formatNumber(item.unit_price)}{CURRENCY} / {UNITS[item.unit] ?? item.unit}
+                    <MoneyText amount={item.unit_price} /> / {UNITS[item.unit] ?? item.unit}
                 </RNText>
             </View>
-            <RNText style={styles.purchaseDetailItemTotal}>{formatNumber(item.line_total)}{CURRENCY}</RNText>
+            <MoneyText amount={item.line_total} valueStyle={styles.purchaseDetailItemTotal} />
         </View>
     )
 }
 
-function StatCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function StatCell({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
     const styles = useStyles()
     return (
         <View style={styles.purchaseSummaryStatCell}>
@@ -58,7 +59,7 @@ function StatCell({ label, value, highlight }: { label: string; value: string; h
 
 export default function PurchaseSummary() {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const route = useRoute<PurchaseSummaryRouteProp>()
     const purchase = route.params?.purchase
 
@@ -99,7 +100,7 @@ export default function PurchaseSummary() {
                     <View style={styles.purchaseSummaryStatsRow}>
                         <StatCell label={UI_TEXT.TOTAL_ITEMS} value={formatNumber(purchase.items.length, 0)} />
                         <View style={styles.purchaseSummaryStatDivider} />
-                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={`${formatNumber(purchase.total)}${CURRENCY}`} highlight />
+                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={<MoneyText amount={purchase.total} />} highlight />
                     </View>
                 </View>
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>

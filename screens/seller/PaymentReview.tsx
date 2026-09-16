@@ -15,6 +15,7 @@ import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
 import { formatDateDisplay, formatNumber } from '../../utils'
+import { MoneyText } from '../../components/MoneyText'
 import { useLoading } from '../../hooks/useAsync'
 
 type PaymentReviewRouteProp = RouteProp<
@@ -43,7 +44,7 @@ function DashedDivider() {
     )
 }
 
-function SlipRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+function SlipRow({ label, value, strong = false }: { label: string; value: React.ReactNode; strong?: boolean }) {
     const styles = useStyles()
     return (
         <View style={styles.paymentSlipRow}>
@@ -162,11 +163,11 @@ export default function PaymentReview() {
 
                         <SlipRow
                             label={UI_TEXT.OUTSTANDING_BALANCE}
-                            value={`${formatNumber(balance)}${CURRENCY}`}
+                            value={<MoneyText amount={balance} />}
                         />
                         <SlipRow
                             label={UI_TEXT.BALANCE_AFTER_PAYMENT}
-                            value={`${formatNumber(balanceAfter)}${CURRENCY}`}
+                            value={<MoneyText amount={balanceAfter} />}
                             strong
                         />
 
@@ -192,7 +193,7 @@ export default function PaymentReview() {
                                                 {formatDateDisplay(purchase.created_at)}
                                             </RNText>
                                             <RNText style={styles.paymentPurchaseTotal}>
-                                                {formatNumber(purchase.total)}{CURRENCY}
+                                                <MoneyText amount={purchase.total} />
                                             </RNText>
                                         </View>
                                     ))}

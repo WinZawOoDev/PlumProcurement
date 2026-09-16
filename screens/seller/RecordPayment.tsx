@@ -11,10 +11,11 @@ import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { KeyboardAvoid } from '../../components/KeyboardAvoid'
+import { MoneyText } from '../../components/MoneyText'
 import { AMOUNT_PATTERN, ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { showError } from '../../utils/notifications'
-import { formatNumber, toWesternDigits } from '../../utils'
+import { toWesternDigits } from '../../utils'
 
 type FormData = {
     amount: string
@@ -30,7 +31,7 @@ type RecordPaymentRouteProp = RouteProp<
 export default function RecordPayment() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<RecordPaymentRouteProp>()
     const { sellerId, sellerName, sellerPhone, balance = 0 } = route.params ?? {}
@@ -113,9 +114,7 @@ export default function RecordPayment() {
                             <RNText style={styles.paymentBalanceLabel}>
                                 {UI_TEXT.OUTSTANDING_BALANCE}
                             </RNText>
-                            <RNText style={styles.paymentBalanceValue}>
-                                {formatNumber(balance)}{CURRENCY}
-                            </RNText>
+                            <MoneyText amount={balance} valueStyle={styles.paymentBalanceValue} />
                         </View>
 
                         <View style={styles.paymentField}>

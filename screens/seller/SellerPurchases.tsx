@@ -17,12 +17,13 @@ import { useLoading } from '../../hooks/useAsync'
 import { CardSkeleton } from '../../components/Skeleton'
 import { EmptyState } from '../../components/EmptyState'
 import { IconButton } from '../../components/buttons/Button'
+import { MoneyText } from '../../components/MoneyText'
 
 type SellerPurchasesRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
 function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
@@ -43,7 +44,7 @@ function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
-                <RNText style={styles.purchaseItemTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
+                <MoneyText amount={item.total} valueStyle={styles.purchaseItemTotal} />
             </View>
         </Pressable>
     )
@@ -53,7 +54,7 @@ export default function SellerPurchases() {
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
-    const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPurchasesRouteProp>()
     const sellerId = route.params?.sellerId
@@ -148,7 +149,9 @@ export default function SellerPurchases() {
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
                     <RNText style={styles.recentPurchasesCount}>
-                        {sellerStats && sellerStats.count > 0 ? `${formatNumber(sellerStats.count, 0)} · ${formatNumber(total)}${CURRENCY}` : ''}
+                        {sellerStats && sellerStats.count > 0 ? (
+                            <>{formatNumber(sellerStats.count, 0)} · <MoneyText amount={total} /></>
+                        ) : null}
                     </RNText>
                 </View>
 

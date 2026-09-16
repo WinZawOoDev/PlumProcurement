@@ -22,6 +22,7 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
 import { StatCell } from '../../components/StatCell'
+import { MoneyText } from '../../components/MoneyText'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -108,7 +109,7 @@ function PurchasesSection({
     onPress: () => void
 }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const average = count > 0 ? total / count : 0
     return (
         <View style={styles.sellerSectionSpacer}>
@@ -125,9 +126,9 @@ function PurchasesSection({
                 <View style={styles.sellerStatsRow}>
                     <StatCell label={UI_TEXT.PURCHASES_COUNT} value={formatNumber(count, 0)} icon="receipt-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.TOTAL_VALUE} value={`${formatNumber(total)}${CURRENCY}`} icon="wallet-outline" />
+                    <StatCell label={UI_TEXT.TOTAL_VALUE} value={<MoneyText amount={total} />} icon="wallet-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.AVERAGE_VALUE} value={`${formatNumber(average)}${CURRENCY}`} icon="analytics-outline" />
+                    <StatCell label={UI_TEXT.AVERAGE_VALUE} value={<MoneyText amount={average} />} icon="analytics-outline" />
                 </View>
             </Pressable>
         </View>
@@ -142,16 +143,19 @@ function PaymentsSection({
     onPress: () => void
 }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.sellerSectionSpacer}>
             <SectionHeader
                 icon="wallet-outline"
                 title={UI_TEXT.PAYMENT_HISTORY}
                 description={
-                    stat && stat.balance > 0
-                        ? `${UI_TEXT.BALANCE}: ${formatNumber(stat.balance)}${CURRENCY}`
-                        : undefined
+                    stat && stat.balance > 0 ? (
+                        <RNText>
+                            {`${UI_TEXT.BALANCE}: `}
+                            <MoneyText amount={stat.balance} />
+                        </RNText>
+                    ) : undefined
                 }
             />
             <Pressable
@@ -161,11 +165,11 @@ function PaymentsSection({
                 accessibilityLabel={`${UI_TEXT.PAYMENT_HISTORY}: ${UI_TEXT.VIEW_ALL}`}
             >
                 <View style={styles.sellerStatsRow}>
-                    <StatCell label={UI_TEXT.OWED} value={`${formatNumber(stat?.total_owed ?? 0)}${CURRENCY}`} icon="cart-outline" />
+                    <StatCell label={UI_TEXT.OWED} value={<MoneyText amount={stat?.total_owed ?? 0} />} icon="cart-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.PAID} value={`${formatNumber(stat?.total_paid ?? 0)}${CURRENCY}`} icon="checkmark-circle-outline" />
+                    <StatCell label={UI_TEXT.PAID} value={<MoneyText amount={stat?.total_paid ?? 0} />} icon="checkmark-circle-outline" />
                     <View style={styles.sellerStatDivider} />
-                    <StatCell label={UI_TEXT.BALANCE} value={`${formatNumber(stat?.balance ?? 0)}${CURRENCY}`} icon="wallet-outline" />
+                    <StatCell label={UI_TEXT.BALANCE} value={<MoneyText amount={stat?.balance ?? 0} />} icon="wallet-outline" />
                 </View>
             </Pressable>
         </View>
@@ -175,11 +179,10 @@ function PaymentsSection({
 function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }) {
     const styles = useStyles()
     const { t } = useTranslation()
-    const { CURRENCY } = useLocalizedConstants()
     return (
         <View style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}>
             <View style={styles.sellerInfo}>
-                <RNText style={styles.sellerRecentTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
+                <MoneyText amount={item.amount} valueStyle={styles.sellerRecentTitle} />
                 <RNText style={styles.sellerRecentSubtitle}>
                     {formatDateDisplay(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}
@@ -191,7 +194,7 @@ function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }
 
 function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: boolean }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     return (
         <Pressable
@@ -208,7 +211,7 @@ function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: b
                 </RNText>
             </View>
             <View style={styles.purchaseItemActions}>
-                <RNText style={styles.sellerRecentTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
+                <MoneyText amount={item.total} valueStyle={styles.sellerRecentTotal} />
             </View>
         </Pressable>
     )

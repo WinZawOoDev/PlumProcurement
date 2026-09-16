@@ -82,7 +82,7 @@ describe('EditPurchase screen', () => {
         expect(text).toContain(UI_TEXT.EDIT_PURCHASE)
         expect(text).toContain(CATEGORY_LABELS.fruit)
         expect(text).toContain('U Ba')
-        expect(text).toContain('10.00$')
+        expect(text).toContain('10.00')
     })
 
     test('recomputes the total preview from the quantity counter', async () => {
@@ -90,7 +90,7 @@ describe('EditPurchase screen', () => {
         await act(async () => {
             findIncrease(root).props.onPress()
         })
-        expect(textContent(root)).toContain('15.00$')
+        expect(textContent(root)).toContain('15.00')
     })
 
     test('undo restores the previous quantity', async () => {
@@ -100,7 +100,7 @@ describe('EditPurchase screen', () => {
         await act(async () => {
             findIncrease(root).props.onPress()
         })
-        expect(textContent(root)).toContain('15.00$')
+        expect(textContent(root)).toContain('15.00')
 
         const undoOptions = showSpy.mock.calls
             .map((call) => call[0] as { type?: string; props?: { onUndo?: () => void } })
@@ -111,7 +111,7 @@ describe('EditPurchase screen', () => {
         await act(async () => {
             undoOptions!.props!.onUndo!()
         })
-        expect(textContent(root)).toContain('10.00$')
+        expect(textContent(root)).toContain('10.00')
     })
 
     test('saves updated item quantities and goes back', async () => {

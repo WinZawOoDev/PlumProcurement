@@ -4,7 +4,7 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../styles'
 
-export function StatCell({ label, value, icon }: { label: string; value: string; icon: string }) {
+export function StatCell({ label, value, icon }: { label: string; value: React.ReactNode; icon: string }) {
     const styles = useStyles()
     const { theme } = useTheme()
     return (

@@ -34,6 +34,7 @@ import {
 import { IconButton /* , SecondaryButton */ } from '../../components/buttons/Button';
 import { SearchBar } from '../../components/SearchBar';
 import { SearchIconButton } from '../../components/SearchIconButton';
+import { MoneyText } from '../../components/MoneyText';
 import { showError /* , showSuccess */ } from '../../utils/notifications';
 import { useSearchFilter } from '../../hooks/useSearchFilter';
 import { PAGINATION_CONFIG } from '../../constants';
@@ -43,7 +44,7 @@ import { CardSkeleton, Skeleton } from '../../components/Skeleton';
 
 function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
   const styles = useStyles();
-  const { UI_TEXT, CURRENCY } = useLocalizedConstants();
+  const { UI_TEXT } = useLocalizedConstants();
   return (
     <View style={styles.purchaseSummaryCard}>
       <View style={styles.purchaseSummaryRow}>
@@ -61,7 +62,7 @@ function PurchaseSummaryCard({ count, total }: { count: number; total: number })
         <RNText style={styles.purchaseSummaryLabel}>
           {UI_TEXT.TOTAL_VALUE}
         </RNText>
-        <RNText style={styles.purchaseTotalText}>{formatNumber(total)}{CURRENCY}</RNText>
+        <MoneyText amount={total} valueStyle={styles.purchaseTotalText} />
       </View>
     </View>
   );
@@ -145,7 +146,7 @@ function PurchaseRow({
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
-  const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants();
+  const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   return (
     <Pressable
@@ -172,9 +173,7 @@ function PurchaseRow({
         </RNText>
       </View>
       <View style={styles.purchaseItemActions}>
-        <RNText style={styles.purchaseItemTotal}>
-          {formatNumber(item.total)}{CURRENCY}
-        </RNText>
+        <MoneyText amount={item.total} valueStyle={styles.purchaseItemTotal} />
         <View style={styles.purchaseItemButtons}>
           {locked ? (
             <Ionicons

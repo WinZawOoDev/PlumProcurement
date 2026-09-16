@@ -21,6 +21,7 @@ import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { QuantityCounter } from '../../components/QuantityCounter'
+import { MoneyText } from '../../components/MoneyText'
 
 interface SelectedSeller {
     id: number
@@ -70,9 +71,9 @@ function PriceItemCard({
             {selected && (
                 <View style={styles.priceItemCardFooter}>
                     <RNText style={styles.priceItemCardFooterCalc}>
-                        {formatNumber(quantity, 0)} × {formatNumber(price.price)}{CURRENCY}
+                        {formatNumber(quantity, 0)} × <MoneyText amount={price.price} />
                     </RNText>
-                    <RNText style={styles.priceItemCardFooterTotal}>{formatNumber(lineTotal)}{CURRENCY}</RNText>
+                    <MoneyText amount={lineTotal} valueStyle={styles.priceItemCardFooterTotal} />
                 </View>
             )}
         </View>
@@ -81,7 +82,7 @@ function PriceItemCard({
 
 function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; total: number; onPress: () => void }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const hasItems = itemCount > 0
     return (
         <TouchableOpacity
@@ -99,7 +100,7 @@ function PurchaseSummary({ itemCount, total, onPress }: { itemCount: number; tot
             <View style={[styles.purchaseSummaryRow, styles.purchaseSummaryDivider]}>
                 <Text style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL_AMOUNT}</Text>
                 <Text style={[styles.purchaseTotalText, total <= 0 && styles.purchaseSummaryValueMuted]}>
-                    {total > 0 ? `${formatNumber(total)}${CURRENCY}` : '—'}
+                    {total > 0 ? <MoneyText amount={total} /> : '—'}
                 </Text>
             </View>
         </TouchableOpacity>

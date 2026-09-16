@@ -13,6 +13,7 @@ import { QuantityCounter } from '../../components/QuantityCounter'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
+import { MoneyText } from '../../components/MoneyText'
 import { showSuccess, showError, showUndo } from '../../utils/notifications'
 import { formatDateDisplay, formatNumber } from '../../utils'
 import { useLoading } from '../../hooks/useAsync'
@@ -60,9 +61,9 @@ function EditItemCard({
             />
             <View style={styles.priceItemCardFooter}>
                 <RNText style={styles.priceItemCardFooterCalc}>
-                    {formatNumber(quantity, 0)} × {formatNumber(unitPrice)}{CURRENCY}
+                    {formatNumber(quantity, 0)} × <MoneyText amount={unitPrice} />
                 </RNText>
-                <RNText style={styles.priceItemCardFooterTotal}>{formatNumber(unitPrice * quantity)}{CURRENCY}</RNText>
+                <MoneyText amount={unitPrice * quantity} valueStyle={styles.priceItemCardFooterTotal} />
             </View>
         </View>
     )
@@ -70,7 +71,7 @@ function EditItemCard({
 
 export default function EditPurchase() {
     const styles = useStyles()
-    const { UI_TEXT, MESSAGES, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<EditPurchaseRouteProp>()
     const purchase = route.params?.purchase
@@ -231,7 +232,7 @@ export default function EditPurchase() {
                     <View style={styles.editPurchaseFooterTotal}>
                         <RNText style={styles.purchaseSummaryLabel}>{UI_TEXT.TOTAL}</RNText>
                         <RNText style={styles.purchaseTotalText}>
-                            {total > 0 ? `${formatNumber(total)}${CURRENCY}` : '—'}
+                            {total > 0 ? <MoneyText amount={total} /> : '—'}
                         </RNText>
                     </View>
                     <PrimaryButton

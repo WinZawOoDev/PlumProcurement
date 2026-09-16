@@ -162,7 +162,7 @@ describe('PurchaseForm', () => {
             await flush()
         })
 
-        expect(textContent(root)).toContain('200.00$')
+        expect(textContent(root)).toContain('200.00')
     })
 
     test('records purchase with correct payload and refreshes recents', async () => {
@@ -225,7 +225,7 @@ describe('PurchaseForm', () => {
             findIncreaseButton(root).props.onPress()
             await flush()
         })
-        expect(textContent(root)).toContain('100.00$')
+        expect(textContent(root)).toContain('100.00')
 
         const undoOptions = showSpy.mock.calls
             .map((call) => call[0] as { type?: string; props?: { onUndo?: () => void } })

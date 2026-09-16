@@ -12,7 +12,6 @@ import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
 import { formatDateDisplay } from '../../utils'
-import { formatNumber } from '../../utils'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -20,19 +19,20 @@ import { CardSkeleton } from '../../components/Skeleton'
 import { EmptyState } from '../../components/EmptyState'
 import { IconButton } from '../../components/buttons/Button'
 import { StatCell } from '../../components/StatCell'
+import { MoneyText } from '../../components/MoneyText'
 
 type SellerPaymentsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
 function PaymentStatsSection({ stat }: { stat: ISellerPaymentStat }) {
     const styles = useStyles()
-    const { UI_TEXT, CURRENCY } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.sellerStatsRow}>
-            <StatCell label={UI_TEXT.OWED} value={`${formatNumber(stat.total_owed)}${CURRENCY}`} icon="cart-outline" />
+            <StatCell label={UI_TEXT.OWED} value={<MoneyText amount={stat.total_owed} />} icon="cart-outline" />
             <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.PAID} value={`${formatNumber(stat.total_paid)}${CURRENCY}`} icon="checkmark-circle-outline" />
+            <StatCell label={UI_TEXT.PAID} value={<MoneyText amount={stat.total_paid} />} icon="checkmark-circle-outline" />
             <View style={styles.sellerStatDivider} />
-            <StatCell label={UI_TEXT.BALANCE} value={`${formatNumber(stat.balance)}${CURRENCY}`} icon="wallet-outline" />
+            <StatCell label={UI_TEXT.BALANCE} value={<MoneyText amount={stat.balance} />} icon="wallet-outline" />
         </View>
     )
 }
@@ -41,11 +41,11 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
-    const { A11Y_LABELS, CURRENCY } = useLocalizedConstants()
+    const { A11Y_LABELS } = useLocalizedConstants()
     return (
         <View style={styles.purchaseItemRow}>
             <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>{formatNumber(item.amount)}{CURRENCY}</RNText>
+                <MoneyText amount={item.amount} valueStyle={styles.purchaseItemTitle} />
                 <RNText style={styles.purchaseItemSubtitle}>
                     {formatDateDisplay(item.paid_at)}
                     {item.method ? ` · ${t(`paymentMethods.${item.method}`, { defaultValue: item.method })}` : ''}

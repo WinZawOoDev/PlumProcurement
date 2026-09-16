@@ -65,7 +65,7 @@ describe('RecordPayment screen', () => {
         expect(text).toContain(UI_TEXT.RECORD_PAYMENT)
         expect(text).toContain('U Ba')
         expect(text).toContain('09-123')
-        expect(text).toContain('120.00$')
+        expect(text).toContain('120.00')
     })
 
     test('continues to the payment review with the entered details', async () => {

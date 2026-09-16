@@ -7,6 +7,7 @@ import { useStyles } from '../../styles'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { DIMENSIONS } from '../../constants'
 import { formatNumber } from '../../utils'
+import { MoneyText } from '../../components/MoneyText'
 import { ISeller } from '../../types/database'
 
 interface SellerRowProps {
@@ -52,16 +53,14 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                             <>
                                 <Ionicons name="receipt-outline" size={12} color={theme.colors.primary} />
                                 <RNText style={styles.sellerRowDotText}>
-                                    {formatNumber(purchaseCount ?? 0, 0)} · {formatNumber(purchaseTotal ?? 0)}{CURRENCY}
+                                    {formatNumber(purchaseCount ?? 0, 0)} · <MoneyText amount={purchaseTotal ?? 0} />
                                 </RNText>
                             </>
                         )}
                         {(balance ?? 0) > 0 && (
                             <>
                                 <Ionicons name="wallet-outline" size={12} color={theme.colors.warning} />
-                                <RNText style={styles.sellerRowDotText}>
-                                    {formatNumber(balance ?? 0)}{CURRENCY}
-                                </RNText>
+                                <MoneyText amount={balance ?? 0} valueStyle={styles.sellerRowDotText} />
                             </>
                         )}
                     </View>
