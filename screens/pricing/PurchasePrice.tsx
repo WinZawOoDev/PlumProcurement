@@ -99,7 +99,11 @@ function PriceList({
                     description={hasQuery ? t('uiText.NO_PRICES_MATCHING', { query: searchQuery }) : UI_TEXT.PLUM_COUNT_TITLE}
                 />
             }
-            removeClippedSubviews={true}
+            // removeClippedSubviews stays off: with sticky headers and no
+            // getItemLayout, newly inserted rows/sections can remain clipped
+            // (invisible) until a full re-layout such as pull-to-refresh.
+            // Price lists are short, so view recycling buys nothing here.
+            removeClippedSubviews={false}
             maxToRenderPerBatch={10}
             updateCellsBatchingPeriod={50}
             initialNumToRender={10}
