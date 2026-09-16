@@ -77,6 +77,7 @@ function PriceList({
             keyExtractor={(item) => item.id.toString()}
             refreshing={loading}
             stickySectionHeadersEnabled
+            contentContainerStyle={styles.scrollContentGutter}
             renderItem={({ item }) => (
                 <PriceCard
                     {...item}

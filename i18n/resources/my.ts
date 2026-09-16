@@ -125,6 +125,7 @@ export const my: TranslationSchema = {
     PAYMENT_REVIEW_TITLE: 'ငွေပေးချေမှု အသေးစိတ်',
     PAYMENT_REVIEW_DESCRIPTION: 'မဆောင်ရွက်မီ ငွေပေးချေမှုကို ပြန်လည်စစ်ဆေးပါ။',
     PROCESS_PAYMENT: 'ငွေပေးချေမှု ဆောင်ရွက်ရန်',
+    PROCESSING_PAYMENT: 'ငွေပေးချေမှု ဆောင်ရွက်နေသည်…',
     SETTLE_FULL_BALANCE: 'လက်ကျန်အပြည့် ရှင်းလင်းရန်',
     PAID_TO: 'ငွေပေးချေသည့်သူ',
     PAYMENT_DATE: 'ရက်စွဲ',

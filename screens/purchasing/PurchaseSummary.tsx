@@ -105,7 +105,10 @@ export default function PurchaseSummary() {
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>
                 <FlatList
                     style={styles.purchaseHistoryItems}
-                    contentContainerStyle={purchase.items.length === 0 ? styles.recentPurchasesEmpty : styles.purchaseDetailList}
+                    contentContainerStyle={[
+                        purchase.items.length === 0 ? styles.recentPurchasesEmpty : styles.purchaseDetailList,
+                        styles.scrollContentGutter,
+                    ]}
                     data={purchase.items}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => <ItemDetailRow item={item} />}

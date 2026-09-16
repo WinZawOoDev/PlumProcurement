@@ -139,6 +139,7 @@ function SellerList({
     onOpenDetail: (seller: ISellerWithStats) => void
     onEdit: (seller: ISellerWithStats) => void
 }) {
+    const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
@@ -150,6 +151,7 @@ function SellerList({
     return (
         <FlatList
             data={sellers}
+            contentContainerStyle={styles.scrollContentGutter}
             keyExtractor={(item) => item.id.toString()}
             initialNumToRender={10}
             windowSize={10}

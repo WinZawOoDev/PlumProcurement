@@ -1,5 +1,5 @@
-import { Alert, FlatList, Pressable, ScrollView, Text as RNText, TouchableOpacity, useWindowDimensions, View } from 'react-native'
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { Alert, FlatList, Pressable, Text as RNText, TouchableOpacity, View } from 'react-native'
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Text } from '@rneui/base'
 import { useTheme } from '@rneui/themed'
@@ -10,7 +10,7 @@ import { ParamListBase, RouteProp, useFocusEffect, useNavigation, useRoute } fro
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import { ROUTES, SAFE_AREA, PAGINATION_CONFIG } from '../../constants'
+import { ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
 import { purchaseService } from '../../services/purchaseService'
@@ -36,13 +36,11 @@ interface PurchaseFormProps {
 function PriceItemCard({
     price,
     quantity,
-    width,
     onIncrease,
     onDecrease,
 }: {
     price: IPrice
     quantity: number
-    width: number
     onIncrease: () => void
     onDecrease: () => void
 }) {
@@ -52,7 +50,7 @@ function PriceItemCard({
     const selected = quantity > 0
     const lineTotal = price.price * quantity
     return (
-        <View style={[styles.priceItemCard, { width }]}>
+        <View style={styles.priceItemCard}>
             <View style={styles.priceItemCardHeader}>
                 <View style={styles.priceItemCardHeaderText}>
                     <RNText style={styles.priceItemCardTitle}>{t(`categories.${price.category}`, { defaultValue: price.category })}</RNText>
@@ -135,23 +133,48 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()
-    const { width } = useWindowDimensions()
-    const cardWidth = width - 78
 
     const [quantities, setQuantities] = useState<Record<string, number>>({})
-    const [activeCardIndex, setActiveCardIndex] = useState(0)
+    const [hasMorePricesBelow, setHasMorePricesBelow] = useState(false)
     // Synchronous mirror so quick repeated taps accumulate correctly (state
     // updates are async) and so undo can restore the exact previous value.
     const quantitiesRef = useRef<Record<string, number>>({})
+    // Tracks the price list viewport/content so the bottom fade can hide once
+    // the user reaches the end of the list.
+    const priceListMetrics = useRef({ viewport: 0, content: 0, offset: 0 })
     const { loading: recording, withLoading: withRecording } = useLoading(false)
 
     const selectablePrices = prices
 
-    const handleCardsScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const next = Math.round(event.nativeEvent.contentOffset.x / cardWidth)
-        const clamped = Math.min(selectablePrices.length - 1, Math.max(0, next))
-        setActiveCardIndex((prev) => (prev === clamped ? prev : clamped))
-    }
+    const syncPriceListOverflow = useCallback(() => {
+        const { viewport, content, offset } = priceListMetrics.current
+        const more = content - (offset + viewport) > 4
+        setHasMorePricesBelow((prev) => (prev === more ? prev : more))
+    }, [])
+
+    const handlePriceListScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            priceListMetrics.current.offset = event.nativeEvent.contentOffset.y
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
+
+    const handlePriceListLayout = useCallback(
+        (event: LayoutChangeEvent) => {
+            priceListMetrics.current.viewport = event.nativeEvent.layout.height
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
+
+    const handlePriceListContentSize = useCallback(
+        (_width: number, height: number) => {
+            priceListMetrics.current.content = height
+            syncPriceListOverflow()
+        },
+        [syncPriceListOverflow]
+    )
 
     const getQuantity = (priceId: string) => quantities[priceId] ?? 0
     const applyQuantities = (next: Record<string, number>) => {
@@ -232,7 +255,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     }
 
     return (
-        <View style={styles.formCard}>
+        <View style={styles.purchaseFormContainer}>
             <Pressable
                 style={styles.purchaseItemRow}
                 onPress={onOpenSellerSelect}
@@ -261,40 +284,39 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                         <RNText style={styles.priceItemListTitle}>{UI_TEXT.PRICE_ITEMS}</RNText>
                         <RNText style={styles.priceItemCount}>{formatNumber(selectablePrices.length, 0)}</RNText>
                     </View>
-                    <ScrollView
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        onScroll={handleCardsScroll}
-                        scrollEventThrottle={16}
-                        style={styles.priceItemCardScroll}
-                        contentContainerStyle={styles.priceItemCardList}
-                    >
-                        {selectablePrices.map((price) => {
-                            const priceId = price.id.toString()
-                            const quantity = getQuantity(priceId)
-                            return (
-                                <PriceItemCard
-                                    key={price.id}
-                                    price={price}
-                                    quantity={quantity}
-                                    width={cardWidth}
-                                    onIncrease={() => increment(priceId)}
-                                    onDecrease={() => decrement(priceId)}
-                                />
-                            )
-                        })}
-                    </ScrollView>
-                    {selectablePrices.length > 1 && (
-                        <View style={styles.priceItemDotsRow}>
-                            {selectablePrices.map((price, index) => (
-                                <View
-                                    key={price.id}
-                                    style={[styles.priceItemDot, index === activeCardIndex && styles.priceItemDotActive]}
-                                />
-                            ))}
-                        </View>
-                    )}
+                    <View style={styles.priceItemCardScrollWrapper}>
+                        <FlatList
+                            style={styles.priceItemCardScroll}
+                            contentContainerStyle={[styles.priceItemCardList, styles.scrollContentGutter]}
+                            data={selectablePrices}
+                            keyExtractor={(price) => price.id.toString()}
+                            showsVerticalScrollIndicator
+                            persistentScrollbar
+                            onScroll={handlePriceListScroll}
+                            scrollEventThrottle={16}
+                            onLayout={handlePriceListLayout}
+                            onContentSizeChange={handlePriceListContentSize}
+                            renderItem={({ item: price }) => {
+                                const priceId = price.id.toString()
+                                const quantity = getQuantity(priceId)
+                                return (
+                                    <PriceItemCard
+                                        price={price}
+                                        quantity={quantity}
+                                        onIncrease={() => increment(priceId)}
+                                        onDecrease={() => decrement(priceId)}
+                                    />
+                                )
+                            }}
+                        />
+                        {hasMorePricesBelow && (
+                            <View pointerEvents="none" style={styles.priceItemScrollFade}>
+                                <View style={styles.priceItemScrollFadeTop} />
+                                <View style={styles.priceItemScrollFadeMid} />
+                                <View style={styles.priceItemScrollFadeBottom} />
+                            </View>
+                        )}
+                    </View>
                 </>
             )}
             {!allValid && (
@@ -315,56 +337,8 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     )
 })
 
-interface RecentPurchasesListProps {
-    recent: IPurchaseDetail[]
-    count: number
-}
-
-function RecentPurchaseRow({ item }: { item: IPurchaseDetail }) {
-    const styles = useStyles()
-    const { t } = useTranslation()
-    const { UI_TEXT, UNITS, CURRENCY } = useLocalizedConstants()
-    const single = item.items.length === 1 ? item.items[0] : null
-    const title = single
-        ? `${t(`categories.${single.category}`, { defaultValue: single.category })} × ${formatNumber(single.quantity, 0)} (${UNITS[single.unit] ?? single.unit})`
-        : `${formatNumber(item.items.length, 0)} ${UI_TEXT.ITEMS.toLowerCase()}`
-    return (
-        <View style={styles.purchaseItemRow}>
-            <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>{title}</RNText>
-                {!!item.seller_name && <RNText style={styles.sellerPhoneText}>{UI_TEXT.SOLD_BY}: {item.seller_name}</RNText>}
-            </View>
-            <RNText style={styles.purchaseItemTotal}>{formatNumber(item.total)}{CURRENCY}</RNText>
-        </View>
-    )
-}
-
-const RecentPurchasesList = React.memo(function RecentPurchasesList({ recent, count }: RecentPurchasesListProps) {
-    const styles = useStyles()
-    const { t } = useTranslation()
-    const { UI_TEXT } = useLocalizedConstants()
-    return (
-        <>
-            <View style={styles.recentPurchasesHeader}>
-                <Text style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</Text>
-                <RNText style={styles.recentPurchasesCount}>{count > 0 ? t('uiText.TOTAL_COUNT', { count }) : ''}</RNText>
-            </View>
-            <FlatList
-                style={styles.recentPurchasesList}
-                contentContainerStyle={recent.length === 0 ? styles.recentPurchasesEmpty : undefined}
-                scrollEnabled={recent.length > 0}
-                data={recent}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <RecentPurchaseRow item={item} />}
-                ListEmptyComponent={<EmptyState compact icon="receipt-outline" title={UI_TEXT.EMPTY_PURCHASE_LIST} description={UI_TEXT.EMPTY_PURCHASE_HINT} />}
-            />
-        </>
-    )
-})
-
 export default function Purchase() {
     const styles = useStyles()
-    const { t } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { refresh: refreshPrices } = usePrices()
@@ -373,8 +347,6 @@ export default function Purchase() {
     >()
 
     const [selectedSeller, setSelectedSeller] = useState<SelectedSeller | null>(null)
-    const [recent, setRecent] = useState<IPurchaseDetail[]>([])
-    const [purchaseCount, setPurchaseCount] = useState(0)
 
     // Consume seller selection returned from the SellerSelect screen.
     // Committed immediately (re-render is memoized, so it stays cheap) —
@@ -388,25 +360,11 @@ export default function Purchase() {
         navigation.setParams({ selectedSellerId: undefined, selectedSellerName: undefined })
     }, [route.params, navigation])
 
-    const loadRecent = useCallback(async () => {
-        try {
-            const [items, count] = await Promise.all([
-                purchaseService.getRecentPurchases(PAGINATION_CONFIG.RECENT_PURCHASES_LIMIT),
-                purchaseService.getPurchaseCount(),
-            ])
-            setRecent(items)
-            setPurchaseCount(count)
-        } catch (error) {
-            showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
-        }
-    }, [t])
-
-    // Reload on every focus so returning from history/detail screens shows fresh data
+    // Refresh prices on every focus so returning from pricing screens shows fresh data
     useFocusEffect(
         useCallback(() => {
-            loadRecent()
             refreshPrices()
-        }, [loadRecent, refreshPrices])
+        }, [refreshPrices])
     )
 
     // Stable callbacks so memoized children skip re-renders when only the
@@ -416,9 +374,8 @@ export default function Purchase() {
     }, [navigation, selectedSeller])
 
     const handleRecorded = useCallback(() => {
-        loadRecent()
         setSelectedSeller(null)
-    }, [loadRecent])
+    }, [])
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
@@ -430,8 +387,6 @@ export default function Purchase() {
                     onOpenSellerSelect={handleOpenSellerSelect}
                     onRecorded={handleRecorded}
                 />
-
-                <RecentPurchasesList recent={recent} count={purchaseCount} />
             </View>
         </SafeAreaView>
     )

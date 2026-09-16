@@ -117,6 +117,7 @@ export const UI_TEXT = {
   PAYMENT_REVIEW_TITLE: 'Payment Details',
   PAYMENT_REVIEW_DESCRIPTION: 'Review the payment before processing.',
   PROCESS_PAYMENT: 'Process Payment',
+  PROCESSING_PAYMENT: 'Processing payment…',
   SETTLE_FULL_BALANCE: 'Settle full balance',
   PAID_TO: 'Paid to',
   PAYMENT_DATE: 'Date',

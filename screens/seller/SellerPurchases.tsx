@@ -161,6 +161,7 @@ export default function SellerPurchases() {
                 ) : (
                     <FlatList
                         style={styles.recentPurchasesList}
+                        contentContainerStyle={styles.scrollContentGutter}
                         data={purchases}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => <SellerPurchasesRow item={item} />}

@@ -151,6 +151,8 @@ export default function SellerPayments() {
                     <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.PAYMENT_HISTORY}</RNText>
                 </View>
 
+                {paymentStat ? <PaymentStatsSection stat={paymentStat} /> : null}
+
                 {loading && payments.length === 0 && !paymentStat ? (
                     <>
                         <CardSkeleton />
@@ -159,12 +161,12 @@ export default function SellerPayments() {
                 ) : (
                     <FlatList
                         style={styles.recentPurchasesList}
+                        contentContainerStyle={styles.scrollContentGutter}
                         data={payments}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => (
                             <PaymentRow item={item} onDelete={() => confirmDeletePayment(item.id)} />
                         )}
-                        ListHeaderComponent={paymentStat ? <PaymentStatsSection stat={paymentStat} /> : null}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
                         ListFooterComponent={loadingMore ? (
