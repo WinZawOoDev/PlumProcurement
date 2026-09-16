@@ -200,6 +200,40 @@ const MIGRATIONS: Migration[] = [
             })
         },
     },
+    {
+        version: 7,
+        up: async () => {
+            const db = initDb()
+            // Re-assert the prices unique index for installs whose v6 run did
+            // not leave a working one behind (older/partial migration). Any
+            // index sharing the name is dropped first so a non-unique one can
+            // never shadow the constraint, then duplicates are collapsed and the
+            // unique index is recreated. Runs as one atomic transaction.
+            await db.transaction(async (tx) => {
+                await tx.executeAsync(`DROP INDEX IF EXISTS idx_prices_category_unit_price`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(`CREATE TEMP TABLE price_dupes AS
+                    SELECT p.id AS dup_id, k.keep_id AS keep_id
+                    FROM prices p
+                    JOIN (
+                        SELECT category, unit, price, MIN(id) AS keep_id
+                        FROM prices
+                        GROUP BY category, unit, price
+                        HAVING COUNT(*) > 1
+                    ) k ON k.category IS p.category AND k.unit IS p.unit AND k.price IS p.price
+                    WHERE p.id <> k.keep_id`)
+                await tx.executeAsync(`UPDATE purchase_items
+                    SET price_id = (SELECT keep_id FROM price_dupes WHERE dup_id = purchase_items.price_id)
+                    WHERE price_id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DELETE FROM prices WHERE id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(
+                    `CREATE UNIQUE INDEX idx_prices_category_unit_price
+                     ON prices(category, unit, price)`
+                )
+            })
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null

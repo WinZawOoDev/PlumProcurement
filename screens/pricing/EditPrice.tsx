@@ -17,6 +17,7 @@ import {
 } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
+import { DatabaseError } from '../../database/connection'
 import { IPrice } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
 
@@ -139,8 +140,9 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
             })
             showSuccess(MESSAGES.PRICE_UPDATE_SUCCESS)
             onClose()
-        } catch {
-            showError(MESSAGES.ERROR_GENERIC)
+        } catch (error) {
+            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
+            showError(message)
         }
     }
 

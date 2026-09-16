@@ -38,12 +38,26 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         }
 
         db = initDb()
-        const { insertId } = await db.executeAsync(`
-            INSERT INTO prices (price, unit, category)
-            VALUES (?, ?, ?)
-        `, [price, unit, category]);
+        // Check + insert in one queued transaction. The unique index created by
+        // migration v6 enforces this at the storage layer, but an existing
+        // install can be left without that index, so the duplicate check is also
+        // performed here to guarantee the constraint for every install.
+        return await db.transaction(async (tx) => {
+            const { results } = await tx.executeAsync(
+                `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND price IS ? LIMIT 1`,
+                [category, unit, price]
+            );
+            if ((results as unknown as Array<{ id: number }>).length > 0) {
+                throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
+            }
 
-        return insertId as number;
+            const { insertId } = await tx.executeAsync(`
+                INSERT INTO prices (price, unit, category)
+                VALUES (?, ?, ?)
+            `, [price, unit, category]);
+
+            return insertId as number;
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isUniqueViolation(error)) {
@@ -83,11 +97,38 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         values.push(id)
 
         db = initDb()
-        await db.executeAsync(`
-            UPDATE prices 
-            SET ${updates.join(', ')}
-            WHERE id = ?
-        `, values)
+        await db.transaction(async (tx) => {
+            // Guard the merged row (unchanged fields keep their stored value)
+            // against colliding with another price, mirroring createPrice so the
+            // rule holds even when the unique index is absent.
+            const { results } = await tx.executeAsync(
+                `SELECT category, unit, price FROM prices WHERE id = ?`,
+                [id]
+            );
+            const current = (results as unknown as Array<{
+                category: string
+                unit: string
+                price: number
+            }>)[0];
+            if (current) {
+                const nextCategory = priceData.category ?? current.category
+                const nextUnit = priceData.unit ?? current.unit
+                const nextPrice = priceData.price ?? current.price
+                const { results: duplicates } = await tx.executeAsync(
+                    `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND price IS ? AND id <> ? LIMIT 1`,
+                    [nextCategory, nextUnit, nextPrice, id]
+                );
+                if ((duplicates as unknown as Array<{ id: number }>).length > 0) {
+                    throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
+                }
+            }
+
+            await tx.executeAsync(`
+                UPDATE prices 
+                SET ${updates.join(', ')}
+                WHERE id = ?
+            `, values)
+        })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isUniqueViolation(error)) {

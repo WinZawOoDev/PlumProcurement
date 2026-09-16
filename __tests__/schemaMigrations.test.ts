@@ -70,7 +70,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 6 }] }
+                return { results: [{ user_version: 7 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -112,6 +112,27 @@ describe('initializeSchema', () => {
             sql.some(
                 (q) =>
                     q.includes('CREATE UNIQUE INDEX IF NOT EXISTS idx_prices_category_unit_price') &&
+                    q.includes('ON prices(category, unit, price)')
+            )
+        ).toBe(true)
+    })
+
+    test('v7 re-asserts the unique prices index on installs stuck without one', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 6 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('DROP INDEX IF EXISTS idx_prices_category_unit_price'))).toBe(true)
+        expect(
+            sql.some(
+                (q) =>
+                    q.includes('CREATE UNIQUE INDEX idx_prices_category_unit_price') &&
                     q.includes('ON prices(category, unit, price)')
             )
         ).toBe(true)
