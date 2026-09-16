@@ -218,7 +218,11 @@ export const sellerStyles = (theme: ThemeOptions) => StyleSheet.create({
     sellerStatCell: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
+        // Top-pinned so the icon sits at the same position in every cell:
+        // the row stretches cells to the tallest one, and with centering a
+        // shorter cell's icon would float lower — visibly worse in Myanmar,
+        // where taller line-heights and longer labels grow cells unevenly.
+        justifyContent: 'flex-start',
         gap: 6,
         paddingHorizontal: 6,
     },
