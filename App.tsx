@@ -36,13 +36,24 @@ import { changeLanguage } from './i18n';
 const tabLabelStyles = StyleSheet.create({
   label: { fontWeight: '700', fontSize: 11, letterSpacing: 0.3, marginTop: 2 },
   myanmar: { fontFamily: MYANMAR_FONT_FAMILY_BOLD },
+  // Letter-spacing breaks Myanmar shaping, so it is dropped alongside
+  // the font swap (mirrors the useStyles() Myanmar pass).
+  myanmarSpacing: { letterSpacing: 0 },
 });
 
 function LocalizedTabLabel({ label, color }: { label: string; color: string }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const isMyanmar = language === 'my';
   return (
-    <Text style={[tabLabelStyles.label, { color }, language === 'my' && tabLabelStyles.myanmar]}>
+    <Text
+      style={[
+        tabLabelStyles.label,
+        { color },
+        isMyanmar && tabLabelStyles.myanmar,
+        isMyanmar && tabLabelStyles.myanmarSpacing,
+      ]}
+    >
       {t(label)}
     </Text>
   );
