@@ -25,7 +25,7 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
     const { UI_TEXT, A11Y_LABELS, CURRENCY } = useLocalizedConstants()
     const initial = seller.name.trim().charAt(0).toUpperCase() || '?'
     return (
-        <Pressable onPress={onPress} style={styles.purchaseItemRow}>
+        <Pressable onPress={onPress} testID={`seller-row-${seller.id}`} style={styles.purchaseItemRow}>
             <View style={styles.avatarCircle}>
                 <RNText style={styles.avatarText}>{initial}</RNText>
             </View>
@@ -71,6 +71,7 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
                     e?.stopPropagation?.()
                     onEdit()
                 }}
+                testID={`edit-seller-${seller.id}`}
                 accessibilityRole="button"
                 accessibilityLabel={A11Y_LABELS.EDIT_SELLER}
                 hitSlop={8}

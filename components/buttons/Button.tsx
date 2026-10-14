@@ -12,9 +12,10 @@ interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containe
     compact?: boolean
     buttonStyle?: ViewStyle
     titleStyle?: any
+    testID?: string
 }
 
-export function PrimaryButton({ title, onPress, disabled, containerStyle, compact = false, buttonStyle, titleStyle, ...props }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, disabled, containerStyle, compact = false, buttonStyle, titleStyle, testID, ...props }: PrimaryButtonProps) {
     const styles = useStyles()
     const handlePress = () => {
         if (!disabled) lightHaptic()
@@ -26,6 +27,7 @@ export function PrimaryButton({ title, onPress, disabled, containerStyle, compac
             title={title}
             onPress={handlePress}
             disabled={disabled}
+            testID={testID ?? `btn-${title}`}
             accessibilityRole="button"
             accessibilityLabel={title}
             containerStyle={{
@@ -52,9 +54,10 @@ interface SecondaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'contai
     containerStyle?: ViewStyle
     buttonStyle?: ViewStyle
     titleStyle?: any
+    testID?: string
 }
 
-export function SecondaryButton({ title, onPress, disabled, containerStyle, buttonStyle, titleStyle, ...props }: SecondaryButtonProps) {
+export function SecondaryButton({ title, onPress, disabled, containerStyle, buttonStyle, titleStyle, testID, ...props }: SecondaryButtonProps) {
     const styles = useStyles()
     const handlePress = () => {
         if (!disabled) lightHaptic()
@@ -66,6 +69,7 @@ export function SecondaryButton({ title, onPress, disabled, containerStyle, butt
             title={title}
             onPress={handlePress}
             disabled={disabled}
+            testID={testID ?? `btn-${title}`}
             accessibilityRole="button"
             accessibilityLabel={title}
             containerStyle={{

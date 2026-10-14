@@ -132,6 +132,7 @@ export default function RecordPayment() {
                                         keyboardType="decimal-pad"
                                         placeholder={UI_TEXT.AMOUNT_PLACEHOLDER}
                                         placeholderTextColor={theme.colors.grey3}
+                                        testID="payment-amount-input"
                                         accessibilityLabel={UI_TEXT.AMOUNT}
                                     />
                                 )}
@@ -143,6 +144,7 @@ export default function RecordPayment() {
                                 <Pressable
                                     style={styles.settleFullBalance}
                                     onPress={() => setValue('amount', String(balance))}
+                                    testID="settle-full-balance"
                                     accessibilityRole="button"
                                     accessibilityLabel={UI_TEXT.SETTLE_FULL_BALANCE}
                                 >

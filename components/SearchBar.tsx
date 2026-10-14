@@ -55,6 +55,7 @@ export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }
             placeholder={placeholder}
             value={localValue}
             onChangeText={handleChange}
+            testID="search-input"
             accessibilityLabel={placeholder}
             accessibilityRole="search"
             leftIcon={
