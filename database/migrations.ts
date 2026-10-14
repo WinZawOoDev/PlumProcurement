@@ -270,6 +270,46 @@ const MIGRATIONS: Migration[] = [
             })
         },
     },
+    {
+        version: 9,
+        up: async () => {
+            const db = initDb()
+            // Close the NULL bypass of the (category, unit) unique key: SQLite
+            // treats NULLs as distinct, so duplicate (NULL, unit) rows were
+            // allowed. Normalize NULL/blank category/unit to trimmed text,
+            // drop rows that are still blank, collapse duplicates (keep newest),
+            // then re-assert the unique index. Fresh installs already create
+            // prices.category NOT NULL via schema.ts.
+            await db.transaction(async (tx) => {
+                await tx.executeAsync(`UPDATE prices SET category = TRIM(category) WHERE category IS NOT NULL`)
+                await tx.executeAsync(`UPDATE prices SET unit = TRIM(unit) WHERE unit IS NOT NULL`)
+                await tx.executeAsync(`UPDATE prices SET category = '' WHERE category IS NULL`)
+                await tx.executeAsync(`UPDATE prices SET unit = '' WHERE unit IS NULL`)
+                await tx.executeAsync(`DELETE FROM prices WHERE category = '' OR unit = ''`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(`CREATE TEMP TABLE price_dupes AS
+                    SELECT p.id AS dup_id, k.keep_id AS keep_id
+                    FROM prices p
+                    JOIN (
+                        SELECT category, unit, MAX(id) AS keep_id
+                        FROM prices
+                        GROUP BY category, unit
+                        HAVING COUNT(*) > 1
+                    ) k ON k.category IS p.category AND k.unit IS p.unit
+                    WHERE p.id <> k.keep_id`)
+                await tx.executeAsync(`UPDATE purchase_items
+                    SET price_id = (SELECT keep_id FROM price_dupes WHERE dup_id = purchase_items.price_id)
+                    WHERE price_id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DELETE FROM prices WHERE id IN (SELECT dup_id FROM price_dupes)`)
+                await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
+                await tx.executeAsync(`DROP INDEX IF EXISTS idx_prices_category_unit`)
+                await tx.executeAsync(
+                    `CREATE UNIQUE INDEX idx_prices_category_unit
+                     ON prices(category, unit)`
+                )
+            })
+        },
+    },
 ]
 
 let migrationsPromise: Promise<void> | null = null

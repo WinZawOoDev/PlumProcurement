@@ -70,7 +70,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 8 }] }
+                return { results: [{ user_version: 9 }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -154,6 +154,28 @@ describe('initializeSchema', () => {
         expect(sql.some((q) => q.includes('GROUP BY category, unit'))).toBe(true)
         expect(sql.some((q) => q.includes('UPDATE purchase_items'))).toBe(true)
         expect(sql.some((q) => q.includes('DELETE FROM prices WHERE id IN'))).toBe(true)
+        expect(
+            sql.some(
+                (q) =>
+                    q.includes('CREATE UNIQUE INDEX idx_prices_category_unit') &&
+                    q.includes('ON prices(category, unit)')
+            )
+        ).toBe(true)
+    })
+
+    test('v9 normalizes blank categories and re-asserts the (category, unit) index', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 8 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes(`UPDATE prices SET category = TRIM(category)`))).toBe(true)
+        expect(sql.some((q) => q.includes(`DELETE FROM prices WHERE category = '' OR unit = ''`))).toBe(true)
         expect(
             sql.some(
                 (q) =>

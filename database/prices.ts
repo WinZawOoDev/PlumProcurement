@@ -33,7 +33,9 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         if (!price || price <= 0) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
-        if (!unit || !category) {
+        const cleanCategory = category?.trim()
+        const cleanUnit = unit?.trim()
+        if (!cleanCategory || !cleanUnit) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
 
@@ -45,7 +47,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         return await db.transaction(async (tx) => {
             const { results } = await tx.executeAsync(
                 `SELECT id FROM prices WHERE category IS ? AND unit IS ? LIMIT 1`,
-                [category, unit]
+                [cleanCategory, cleanUnit]
             );
             if ((results as unknown as Array<{ id: number }>).length > 0) {
                 throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
@@ -54,7 +56,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
             const { insertId } = await tx.executeAsync(`
                 INSERT INTO prices (price, unit, category)
                 VALUES (?, ?, ?)
-            `, [price, unit, category]);
+            `, [price, cleanUnit, cleanCategory]);
 
             return insertId as number;
         })
@@ -81,12 +83,20 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
             values.push(priceData.price)
         }
         if (priceData.unit !== undefined) {
+            const cleanUnit = priceData.unit?.trim()
+            if (!cleanUnit) {
+                throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+            }
             updates.push('unit = ?')
-            values.push(priceData.unit)
+            values.push(cleanUnit)
         }
         if (priceData.category !== undefined) {
+            const cleanCategory = priceData.category?.trim()
+            if (!cleanCategory) {
+                throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+            }
             updates.push('category = ?')
-            values.push(priceData.category)
+            values.push(cleanCategory)
         }
 
         if (updates.length === 0) {
@@ -166,10 +176,10 @@ export async function deletePrice(id: number): Promise<void> {
 
 function isForeignKeyViolation(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error ?? '')
-    return /foreign key|FOREIGN KEY|constraint failed/i.test(message)
+    return /FOREIGN KEY constraint failed/i.test(message)
 }
 
 function isUniqueViolation(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error ?? '')
-    return /unique constraint failed/i.test(message)
+    return /UNIQUE constraint failed/i.test(message)
 }

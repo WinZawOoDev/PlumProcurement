@@ -244,5 +244,5 @@ export async function deleteSeller(id: number): Promise<void> {
 
 function isForeignKeyViolation(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error ?? '')
-    return /foreign key|FOREIGN KEY|constraint failed/i.test(message)
+    return /FOREIGN KEY constraint failed/i.test(message)
 }

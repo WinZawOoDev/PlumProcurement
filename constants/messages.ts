@@ -25,6 +25,8 @@ export const MESSAGES = {
   ERROR_NO_ITEMS: 'Add at least one item to record a purchase.',
   ERROR_PURCHASE_LOCKED: 'Cannot change this purchase because it has already been paid.',
   ERROR_PURCHASE_OVERPAY: 'Cannot change this purchase because the seller would be overpaid.',
+  ERROR_PURCHASE_NOT_FOUND: 'Purchase not found.',
+  ERROR_PAYMENT_INVALID_PURCHASE: 'Selected purchase is invalid for this payment.',
   ERROR_PAYMENT_EXCEEDS_BALANCE: 'Payment exceeds the outstanding balance.',
   ERROR_INVALID_AMOUNT: 'Amount must be greater than zero.',
   ERROR_GENERIC: 'Something went wrong. Please try again.',

@@ -13,7 +13,7 @@ const TABLE_STATEMENTS = [
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         price REAL NOT NULL,
         unit TEXT NOT NULL,
-        category TEXT,
+        category TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,

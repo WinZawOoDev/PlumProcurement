@@ -216,6 +216,8 @@ export const my: TranslationSchema = {
     ERROR_NO_ITEMS: 'အဝယ်မှတ်တမ်းတင်ရန် အနည်းဆုံး ပစ္စည်းတစ်ခု ထည့်ပါ။',
     ERROR_PURCHASE_LOCKED: 'ဤအဝယ်ကို ပေးချေပြီးဖြစ်သောကြောင့် ပြောင်း၍မရပါ။',
     ERROR_PURCHASE_OVERPAY: 'ငွေပမာဏ ပိုနေပါသောကြောင့် ပေးချေ၍မရနိုင်ပါ',
+    ERROR_PURCHASE_NOT_FOUND: 'ဝယ်ယူမှု မှတ်တမ်း မတွေ့ပါ။',
+    ERROR_PAYMENT_INVALID_PURCHASE: 'ဤငွေပေးချေမှုအတွက် ရွေးထားသော ဝယ်ယူမှု မမှန်ကန်ပါ။',
     ERROR_PAYMENT_EXCEEDS_BALANCE: 'ငွေပေးချေမှုသည် ကျန်ရှိသောလက်ကျန်ထက် ကျော်လွန်နေပါသည်။',
     ERROR_INVALID_AMOUNT: 'ထည့်သွင်း ငွေပမာဏသည် သုညထက် ကြီးရမည်။',
     ERROR_GENERIC: 'တစ်ခုခုမှားယွင်းသွားပါသည်။ ထပ်မံကြိုးစားပါ။',
