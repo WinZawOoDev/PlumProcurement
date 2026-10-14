@@ -212,6 +212,7 @@ async function isPurchaseLocked(db: DbExecutor, purchaseId: number): Promise<boo
  * Blocks a mutation that would leave the seller with more paid than owed.
  * `newTotal` is the purchase's total after the change (0 when deleting).
  * Must be called inside a transaction.
+ * Uses a small epsilon so float REAL sums cannot false-trigger the guard.
  */
 async function assertSellerNotOverpaid(
     db: DbExecutor,
@@ -231,8 +232,19 @@ async function assertSellerNotOverpaid(
     )
     const totalPaid = (paid.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
 
-    if (totalPaid > totalOwed - oldTotal + newTotal) {
+    if (totalPaid - (totalOwed - oldTotal + newTotal) > 1e-9) {
         throw new DatabaseError(tMessage('ERROR_PURCHASE_OVERPAY'))
+    }
+}
+
+/** Throws when the seller id does not reference an existing seller. */
+async function assertSellerExists(db: DbExecutor, sellerId: number): Promise<void> {
+    const { results } = await db.executeAsync(
+        `SELECT 1 AS ok FROM sellers WHERE id = ? LIMIT 1`,
+        [sellerId]
+    )
+    if ((results as unknown as unknown[]).length === 0) {
+        throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
     }
 }
 
@@ -288,6 +300,9 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
 
         db = initDb()
         return await db.transaction(async (tx) => {
+            if (seller_id != null) {
+                await assertSellerExists(tx, seller_id)
+            }
             const { insertId } = await tx.executeAsync(
                 `INSERT INTO purchases (seller_id, total) VALUES (?, ?)`,
                 [seller_id ?? null, total]
@@ -315,11 +330,32 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                 [id]
             )).results as unknown as Array<{ seller_id: number | null; total: number }>
             const existing = current[0]
+            if (!existing) {
+                throw new DatabaseError(tMessage('ERROR_PURCHASE_NOT_FOUND'))
+            }
+            if (updates.items !== undefined) {
+                validateItems(updates.items)
+            }
             const newTotal = updates.items === undefined
-                ? existing?.total ?? 0
+                ? existing.total
                 : updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
-            if (existing?.seller_id != null) {
-                await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, newTotal)
+            const sellerChanging = updates.seller_id !== undefined && updates.seller_id !== existing.seller_id
+            if (!sellerChanging) {
+                // Same owner (or no seller change): the purchase total moves
+                // from oldTotal to newTotal under the current seller.
+                if (existing.seller_id != null) {
+                    await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, newTotal)
+                }
+            } else {
+                // Owner changes: the old seller loses the whole purchase
+                // (newTotal 0) and the new seller gains it (from 0 to newTotal).
+                if (existing.seller_id != null) {
+                    await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, 0)
+                }
+                if (updates.seller_id != null) {
+                    await assertSellerExists(tx, updates.seller_id)
+                    await assertSellerNotOverpaid(tx, updates.seller_id, 0, newTotal)
+                }
             }
             if (updates.seller_id !== undefined) {
                 await tx.executeAsync(
@@ -328,7 +364,6 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                 )
             }
             if (updates.items !== undefined) {
-                validateItems(updates.items)
                 const total = updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
                 await tx.executeAsync(`DELETE FROM purchase_items WHERE purchase_id = ?`, [id])
                 await insertMany(tx, 'purchase_items', PURCHASE_ITEM_COLUMNS, toPurchaseItemRows(id, updates.items))
@@ -359,8 +394,11 @@ export async function deletePurchase(id: number): Promise<void> {
                 [id]
             )).results as unknown as Array<{ seller_id: number | null; total: number }>
             const existing = current[0]
+            if (!existing) {
+                throw new DatabaseError(tMessage('ERROR_PURCHASE_NOT_FOUND'))
+            }
             // Deleting removes this purchase's total from what the seller is owed.
-            if (existing?.seller_id != null) {
+            if (existing.seller_id != null) {
                 await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, 0)
             }
             await tx.executeAsync(`DELETE FROM purchases WHERE id = ?`, [id])

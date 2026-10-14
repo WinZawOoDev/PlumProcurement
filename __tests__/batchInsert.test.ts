@@ -57,6 +57,7 @@ describe('insertMany', () => {
 
 describe('purchase item writes use a bounded number of statements', () => {
     test('createPurchase inserts every line item in a single statement', async () => {
+        executeAsync.mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
         await createPurchase({ seller_id: 1, items })
 
         const inserts = executeAsync.mock.calls.filter(([sql]) =>
