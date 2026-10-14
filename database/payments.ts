@@ -28,6 +28,41 @@ async function fetchOwedAndPaid(db: DbExecutor, sellerId: number, excludePayment
     return { owed, paid }
 }
 
+/** Throws when the seller id does not reference an existing seller. */
+async function assertSellerExists(db: DbExecutor, sellerId: number): Promise<void> {
+    const { results } = await db.executeAsync(
+        `SELECT 1 AS ok FROM sellers WHERE id = ? LIMIT 1`,
+        [sellerId]
+    )
+    if ((results as unknown as unknown[]).length === 0) {
+        throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+    }
+}
+
+/**
+ * Validates an explicit payment -> purchase link: the purchase must exist,
+ * belong to the same seller, and not already be settled by another payment.
+ * Returns the validated purchase id.
+ */
+async function assertValidLinkedPurchase(db: DbExecutor, sellerId: number, purchaseId: number): Promise<number> {
+    const { results } = await db.executeAsync(
+        `SELECT id, seller_id FROM purchases WHERE id = ? LIMIT 1`,
+        [purchaseId]
+    )
+    const row = (results as unknown as Array<{ id: number; seller_id: number | null }>)[0]
+    if (!row || row.seller_id !== sellerId) {
+        throw new DatabaseError(tMessage('ERROR_PAYMENT_INVALID_PURCHASE'))
+    }
+    const { results: linked } = await db.executeAsync(
+        `SELECT 1 AS ok FROM payments WHERE purchase_id = ? LIMIT 1`,
+        [purchaseId]
+    )
+    if ((linked as unknown as unknown[]).length > 0) {
+        throw new DatabaseError(tMessage('ERROR_PAYMENT_INVALID_PURCHASE'))
+    }
+    return row.id
+}
+
 /**
  * Rebuilds a seller's payment -> purchase links using the canonical FIFO rule
  * (oldest payment settles the oldest purchase, 1:1; payments beyond the
@@ -162,14 +197,17 @@ export async function createPayment(data: Omit<IPayment, 'id'>): Promise<number>
 
         db = initDb()
         return await db.transaction(async (tx) => {
+            await assertSellerExists(tx, seller_id)
             const { owed, paid } = await fetchOwedAndPaid(tx, seller_id)
-            if (amount > owed - paid) {
+            if (amount - (owed - paid) > 1e-9) {
                 throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
             }
-            // Explicit link wins; otherwise settle the seller's oldest purchase
+            // Explicit link wins (validated); otherwise settle the seller's oldest purchase
             // that no payment has been linked to yet (FIFO).
             let linkedPurchaseId = purchase_id ?? null
-            if (linkedPurchaseId === null) {
+            if (linkedPurchaseId !== null) {
+                linkedPurchaseId = await assertValidLinkedPurchase(tx, seller_id, linkedPurchaseId)
+            } else {
                 const { results } = await tx.executeAsync(
                     `SELECT p.id FROM purchases p
                      WHERE p.seller_id = ?
@@ -225,10 +263,13 @@ export async function updatePayment(
                     [id]
                 )
                 const existing = (results as unknown as Array<{ seller_id: number; amount: number }>)[0]
+                if (!existing) {
+                    throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+                }
                 if (existing) {
                     const { owed, paid } = await fetchOwedAndPaid(tx, existing.seller_id, id)
                     const balanceWithoutThis = owed - paid
-                    if (updates.amount > balanceWithoutThis) {
+                    if (updates.amount - balanceWithoutThis > 1e-9) {
                         throw new DatabaseError(tMessage('ERROR_PAYMENT_EXCEEDS_BALANCE'))
                     }
                 }
@@ -254,6 +295,9 @@ export async function deletePayment(id: number): Promise<void> {
                 [id]
             )
             const sellerId = (results as unknown as Array<{ seller_id: number | null }>)[0]?.seller_id
+            if (sellerId == null && (results as unknown as unknown[]).length === 0) {
+                throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+            }
             await tx.executeAsync(`DELETE FROM payments WHERE id = ?`, [id])
             // Removing a payment shifts every later payment one purchase
             // earlier under FIFO — rebuild the links so the correct purchases

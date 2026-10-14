@@ -22,6 +22,7 @@ beforeEach(() => {
 describe('createPayment overpayment guard', () => {
     test('blocks a payment that exceeds the outstanding balance', async () => {
         executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
 
@@ -29,7 +30,7 @@ describe('createPayment overpayment guard', () => {
             createPayment({ seller_id: 5, purchase_id: null, amount: 60, method: null, note: null })
         ).rejects.toThrow('Payment exceeds the outstanding balance.')
 
-        expect(executeAsync).toHaveBeenCalledTimes(2)
+        expect(executeAsync).toHaveBeenCalledTimes(3)
         expect(executeAsync).not.toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO payments'),
             expect.anything()
@@ -38,6 +39,7 @@ describe('createPayment overpayment guard', () => {
 
     test('records a payment within the balance and auto-links the oldest unlinked purchase', async () => {
         executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({ results: [{ id: 7 }] }) // oldest unlinked purchase
@@ -55,8 +57,11 @@ describe('createPayment overpayment guard', () => {
 
     test('keeps an explicit purchase link and skips the FIFO lookup', async () => {
         executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
             .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 5 }] }) // linked purchase row
+            .mockResolvedValueOnce({ results: [] }) // not already settled
             .mockResolvedValueOnce({ insertId: 4 }) // INSERT
 
         await expect(
@@ -67,7 +72,31 @@ describe('createPayment overpayment guard', () => {
             expect.stringContaining('INSERT INTO payments'),
             [5, 3, 20, null, null]
         )
-        expect(executeAsync).toHaveBeenCalledTimes(3)
+    })
+
+    test('rejects an explicit link to another seller’s purchase', async () => {
+        executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
+            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // owed
+            .mockResolvedValueOnce({ results: [{ total: 0 }] }) // paid
+            .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 6 }] }) // wrong owner
+
+        await expect(
+            createPayment({ seller_id: 5, purchase_id: 3, amount: 20, method: null, note: null })
+        ).rejects.toThrow('Selected purchase is invalid')
+    })
+
+    test('rejects an explicit link to an already-settled purchase', async () => {
+        executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
+            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // owed
+            .mockResolvedValueOnce({ results: [{ total: 0 }] }) // paid
+            .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 5 }] }) // owned
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // already linked
+
+        await expect(
+            createPayment({ seller_id: 5, purchase_id: 3, amount: 20, method: null, note: null })
+        ).rejects.toThrow('Selected purchase is invalid')
     })
 
     test('rejects non-positive amounts before touching the database', async () => {
