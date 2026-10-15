@@ -38,9 +38,63 @@ function SettingsSectionHeader({ icon, title, description }: { icon: string; tit
     )
 }
 
-function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected: boolean; onPress: () => void }) {
+/** Generic radio tile used by both the theme-mode and language sections. */
+function OptionTile({
+    icon,
+    label,
+    hint,
+    selected,
+    onPress,
+    accessibilityLabel,
+}: {
+    icon: string
+    label: string
+    hint: string
+    selected: boolean
+    onPress: () => void
+    accessibilityLabel: string
+}) {
     const styles = useStyles()
     const { theme } = useTheme()
+    return (
+        <Pressable
+            onPress={onPress}
+            hitSlop={4}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={accessibilityLabel}
+            style={({ pressed }) => [
+                styles.settingsThemeOption,
+                selected && styles.settingsThemeOptionSelected,
+                pressed && styles.settingsThemeOptionPressed,
+            ]}
+        >
+            <View
+                style={[
+                    styles.settingsThemeOptionIconCircle,
+                    selected && styles.settingsThemeOptionIconCircleSelected,
+                ]}
+            >
+                <Ionicons
+                    name={icon as any}
+                    size={18}
+                    color={selected ? theme.colors.white : theme.colors.primary}
+                />
+            </View>
+            <RNText
+                style={[
+                    styles.settingsThemeOptionLabel,
+                    selected && styles.settingsThemeOptionLabelSelected,
+                ]}
+            >
+                {label}
+            </RNText>
+            <RNText style={styles.settingsThemeOptionHint}>{hint}</RNText>
+        </Pressable>
+    )
+}
+
+function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected: boolean; onPress: () => void }) {
     const { UI_TEXT, A11Y_LABELS: a11y } = useLocalizedConstants()
 
     const labels: Record<ThemeMode, string> = {
@@ -55,40 +109,14 @@ function ThemeModeTile({ mode, selected, onPress }: { mode: ThemeMode; selected:
     }
 
     return (
-        <Pressable
+        <OptionTile
+            icon={THEME_MODE_ICONS[mode]}
+            label={labels[mode]}
+            hint={hints[mode]}
+            selected={selected}
             onPress={onPress}
-            hitSlop={4}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}
             accessibilityLabel={`${a11y.SELECT_THEME_MODE}: ${labels[mode]}`}
-            style={({ pressed }) => [
-                styles.settingsThemeOption,
-                selected && styles.settingsThemeOptionSelected,
-                pressed && styles.settingsThemeOptionPressed,
-            ]}
-        >
-            <View
-                style={[
-                    styles.settingsThemeOptionIconCircle,
-                    selected && styles.settingsThemeOptionIconCircleSelected,
-                ]}
-            >
-                <Ionicons
-                    name={THEME_MODE_ICONS[mode] as any}
-                    size={18}
-                    color={selected ? theme.colors.white : theme.colors.primary}
-                />
-            </View>
-            <RNText
-                style={[
-                    styles.settingsThemeOptionLabel,
-                    selected && styles.settingsThemeOptionLabelSelected,
-                ]}
-            >
-                {labels[mode]}
-            </RNText>
-            <RNText style={styles.settingsThemeOptionHint}>{hints[mode]}</RNText>
-        </Pressable>
+        />
     )
 }
 
@@ -112,8 +140,6 @@ function AppearanceSection({ mode, onSelect }: { mode: ThemeMode; onSelect: (mod
 }
 
 function LanguageTile({ language, selected, onPress }: { language: Language; selected: boolean; onPress: () => void }) {
-    const styles = useStyles()
-    const { theme } = useTheme()
     const { UI_TEXT } = useLocalizedConstants()
 
     const labels: Record<Language, string> = {
@@ -126,40 +152,14 @@ function LanguageTile({ language, selected, onPress }: { language: Language; sel
     }
 
     return (
-        <Pressable
+        <OptionTile
+            icon={LANGUAGE_ICONS[language]}
+            label={labels[language]}
+            hint={hints[language]}
+            selected={selected}
             onPress={onPress}
-            hitSlop={4}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}
             accessibilityLabel={labels[language]}
-            style={({ pressed }) => [
-                styles.settingsThemeOption,
-                selected && styles.settingsThemeOptionSelected,
-                pressed && styles.settingsThemeOptionPressed,
-            ]}
-        >
-            <View
-                style={[
-                    styles.settingsThemeOptionIconCircle,
-                    selected && styles.settingsThemeOptionIconCircleSelected,
-                ]}
-            >
-                <Ionicons
-                    name={LANGUAGE_ICONS[language] as any}
-                    size={18}
-                    color={selected ? theme.colors.white : theme.colors.primary}
-                />
-            </View>
-            <RNText
-                style={[
-                    styles.settingsThemeOptionLabel,
-                    selected && styles.settingsThemeOptionLabelSelected,
-                ]}
-            >
-                {labels[language]}
-            </RNText>
-            <RNText style={styles.settingsThemeOptionHint}>{hints[language]}</RNText>
-        </Pressable>
+        />
     )
 }
 

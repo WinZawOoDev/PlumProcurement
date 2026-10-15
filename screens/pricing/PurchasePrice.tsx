@@ -1,5 +1,5 @@
 import { RefreshControl, SectionList, Text as RNText, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
@@ -17,6 +17,7 @@ import { PriceTrend } from '../../components/PriceTrend'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/Skeleton'
+import { LoadError } from '../../components/LoadError'
 import { PriceDetailSheet } from '../../components/PriceDetailSheet'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -51,6 +52,21 @@ function PriceListSkeleton() {
     )
 }
 
+/**
+ * One price row. The press closure lives inside this memoized child, so
+ * PriceCard's React.memo compares only the stable (item, onSelect) props and
+ * list re-renders do not re-render every row.
+ */
+const PriceRow = React.memo(function PriceRow({
+    item,
+    onSelect,
+}: {
+    item: IPrice
+    onSelect: (price: IPrice) => void
+}) {
+    return <PriceCard {...item} onPress={() => onSelect(item)} />
+})
+
 function PriceList({
     prices,
     loading,
@@ -75,15 +91,9 @@ function PriceList({
         <SectionList
             sections={sections}
             keyExtractor={(item) => item.id.toString()}
-            refreshing={loading}
             stickySectionHeadersEnabled
             contentContainerStyle={styles.scrollContentGutter}
-            renderItem={({ item }) => (
-                <PriceCard
-                    {...item}
-                    onPress={() => onSelect(item)}
-                />
-            )}
+            renderItem={({ item }) => <PriceRow item={item} onSelect={onSelect} />}
             renderSectionHeader={({ section }) => (
                 <View style={[styles.priceListSectionHeader, styles.priceListSectionHeaderSticky]}>
                     <RNText style={styles.priceListSectionTitle} numberOfLines={1}>
@@ -122,8 +132,9 @@ function PriceList({
 
 export default function PurchasePrices() {
     const styles = useStyles()
+    const { t } = useTranslation()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
-    const { prices, loading, refresh, removePrice } = usePrices()
+    const { prices, loading, error: pricesError, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
     const [detailPrice, setDetailPrice] = useState<IPrice | null>(null)
     const [sortMode, setSortMode] = useState<SortMode>('default')
@@ -147,7 +158,7 @@ export default function PurchasePrices() {
         refresh()
     }, [refresh])
 
-    const visiblePrices = (() => {
+    const visiblePrices = useMemo(() => {
         if (sortMode === 'price_asc') {
             return [...matchedPrices].sort((a, b) => a.price - b.price)
         }
@@ -155,7 +166,7 @@ export default function PurchasePrices() {
             return [...matchedPrices].sort((a, b) => b.price - a.price)
         }
         return matchedPrices
-    })()
+    }, [matchedPrices, sortMode])
 
     const handleSortPress = () => {
         const nextIndex = (SORT_MODES.indexOf(sortMode) + 1) % SORT_MODES.length
@@ -177,7 +188,10 @@ export default function PurchasePrices() {
                 <SectionHeader
                     icon="pricetags-outline"
                     title={UI_TEXT.PRICE_MANAGEMENT}
-                    description={`${UI_TEXT.PRICE_DESCRIPTION} • ${formatNumber(visiblePrices.length, 0)} ${visiblePrices.length === 1 ? UI_TEXT.PRICE_SINGULAR : UI_TEXT.PRICE_PLURAL}`}
+                    description={t('uiText.LIST_HEADER_DESCRIPTION', {
+                        description: UI_TEXT.PRICE_DESCRIPTION,
+                        summary: t('uiText.PRICE_COUNT', { count: visiblePrices.length }),
+                    })}
                 />
                 <ActionButtons
                     searchActive={searchVisible}
@@ -194,8 +208,10 @@ export default function PurchasePrices() {
                     />
                 )}
                 {visiblePrices.length > 1 && <PriceTrend prices={visiblePrices} onSelect={setDetailPrice} />}
-                {loading && prices.length === 0 ? (
+                {loading && prices.length === 0 && !pricesError ? (
                     <PriceListSkeleton />
+                ) : pricesError && prices.length === 0 ? (
+                    <LoadError error={pricesError} onRetry={refresh} />
                 ) : (
                     <PriceList
                         prices={visiblePrices}

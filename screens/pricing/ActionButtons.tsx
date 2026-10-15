@@ -5,7 +5,8 @@ import Ionicons from '@react-native-vector-icons/ionicons'
 import { IconButton } from '../../components/buttons/Button'
 import { ROUTES, DIMENSIONS } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
-import { useNavigation } from '@react-navigation/native'
+import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { SearchIconButton } from '../../components/SearchIconButton'
 
@@ -26,8 +27,8 @@ export default function ActionButtons({
 }: ActionButtonsProps) {
     const styles = useStyles()
     const { theme } = useTheme()
-    const navigation = useNavigation()
-    const { UI_TEXT } = useLocalizedConstants()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
+    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
 
     return (
         <View style={styles.actionButtonsRow}>
@@ -36,10 +37,14 @@ export default function ActionButtons({
                 title={UI_TEXT.ADD_NEW_PRICE}
                 icon={<Ionicons name="add-sharp" size={DIMENSIONS.ICON_SIZE_SMALL} color="white" />}
                 variant="primary"
-                //@ts-expect-error
                 onPress={() => navigation.navigate(ROUTES.CREATE_PRICE)}
+                accessibilityLabel={UI_TEXT.ADD_NEW_PRICE}
             />
-            <SearchIconButton active={searchActive} onPress={onSearchPress} />
+            <SearchIconButton
+                active={searchActive}
+                onPress={onSearchPress}
+                accessibilityLabel={A11Y_LABELS.TOGGLE_SEARCH}
+            />
             <IconButton
                 icon={
                     <Ionicons
@@ -56,6 +61,8 @@ export default function ActionButtons({
                 }
                 variant="ghost"
                 onPress={onSortPress}
+                accessibilityLabel={UI_TEXT.SORT_PRICES}
+                accessibilityState={{ selected: sortActive }}
             />
         </View>
     )

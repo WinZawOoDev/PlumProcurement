@@ -1,31 +1,18 @@
-import { View, Text } from 'react-native'
+import { Text } from 'react-native'
 import React, { useEffect } from 'react'
-import { BottomSheet } from '@rneui/themed'
-import { Control, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
-import {
-    FormInputField,
-    FormSelectField,
-    FormButtonGroupField,
-} from '../../components/forms/FormFields'
-import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
-import {
-    PRICE_PATTERN,
-    FORM_CONFIG,
-    CATEGORY_LIST,
-    UNIT_LIST,
-} from '../../constants'
+import { DetailSheet } from '../../components/DetailSheet'
+import { FORM_CONFIG, CATEGORY_LIST, UNIT_LIST } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { usePrices } from '../../context/PriceContext'
-import { DatabaseError } from '../../database/connection'
+import { getErrorMessage } from '../../utils/errors'
 import { IPrice } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
+import { PriceFormActions, PriceFormFields, PriceFormValues } from './PriceForm'
 
-type FormData = {
+interface EditPriceFormValues extends PriceFormValues {
     id: number
-    price: string
-    unit: number
-    category: string
 }
 
 interface EditPriceProps {
@@ -34,80 +21,12 @@ interface EditPriceProps {
     onClose: () => void
 }
 
-function EditPriceFields({ control }: { control: Control<FormData> }) {
-    const { UI_TEXT, VALIDATION_MESSAGES, CATEGORY_LIST: categoryOptions, UNITS } = useLocalizedConstants()
-    return (
-        <>
-            <FormSelectField
-                name="category"
-                control={control}
-                label={UI_TEXT.CATEGORY}
-                options={categoryOptions}
-                required
-                rules={{ required: VALIDATION_MESSAGES.CATEGORY_REQUIRED }}
-            />
-            <FormButtonGroupField
-                name="unit"
-                control={control}
-                label={UI_TEXT.UNIT_SELECTION}
-                buttons={UNIT_LIST.map((unit) => UNITS[unit] ?? unit)}
-                required
-                rules={{ required: VALIDATION_MESSAGES.UNIT_REQUIRED }}
-            />
-            <FormInputField
-                name="price"
-                control={control}
-                label={UI_TEXT.PRICE}
-                placeholder={UI_TEXT.PRICE_PLACEHOLDER}
-                keyboardType={FORM_CONFIG.PRICE_KEYTYPE}
-                required
-                rules={{
-                    required: VALIDATION_MESSAGES.PRICE_REQUIRED,
-                    pattern: {
-                        value: PRICE_PATTERN,
-                        message: VALIDATION_MESSAGES.PRICE_INVALID,
-                    },
-                }}
-            />
-        </>
-    )
-}
-
-function EditPriceActions({
-    saving,
-    onSubmit,
-    onCancel,
-}: {
-    saving: boolean
-    onSubmit: () => void
-    onCancel: () => void
-}) {
-    const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
-    return (
-        <>
-            <PrimaryButton
-                title={UI_TEXT.UPDATE}
-                disabled={saving}
-                loading={saving}
-                onPress={onSubmit}
-                containerStyle={styles.updateButtonContainerStyle}
-            />
-            <SecondaryButton
-                title={UI_TEXT.CANCEL}
-                onPress={onCancel}
-                containerStyle={styles.updateButtonContainerStyle}
-            />
-        </>
-    )
-}
-
 export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
     const styles = useStyles()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const { editPrice } = usePrices()
 
-    const { control, handleSubmit, reset, formState } = useForm<FormData>({
+    const { control, handleSubmit, reset, formState } = useForm<EditPriceFormValues>({
         defaultValues: {
             id: 0,
             price: FORM_CONFIG.PRICE_DEFAULT,
@@ -131,7 +50,7 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
         }
     }, [visible, price, reset])
 
-    const handleUpdate = async (data: FormData) => {
+    const handleUpdate = async (data: EditPriceFormValues) => {
         try {
             await editPrice(data.id, {
                 price: parseFloat(data.price),
@@ -141,26 +60,21 @@ export default function EditPrice({ visible, price, onClose }: EditPriceProps) {
             showSuccess(MESSAGES.PRICE_UPDATE_SUCCESS)
             onClose()
         } catch (error) {
-            const message = error instanceof DatabaseError ? error.message : MESSAGES.ERROR_GENERIC
-            showError(message)
+            showError(getErrorMessage(error))
         }
     }
 
     return (
-        <BottomSheet
-            isVisible={visible}
-            modalProps={{ animationType: 'slide' }}
-            onBackdropPress={onClose}
-        >
-            <View style={styles.bottomSheetContainer}>
-                <Text style={styles.bottomSheetTitle}>{UI_TEXT.EDIT_PRICE}</Text>
-                <EditPriceFields control={control} />
-                <EditPriceActions
-                    saving={formState.isSubmitting}
-                    onSubmit={handleSubmit(handleUpdate)}
-                    onCancel={onClose}
-                />
-            </View>
-        </BottomSheet>
+        <DetailSheet visible={visible} onClose={onClose}>
+            <Text style={styles.bottomSheetTitle}>{UI_TEXT.EDIT_PRICE}</Text>
+            <PriceFormFields control={control} />
+            <PriceFormActions
+                primaryTitle={UI_TEXT.UPDATE}
+                saving={formState.isSubmitting}
+                onSubmit={handleSubmit(handleUpdate)}
+                onCancel={onClose}
+                buttonStyle={styles.updateButtonContainerStyle}
+            />
+        </DetailSheet>
     )
 }
