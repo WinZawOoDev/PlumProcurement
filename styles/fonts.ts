@@ -1,5 +1,12 @@
 import { Platform } from 'react-native'
 
+/** Slightly reduce Burmese text size to balance its taller glyphs with Latin text. */
+export const MYANMAR_FONT_SIZE_SCALE = 0.9
+
+export function scaleMyanmarFontSize(fontSize: number): number {
+    return Math.max(1, Math.round(fontSize * MYANMAR_FONT_SIZE_SCALE))
+}
+
 /**
  * Noto Sans Myanmar is bundled under `assets/fonts` for Myanmar script support.
  * Android resolves custom fonts by file name, iOS by the font's family name.

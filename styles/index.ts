@@ -7,7 +7,7 @@ import { pricingStyles } from './pricingStyles'
 import { purchasingStyles } from './purchasingStyles'
 import { sellerStyles } from './sellerStyles'
 import { settingsStyles } from './settingsStyles'
-import { MYANMAR_FONT_FAMILY, MYANMAR_FONT_FAMILY_BOLD, isBoldWeight } from './fonts'
+import { MYANMAR_FONT_FAMILY, MYANMAR_FONT_FAMILY_BOLD, isBoldWeight, scaleMyanmarFontSize } from './fonts'
 
 const createStyles = (theme: ThemeOptions) => ({
     ...sharedStyles(theme),
@@ -29,9 +29,9 @@ const MYANMAR_LINE_HEIGHT_SCALE = 1.18
 /**
  * Swaps the (unbundled) Latin font families for the bundled Noto Sans Myanmar
  * face so Burmese text renders correctly. Bold styles pick the bold face.
- * Spacing is adjusted alongside the swap: letter-spacing is dropped (it breaks
- * Myanmar shaping) and explicit line-heights are scaled up for the taller
- * stacked glyphs. Only text styles (those declaring a fontFamily) are touched.
+ * Font size is reduced slightly to visually balance the taller glyphs. Spacing
+ * is adjusted alongside the swap: letter-spacing is dropped (it breaks Myanmar
+ * shaping) and explicit line-heights are scaled up for stacked glyphs.
  */
 const withMyanmarTypography = (styles: Styles): Styles => {
     const result: Record<string, unknown> = {}
@@ -39,10 +39,9 @@ const withMyanmarTypography = (styles: Styles): Styles => {
         const value = (styles as Record<string, unknown>)[key]
         if (value && typeof value === 'object') {
             const base = value as Record<string, unknown>
-            // letterSpacing/lineHeight only affect Text, so any style declaring
-            // them is a text style — even when it inherits (rather than sets)
-            // its fontFamily from the RNEUI theme.
-            const isTextStyle = 'fontFamily' in base || 'letterSpacing' in base || 'lineHeight' in base
+            // These properties only affect Text, so any style declaring them
+            // is a text style — even when it inherits its fontFamily from RNEUI.
+            const isTextStyle = 'fontFamily' in base || 'fontSize' in base || 'letterSpacing' in base || 'lineHeight' in base
             if (!isTextStyle) {
                 result[key] = value
                 continue
@@ -52,6 +51,9 @@ const withMyanmarTypography = (styles: Styles): Styles => {
                 next.fontFamily = isBoldWeight(base.fontWeight)
                     ? MYANMAR_FONT_FAMILY_BOLD
                     : MYANMAR_FONT_FAMILY
+            }
+            if (typeof next.fontSize === 'number') {
+                next.fontSize = scaleMyanmarFontSize(next.fontSize)
             }
             if ('letterSpacing' in next) {
                 next.letterSpacing = 0

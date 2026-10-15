@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { MYANMAR_FONT_FAMILY_BOLD } from './fonts'
+import { MYANMAR_FONT_FAMILY_BOLD, scaleMyanmarFontSize } from './fonts'
 
 /**
  * Static tab-bar styles. Kept theme-independent (like the navigator itself) so
@@ -36,6 +36,7 @@ export const navigationStyles = StyleSheet.create({
     },
     tabLabelMyanmar: {
         fontFamily: MYANMAR_FONT_FAMILY_BOLD,
+        fontSize: scaleMyanmarFontSize(11),
     },
     // Letter-spacing breaks Myanmar shaping, so it is dropped alongside the
     // font swap (mirrors the useStyles() Myanmar pass).

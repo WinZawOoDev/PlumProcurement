@@ -19,10 +19,10 @@ interface ErrorFallbackProps {
 /** Full-screen error state with a retry action. Shared by ErrorBoundary and startup. */
 export function ErrorFallback({ message, isDarkMode, onRetry }: ErrorFallbackProps) {
     const options = useMemo(() => makeAppTheme(isDarkMode), [isDarkMode])
-    const styles = useMemo(() => errorFallbackStyles(options, isDarkMode), [options, isDarkMode])
     const { i18n } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
     const isMyanmar = i18n.language === 'my'
+    const styles = useMemo(() => errorFallbackStyles(options, isDarkMode, isMyanmar), [options, isDarkMode, isMyanmar])
 
     return (
         <View style={styles.container}>
