@@ -207,12 +207,16 @@ export const purchasingStyles = (theme: ThemeOptions) => StyleSheet.create({
         justifyContent: 'center',
     },
     purchaseHistoryScreen: {
+        flex: 1,
         flexDirection: 'column',
         padding: 15,
         backgroundColor: theme.colors.background,
-        height: '100%',
     },
     purchaseHistoryContainer: {
+        flex: 1,
+        width: '100%',
+        maxWidth: 960,
+        alignSelf: 'center',
         paddingHorizontal: 12,
         paddingBlock: 15
     },

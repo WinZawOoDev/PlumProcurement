@@ -27,6 +27,7 @@ import { MoneyText } from '../../components/MoneyText'
 import { SellerScreenHeader } from './SellerScreenHeader'
 import { SellerPurchaseRow } from './SellerPurchaseRow'
 import { LoadError } from '../../components/LoadError'
+import { useOrientation } from '../../hooks/useOrientation'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -275,6 +276,7 @@ export default function SellerDetails() {
     const { theme } = useTheme()
     const { t } = useTranslation()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerDetailsRouteProp>()
     const sellerId = route.params?.sellerId
@@ -380,7 +382,13 @@ export default function SellerDetails() {
     if (notFound) {
         return (
             <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-                <View style={styles.priceListContainer}>
+                <View
+                    style={[
+                        styles.priceListContainer,
+                        styles.responsiveContent,
+                        isLandscape && styles.responsiveContentLandscape,
+                    ]}
+                >
                     <SellerScreenHeader title={UI_TEXT.SELLERS} onBack={() => navigation.goBack()} />
                     <EmptyState
                         icon="people-outline"
@@ -394,7 +402,14 @@ export default function SellerDetails() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={[styles.priceListContainer, styles.fillContainer]}>
+            <View
+                style={[
+                    styles.priceListContainer,
+                    styles.fillContainer,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
+            >
                 <SellerScreenHeader title={UI_TEXT.SELLERS} onBack={() => navigation.goBack()} />
 
                 {seller && (
@@ -414,95 +429,193 @@ export default function SellerDetails() {
                             <RefreshControl refreshing={loading} onRefresh={loadDetails} colors={[theme.colors.primary]} />
                         }
                     >
-                        {purchaseStats && (
-                            <PurchasesSection
-                                count={purchaseStats.count}
-                                total={purchaseStats.total}
-                                onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
-                            />
-                        )}
-
-                        {purchaseStats && (
-                            <View style={styles.sellerSectionSpacer}>
-                                <SectionHeader
-                                    compact
-                                    icon="time-outline"
-                                    title={UI_TEXT.RECENT_PURCHASES}
-                                    action={
-                                        <ViewAllLink
+                        {isLandscape ? (
+                            <View style={styles.responsiveTwoPane}>
+                                <View style={styles.responsiveTwoPaneColumn}>
+                                    {purchaseStats && (
+                                        <PurchasesSection
+                                            count={purchaseStats.count}
+                                            total={purchaseStats.total}
                                             onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
                                         />
-                                    }
-                                />
-                                {recentPurchases.length === 0 ? (
-                                    <EmptyState
-                                        compact
-                                        icon="receipt-outline"
-                                        title={UI_TEXT.EMPTY_PURCHASE_LIST}
-                                        description={t('uiText.SELLER_NO_PURCHASES', { name: seller.name })}
+                                    )}
+
+                                    {purchaseStats && (
+                                        <View style={styles.sellerSectionSpacer}>
+                                            <SectionHeader
+                                                compact
+                                                icon="time-outline"
+                                                title={UI_TEXT.RECENT_PURCHASES}
+                                                action={
+                                                    <ViewAllLink
+                                                        onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
+                                                    />
+                                                }
+                                            />
+                                            {recentPurchases.length === 0 ? (
+                                                <EmptyState
+                                                    compact
+                                                    icon="receipt-outline"
+                                                    title={UI_TEXT.EMPTY_PURCHASE_LIST}
+                                                    description={t('uiText.SELLER_NO_PURCHASES', { name: seller.name })}
+                                                />
+                                            ) : (
+                                                recentPurchases.map((purchase, index) => (
+                                                    <SellerPurchaseRow
+                                                        key={purchase.id}
+                                                        variant="recent"
+                                                        item={purchase}
+                                                        isLast={index === recentPurchases.length - 1}
+                                                    />
+                                                ))
+                                            )}
+                                        </View>
+                                    )}
+                                </View>
+                                <View style={styles.responsiveTwoPaneColumn}>
+                                    <PaymentsSection
+                                        stat={paymentStat}
+                                        onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
                                     />
-                                ) : (
-                                    recentPurchases.map((purchase, index) => (
-                                        <SellerPurchaseRow
-                                            key={purchase.id}
-                                            variant="recent"
-                                            item={purchase}
-                                            isLast={index === recentPurchases.length - 1}
-                                        />
-                                    ))
-                                )}
-                            </View>
-                        )}
 
-                        <View style={styles.sellerHistoryDivider} />
-
-                        <PaymentsSection
-                            stat={paymentStat}
-                            onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
-                        />
-
-                        <PrimaryButton
-                            title={UI_TEXT.RECORD_PAYMENT}
-                            onPress={() =>
-                                navigation.navigate(ROUTES.RECORD_PAYMENT, {
-                                    sellerId: seller.id,
-                                    sellerName: seller.name,
-                                    sellerPhone: seller.phone,
-                                    balance: paymentStat?.balance ?? 0,
-                                })
-                            }
-                            containerStyle={styles.recordPaymentButton}
-                        />
-
-                        {paymentStat && (
-                            <View style={styles.sellerSectionSpacer}>
-                                <SectionHeader
-                                    compact
-                                    icon="cash-outline"
-                                    title={UI_TEXT.RECENT_PAYMENTS}
-                                    action={
-                                        <ViewAllLink
-                                            onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
-                                        />
-                                    }
-                                />
-                                {recentPayments.length === 0 ? (
-                                    <EmptyState
-                                        compact
-                                        icon="cash-outline"
-                                        title={UI_TEXT.EMPTY_PAYMENT_LIST}
-                                        description={UI_TEXT.PAYMENT_SETTLE_HINT}
+                                    <PrimaryButton
+                                        title={UI_TEXT.RECORD_PAYMENT}
+                                        onPress={() =>
+                                            navigation.navigate(ROUTES.RECORD_PAYMENT, {
+                                                sellerId: seller.id,
+                                                sellerName: seller.name,
+                                                sellerPhone: seller.phone,
+                                                balance: paymentStat?.balance ?? 0,
+                                            })
+                                        }
+                                        containerStyle={styles.recordPaymentButton}
                                     />
-                                ) : (
-                                    recentPayments.map((payment, index) => (
-                                        <RecentPaymentRow
-                                            key={payment.id}
-                                            item={payment}
-                                            isLast={index === recentPayments.length - 1}
-                                        />
-                                    ))
-                                )}
+
+                                    {paymentStat && (
+                                        <View style={styles.sellerSectionSpacer}>
+                                            <SectionHeader
+                                                compact
+                                                icon="cash-outline"
+                                                title={UI_TEXT.RECENT_PAYMENTS}
+                                                action={
+                                                    <ViewAllLink
+                                                        onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
+                                                    />
+                                                }
+                                            />
+                                            {recentPayments.length === 0 ? (
+                                                <EmptyState
+                                                    compact
+                                                    icon="cash-outline"
+                                                    title={UI_TEXT.EMPTY_PAYMENT_LIST}
+                                                    description={UI_TEXT.PAYMENT_SETTLE_HINT}
+                                                />
+                                            ) : (
+                                                recentPayments.map((payment, index) => (
+                                                    <RecentPaymentRow
+                                                        key={payment.id}
+                                                        item={payment}
+                                                        isLast={index === recentPayments.length - 1}
+                                                    />
+                                                ))
+                                            )}
+                                        </View>
+                                    )}
+                                </View>
                             </View>
+                        ) : (
+                            <>
+                                {purchaseStats && (
+                                    <PurchasesSection
+                                        count={purchaseStats.count}
+                                        total={purchaseStats.total}
+                                        onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
+                                    />
+                                )}
+
+                                {purchaseStats && (
+                                    <View style={styles.sellerSectionSpacer}>
+                                        <SectionHeader
+                                            compact
+                                            icon="time-outline"
+                                            title={UI_TEXT.RECENT_PURCHASES}
+                                            action={
+                                                <ViewAllLink
+                                                    onPress={() => navigation.navigate(ROUTES.SELLER_PURCHASES, { sellerId: seller.id })}
+                                                />
+                                            }
+                                        />
+                                        {recentPurchases.length === 0 ? (
+                                            <EmptyState
+                                                compact
+                                                icon="receipt-outline"
+                                                title={UI_TEXT.EMPTY_PURCHASE_LIST}
+                                                description={t('uiText.SELLER_NO_PURCHASES', { name: seller.name })}
+                                            />
+                                        ) : (
+                                            recentPurchases.map((purchase, index) => (
+                                                <SellerPurchaseRow
+                                                    key={purchase.id}
+                                                    variant="recent"
+                                                    item={purchase}
+                                                    isLast={index === recentPurchases.length - 1}
+                                                />
+                                            ))
+                                        )}
+                                    </View>
+                                )}
+
+                                <View style={styles.sellerHistoryDivider} />
+
+                                <PaymentsSection
+                                    stat={paymentStat}
+                                    onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
+                                />
+
+                                <PrimaryButton
+                                    title={UI_TEXT.RECORD_PAYMENT}
+                                    onPress={() =>
+                                        navigation.navigate(ROUTES.RECORD_PAYMENT, {
+                                            sellerId: seller.id,
+                                            sellerName: seller.name,
+                                            sellerPhone: seller.phone,
+                                            balance: paymentStat?.balance ?? 0,
+                                        })
+                                    }
+                                    containerStyle={styles.recordPaymentButton}
+                                />
+
+                                {paymentStat && (
+                                    <View style={styles.sellerSectionSpacer}>
+                                        <SectionHeader
+                                            compact
+                                            icon="cash-outline"
+                                            title={UI_TEXT.RECENT_PAYMENTS}
+                                            action={
+                                                <ViewAllLink
+                                                    onPress={() => navigation.navigate(ROUTES.SELLER_PAYMENTS, { sellerId: seller.id })}
+                                                />
+                                            }
+                                        />
+                                        {recentPayments.length === 0 ? (
+                                            <EmptyState
+                                                compact
+                                                icon="cash-outline"
+                                                title={UI_TEXT.EMPTY_PAYMENT_LIST}
+                                                description={UI_TEXT.PAYMENT_SETTLE_HINT}
+                                            />
+                                        ) : (
+                                            recentPayments.map((payment, index) => (
+                                                <RecentPaymentRow
+                                                    key={payment.id}
+                                                    item={payment}
+                                                    isLast={index === recentPayments.length - 1}
+                                                />
+                                            ))
+                                        )}
+                                    </View>
+                                )}
+                            </>
                         )}
                     </ScrollView>
                 ) : loadError ? (

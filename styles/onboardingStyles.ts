@@ -13,6 +13,7 @@ export const onboardingStyles = (theme: ThemeOptions) => StyleSheet.create({
         flex: 1,
         backgroundColor: theme.colors.background,
         justifyContent: 'center',
+        alignItems: 'center',
         padding: 24,
         gap: 24,
     },

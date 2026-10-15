@@ -7,6 +7,7 @@ import { pricingStyles } from './pricingStyles'
 import { purchasingStyles } from './purchasingStyles'
 import { sellerStyles } from './sellerStyles'
 import { settingsStyles } from './settingsStyles'
+import { responsiveStyles } from './responsiveStyles'
 import { MYANMAR_FONT_FAMILY, MYANMAR_FONT_FAMILY_BOLD, isBoldWeight, scaleMyanmarFontSize } from './fonts'
 
 const createStyles = (theme: ThemeOptions) => ({
@@ -16,6 +17,7 @@ const createStyles = (theme: ThemeOptions) => ({
     ...purchasingStyles(theme),
     ...sellerStyles(theme),
     ...settingsStyles(theme),
+    ...responsiveStyles(theme),
 })
 
 type Styles = ReturnType<typeof createStyles>

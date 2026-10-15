@@ -12,10 +12,12 @@ import { FORM_CONFIG, UNIT_LIST, ROUTES, ANIMATIONS } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { showSuccess, showError } from '../../utils/notifications'
 import { useAsync } from '../../hooks/useAsync'
+import { useOrientation } from '../../hooks/useOrientation'
 
 export default function CreatePrice() {
     const styles = useStyles()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { addPrice } = usePrices()
     const { loading: saving, execute } = useAsync()
@@ -58,7 +60,11 @@ export default function CreatePrice() {
                 saving={saving}
                 onSubmit={handleSubmit(handleSavePrice)}
                 onCancel={() => navigation.goBack()}
-                wrapperStyle={styles.createPriceActions}
+                wrapperStyle={[
+                    styles.createPriceActions,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
                 primaryTestID="btn-Save Price"
             />
         </KeyboardAvoidingView>

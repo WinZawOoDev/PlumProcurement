@@ -1,4 +1,4 @@
-import { View, ViewStyle } from 'react-native'
+import { View, type StyleProp, type ViewStyle } from 'react-native'
 import React from 'react'
 import { Control, FieldValues, Path } from 'react-hook-form'
 import { FORM_CONFIG, PRICE_PATTERN, UNIT_LIST } from '../../constants'
@@ -70,8 +70,8 @@ export function PriceFormActions({
     onSubmit: () => void
     onCancel: () => void
     /** When omitted the buttons render unwrapped (edit sheet layout). */
-    wrapperStyle?: ViewStyle
-    buttonStyle?: ViewStyle
+    wrapperStyle?: StyleProp<ViewStyle>
+    buttonStyle?: StyleProp<ViewStyle>
     primaryTestID?: string
 }) {
     const { UI_TEXT } = useLocalizedConstants()

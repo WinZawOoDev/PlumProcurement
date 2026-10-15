@@ -42,6 +42,7 @@ import { PAGINATION_CONFIG } from '../../constants';
 import { SectionHeader } from '../../components/SectionHeader';
 import { EmptyState } from '../../components/EmptyState';
 import { CardSkeleton, Skeleton } from '../../components/Skeleton';
+import { useOrientation } from '../../hooks/useOrientation';
 
 function PurchaseSummaryCard({ count, total }: { count: number; total: number }) {
   const styles = useStyles();
@@ -154,7 +155,7 @@ const PurchaseRow = React.memo(function PurchaseRow({
   const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants();
   return (
     <Pressable
-      style={styles.purchaseItemRow}
+      style={[styles.purchaseItemRow, styles.responsiveGridColumn]}
       onPress={() => onOpen(item)}
       accessible
       accessibilityRole="button"
@@ -285,6 +286,7 @@ export default function PurchaseDetails() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { UI_TEXT /* , MESSAGES */ } = useLocalizedConstants();
+  const { columns: numColumns, isLandscape } = useOrientation();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [summary, setSummary] = useState<{ count: number; total: number } | null>(null);
@@ -499,7 +501,13 @@ export default function PurchaseDetails() {
 
   return (
     <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.purchaseHistoryScreen}>
-      <View style={styles.purchaseHistoryContainer}>
+      <View
+        style={[
+          styles.purchaseHistoryContainer,
+          styles.responsiveContent,
+          isLandscape && styles.responsiveContentLandscape,
+        ]}
+      >
         <SectionHeader
           icon="time-outline"
           title={UI_TEXT.PURCHASE_HISTORY_TITLE}
@@ -539,6 +547,9 @@ export default function PurchaseDetails() {
           <PurchaseListSkeleton />
         ) : (
           <FlatList
+            key={numColumns}
+            numColumns={numColumns}
+            columnWrapperStyle={numColumns > 1 ? styles.responsiveGridRow : undefined}
             style={styles.purchaseHistoryItems}
             contentContainerStyle={styles.scrollContentGutter}
             data={visiblePurchases}

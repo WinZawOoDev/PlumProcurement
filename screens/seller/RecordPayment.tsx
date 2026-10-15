@@ -16,6 +16,7 @@ import { MoneyText } from '../../components/MoneyText'
 import { AMOUNT_PATTERN, ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { exceedsBalance, isPositiveAmount } from './paymentAmount'
+import { useOrientation } from '../../hooks/useOrientation'
 
 type FormData = {
     amount: string
@@ -33,6 +34,7 @@ export default function RecordPayment() {
     const styles = useStyles()
     const { theme } = useTheme()
     const { UI_TEXT, MESSAGES, VALIDATION_MESSAGES, PAYMENT_METHODS } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<RecordPaymentRouteProp>()
     const { sellerId, sellerName, sellerPhone, balance = 0 } = route.params ?? {}
@@ -79,7 +81,14 @@ export default function RecordPayment() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.purchaseHistoryScreen}>
             <KeyboardAvoid style={styles.fillContainer}>
-                <View style={[styles.purchaseHistoryContainer, styles.fillContainer]}>
+                <View
+                    style={[
+                        styles.purchaseHistoryContainer,
+                        styles.fillContainer,
+                        styles.responsiveContent,
+                        isLandscape && styles.responsiveContentLandscape,
+                    ]}
+                >
                     <SectionHeader
                         onBack={() => navigation.goBack()}
                         title={UI_TEXT.RECORD_PAYMENT}
@@ -168,9 +177,13 @@ export default function RecordPayment() {
                             />
                         </View>
                     </ScrollView>
-                    <View style={styles.editPurchaseFooter}>
-                        <PrimaryButton title={UI_TEXT.CONTINUE} onPress={handleSubmit(handleContinue)} testID="btn-Continue" />
-                        <SecondaryButton title={UI_TEXT.CANCEL} onPress={() => navigation.goBack()} />
+                    <View style={[styles.editPurchaseFooter, isLandscape && styles.responsiveActionsRow]}>
+                        <View style={[isLandscape && styles.responsiveActionsRowItem]}>
+                            <PrimaryButton title={UI_TEXT.CONTINUE} onPress={handleSubmit(handleContinue)} testID="btn-Continue" />
+                        </View>
+                        <View style={[isLandscape && styles.responsiveActionsRowItem]}>
+                            <SecondaryButton title={UI_TEXT.CANCEL} onPress={() => navigation.goBack()} />
+                        </View>
                     </View>
                 </View>
             </KeyboardAvoid>

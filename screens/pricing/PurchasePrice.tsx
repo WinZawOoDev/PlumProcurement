@@ -21,6 +21,7 @@ import { LoadError } from '../../components/LoadError'
 import { PriceDetailSheet } from '../../components/PriceDetailSheet'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
+import { useOrientation } from '../../hooks/useOrientation'
 
 interface PriceSection {
     category: string
@@ -134,6 +135,7 @@ export default function PurchasePrices() {
     const styles = useStyles()
     const { t } = useTranslation()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
     const { prices, loading, error: pricesError, refresh, removePrice } = usePrices()
     const [editing, setEditing] = useState<IPrice | null>(null)
     const [detailPrice, setDetailPrice] = useState<IPrice | null>(null)
@@ -184,7 +186,13 @@ export default function PurchasePrices() {
             edges={SAFE_AREA.EDGES}
             style={styles.priceListScreen}
         >
-            <View style={styles.priceListContainer}>
+            <View
+                style={[
+                    styles.priceListContainer,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
+            >
                 <SectionHeader
                     icon="pricetags-outline"
                     title={UI_TEXT.PRICE_MANAGEMENT}

@@ -33,7 +33,7 @@ function SellerRowInner({ seller, onEdit, onPress, purchaseCount, purchaseTotal,
         <Pressable
             onPress={handlePress}
             testID={`seller-row-${seller.id}`}
-            style={styles.purchaseItemRow}
+            style={[styles.purchaseItemRow, styles.responsiveGridColumn]}
             accessible
             accessibilityRole="button"
             accessibilityLabel={t('a11y.SELLER_SUMMARY', {

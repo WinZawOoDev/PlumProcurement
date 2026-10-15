@@ -7,6 +7,7 @@ import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../styles'
 import { onboardingSlideWidth } from '../styles/onboardingStyles'
+import { useOrientation } from '../hooks/useOrientation'
 import { HIT_SLOP } from '../constants'
 
 const SLIDES = [
@@ -19,6 +20,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     const styles = useStyles()
     const { theme } = useTheme()
     const { t } = useTranslation()
+    const { isLandscape } = useOrientation()
     const scrollRef = useRef<ScrollView>(null)
     const [idx, setIdx] = useState(0)
     const [pageWidth, setPageWidth] = useState(0)
@@ -41,12 +43,21 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
     return (
         <View style={styles.onboardingContainer}>
+            <View
+                style={[
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                    // In landscape the pager and the controls sit side-by-side
+                    // instead of stacking vertically on a short screen.
+                    isLandscape && styles.responsiveOnboardingLandscape,
+                ]}
+            >
             <ScrollView
                 ref={scrollRef}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                style={styles.onboardingSlides}
+                style={[styles.onboardingSlides, isLandscape && styles.responsiveOnboardingSlidesLandscape]}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
@@ -61,6 +72,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                     </View>
                 ))}
             </ScrollView>
+            <View style={[isLandscape && styles.responsiveOnboardingPaneLandscape]}>
             <View style={styles.onboardingDotsRow}>
                 {SLIDES.map((_, i) => (
                     <Pressable
@@ -75,9 +87,17 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                     </Pressable>
                 ))}
             </View>
-            <View style={styles.onboardingButtons}>
-                <PrimaryButton title={last ? t('onboarding.getStarted') : t('onboarding.next')} onPress={handleNext} />
-                {!last && <SecondaryButton title={t('onboarding.skip')} onPress={onDone} testID="btn-Skip" />}
+            <View style={[styles.onboardingButtons, isLandscape && styles.responsiveActionsRow]}>
+                <View style={[isLandscape && styles.responsiveActionsRowItem]}>
+                    <PrimaryButton title={last ? t('onboarding.getStarted') : t('onboarding.next')} onPress={handleNext} />
+                </View>
+                {!last && (
+                    <View style={[isLandscape && styles.responsiveActionsRowItem]}>
+                        <SecondaryButton title={t('onboarding.skip')} onPress={onDone} testID="btn-Skip" />
+                    </View>
+                )}
+            </View>
+            </View>
             </View>
         </View>
     )

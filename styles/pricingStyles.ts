@@ -241,10 +241,10 @@ export const pricingStyles = (theme: ThemeOptions) => StyleSheet.create({
 
     // ===== PRICING - PURCHASE PRICE =====
     priceListScreen: {
+        flex: 1,
         flexDirection: 'column',
         padding: 15,
         backgroundColor: theme.colors.background,
-        height: '100%',
     },
     emptyPriceListText: {
         alignSelf: 'center',
@@ -316,6 +316,9 @@ export const pricingStyles = (theme: ThemeOptions) => StyleSheet.create({
     },
     priceListContainer: {
         flex: 1,
+        width: '100%',
+        maxWidth: 960,
+        alignSelf: 'center',
         paddingHorizontal: 12,
         paddingBlock: 15
     },

@@ -23,6 +23,7 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { QuantityCounter } from '../../components/QuantityCounter'
 import { MoneyText } from '../../components/MoneyText'
+import { useOrientation } from '../../hooks/useOrientation'
 
 interface SelectedSeller {
     id: number
@@ -52,7 +53,7 @@ function PriceItemCard({
     const selected = quantity > 0
     const lineTotal = price.price * quantity
     return (
-        <View style={styles.priceItemCard}>
+        <View style={[styles.priceItemCard, styles.responsiveGridColumn]}>
             <View style={styles.priceItemCardHeader}>
                 <View style={styles.priceItemCardHeaderText}>
                     <RNText style={styles.priceItemCardTitle}>{t(`categories.${price.category}`, { defaultValue: price.category })}</RNText>
@@ -133,6 +134,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
     const styles = useStyles()
     const { theme } = useTheme()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
+    const { columns: numColumns } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { prices } = usePrices()
 
@@ -287,10 +289,13 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                     </View>
                     <View style={styles.priceItemCardScrollWrapper}>
                         <FlatList
+                            key={numColumns}
+                            data={selectablePrices}
+                            numColumns={numColumns}
+                            keyExtractor={(price) => price.id.toString()}
+                            columnWrapperStyle={numColumns > 1 ? styles.responsiveGridRow : undefined}
                             style={styles.priceItemCardScroll}
                             contentContainerStyle={[styles.priceItemCardList, styles.scrollContentGutter]}
-                            data={selectablePrices}
-                            keyExtractor={(price) => price.id.toString()}
                             showsVerticalScrollIndicator
                             persistentScrollbar
                             onScroll={handlePriceListScroll}
@@ -341,6 +346,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
 export default function Purchase() {
     const styles = useStyles()
     const { UI_TEXT } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const { refresh: refreshPrices } = usePrices()
     const route = useRoute<
@@ -380,7 +386,14 @@ export default function Purchase() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={[styles.priceListContainer, styles.fillContainer]}>
+            <View
+                style={[
+                    styles.priceListContainer,
+                    styles.fillContainer,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
+            >
                 <SectionHeader icon="cart-outline" title={UI_TEXT.RECORD_PURCHASE} description={UI_TEXT.PURCHASE_DESCRIPTION} />
 
                 <PurchaseForm

@@ -10,6 +10,7 @@ import { useLanguage } from '../../context/LanguageContext'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { SectionHeader } from '../../components/SectionHeader'
 import { lightHaptic } from '../../utils/haptics'
+import { useOrientation } from '../../hooks/useOrientation'
 
 const THEME_MODE_ICONS: Record<ThemeMode, string> = {
     system: 'phone-portrait-outline',
@@ -257,6 +258,7 @@ export default function Settings() {
     const { mode, setMode } = useThemeMode()
     const { language, setLanguage } = useLanguage()
     const { UI_TEXT } = useLocalizedConstants()
+    const { isLandscape } = useOrientation()
 
     const handleSelectMode = (next: ThemeMode) => {
         if (next === mode) return
@@ -272,7 +274,14 @@ export default function Settings() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={[styles.priceListContainer, styles.fillContainer]}>
+            <View
+                style={[
+                    styles.priceListContainer,
+                    styles.fillContainer,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
+            >
                 <SectionHeader icon="settings-outline" title={UI_TEXT.SETTINGS} description={UI_TEXT.SETTINGS_DESCRIPTION} />
 
                 <ScrollView
@@ -280,11 +289,27 @@ export default function Settings() {
                     contentContainerStyle={styles.settingsScrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <LanguageSection language={language} onSelect={handleSelectLanguage} />
-                    <AppearanceSection mode={mode} onSelect={handleSelectMode} />
-                    <ThemePreviewSection mode={mode} />
-                    <DataStorageSection />
-                    <AboutSection />
+                    {isLandscape ? (
+                        <View style={styles.responsiveTwoPane}>
+                            <View style={[styles.responsiveTwoPaneColumn, styles.responsiveTwoPaneColumnGap]}>
+                                <LanguageSection language={language} onSelect={handleSelectLanguage} />
+                                <AppearanceSection mode={mode} onSelect={handleSelectMode} />
+                            </View>
+                            <View style={[styles.responsiveTwoPaneColumn, styles.responsiveTwoPaneColumnGap]}>
+                                <ThemePreviewSection mode={mode} />
+                                <DataStorageSection />
+                                <AboutSection />
+                            </View>
+                        </View>
+                    ) : (
+                        <>
+                            <LanguageSection language={language} onSelect={handleSelectLanguage} />
+                            <AppearanceSection mode={mode} onSelect={handleSelectMode} />
+                            <ThemePreviewSection mode={mode} />
+                            <DataStorageSection />
+                            <AboutSection />
+                        </>
+                    )}
 
                     <RNText style={styles.settingsFooterNote}>{UI_TEXT.SETTINGS_FOOTER_NOTE}</RNText>
                 </ScrollView>

@@ -22,6 +22,7 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
 import { LoadError } from '../../components/LoadError'
+import { useOrientation } from '../../hooks/useOrientation'
 
 function SellerHeader({ count }: { count: number }) {
     const { t } = useTranslation()
@@ -152,6 +153,7 @@ function SellerList({
     const { theme } = useTheme()
     const { t } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
+    const { columns: numColumns } = useOrientation()
 
     // Stable row element: SellerRow is memoized on (seller + stable callbacks),
     // so rows do not re-render when the list parent does.
@@ -177,6 +179,9 @@ function SellerList({
     return (
         <FlatList
             data={sellers}
+            key={numColumns}
+            numColumns={numColumns}
+            columnWrapperStyle={numColumns > 1 ? styles.responsiveGridRow : undefined}
             contentContainerStyle={styles.scrollContentGutter}
             keyExtractor={(item) => item.id.toString()}
             initialNumToRender={10}
@@ -228,6 +233,7 @@ function SellerForm({
 export default function Sellers() {
     const styles = useStyles()
     const { t } = useTranslation()
+    const { isLandscape } = useOrientation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const [sellers, setSellers] = useState<ISellerWithStats[]>([])
     const [totalCount, setTotalCount] = useState(0)
@@ -370,7 +376,13 @@ export default function Sellers() {
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
-            <View style={styles.priceListContainer}>
+            <View
+                style={[
+                    styles.priceListContainer,
+                    styles.responsiveContent,
+                    isLandscape && styles.responsiveContentLandscape,
+                ]}
+            >
                 <SellerHeader count={totalCount} />
                 <SellerActions
                     searchVisible={searchVisible}
