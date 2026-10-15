@@ -9,7 +9,9 @@ export async function shareOrSaveCsv(csv: string, filename: string, title: strin
     try {
         await Share.share({ message: csv, title: `${title} — ${filename}` })
         return 'shared'
-    } catch {
+    } catch (error) {
+        // Never swallow silently: callers only see 'failed', so log the cause here.
+        console.warn('shareOrSaveCsv failed', error)
         return 'failed'
     }
 }

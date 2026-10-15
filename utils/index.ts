@@ -17,50 +17,12 @@ export function formatNumber(value: number, fractionDigits = 2): string {
     return i18n.language === 'my' ? toMyanmarDigits(formatted) : formatted
 }
 
-/** Formats a monetary value with the localized currency suffix. */
-export function formatCurrency(value: number, fractionDigits = 2): string {
-    return `${formatNumber(value, fractionDigits)}${i18n.t('currency')}`
-}
-
-/**
- * Format price value to 2 decimal places
- */
-export function formatPrice(price: number | string): string {
-    const num = typeof price === 'string' ? parseFloat(price) : price
-    return num.toFixed(2)
-}
-
-/**
- * Parse price string to number
- */
-export function parsePrice(price: string): number {
-    return parseFloat(price) || 0
-}
-
-/**
- * Validate price value
- */
-export function isValidPrice(price: string | number): boolean {
-    const num = typeof price === 'string' ? parseFloat(price) : price
-    return !isNaN(num) && num > 0
-}
-
 /**
  * Capitalize first letter of string
  */
 export function capitalize(str: string): string {
     if (!str) return ''
     return str.charAt(0).toUpperCase() + str.slice(1)
-}
-
-/**
- * Convert camelCase to Title Case
- */
-export function toTitleCase(str: string): string {
-    return str
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, (char) => char.toUpperCase())
-        .trim()
 }
 
 /**
@@ -99,40 +61,6 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 /**
- * Throttle function calls
- */
-export function throttle<T extends (...args: any[]) => any>(
-    func: T,
-    limit: number
-): (...args: Parameters<T>) => void {
-    let inThrottle: boolean
-
-    return function executedFunction(...args: Parameters<T>) {
-        if (!inThrottle) {
-            func(...args)
-            inThrottle = true
-            setTimeout(() => {
-                inThrottle = false
-            }, limit)
-        }
-    }
-}
-
-/**
- * Sleep for specified milliseconds
- */
-export function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/**
- * Check if object is empty
- */
-export function isEmpty(obj: any): boolean {
-    return !obj || Object.keys(obj).length === 0
-}
-
-/**
  * Extract YYYY-MM-DD from a SQLite datetime string
  */
 export function formatDate(value?: string | null): string {
@@ -149,7 +77,8 @@ export function formatDateDisplay(value?: string | null): string {
     return i18n.language === 'my' ? toMyanmarDigits(iso) : iso
 }
 
-export { showSuccess, showError, getErrorMessage } from './notifications'
+export { showSuccess, showError } from './notifications'
+export { getErrorMessage } from './errors'
 
 function csvEscape(value: unknown): string {
     const str = String(value ?? '')

@@ -1,6 +1,11 @@
 import type { ThemeOptions } from '@rneui/themed'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 import { TYPOGRAPHY } from '../constants'
+
+/** Each slide fills the measured pager width (falls back to 100% before layout). */
+export const onboardingSlideWidth = (pageWidth: number): ViewStyle => ({
+    width: pageWidth || '100%',
+})
 
 export const onboardingStyles = (theme: ThemeOptions) => StyleSheet.create({
     // ===== ONBOARDING =====
@@ -74,6 +79,14 @@ export const onboardingStyles = (theme: ThemeOptions) => StyleSheet.create({
     onboardingDot: {
         height: 6,
         borderRadius: 3,
+    },
+    onboardingDotActive: {
+        width: 20,
+        backgroundColor: theme.colors.primary,
+    },
+    onboardingDotInactive: {
+        width: 6,
+        backgroundColor: theme.colors.grey2,
     },
     onboardingButtons: {
         gap: 10,

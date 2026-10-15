@@ -25,6 +25,12 @@ export const ROUTES = {
   SETTINGS: 'Settings',
 } as const;
 
+// ===== TAB BAR LAYOUT =====
+export const TAB_BAR = {
+  /** Extra px added to the purchasing tab icon, which reads smaller than the others. */
+  PURCHASE_ICON_SIZE_BONUS: 2,
+} as const;
+
 // ===== TAB LABELS =====
 export const TAB_LABELS = {
   PRICES: 'Prices',

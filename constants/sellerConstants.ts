@@ -11,3 +11,7 @@ export const PAYMENT_METHODS = [
 
 // ===== AMOUNT VALIDATION =====
 export const AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
+
+// ===== PAYMENT HISTORY PAGINATION =====
+/** Page size for a seller's payment history (keyset-paginated). */
+export const PAYMENT_HISTORY_PAGE_SIZE = 20;

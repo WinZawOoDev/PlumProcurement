@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UseAsyncOptions {
     onSuccess?: () => void
@@ -9,9 +9,12 @@ export function useAsync(options?: UseAsyncOptions) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<unknown>(null)
     // Keep the latest callbacks in a ref so `execute` stays referentially stable
-    // even when callers pass inline option objects.
+    // even when callers pass inline option objects. Written in an effect, never
+    // during render (concurrent render may discard the assignment).
     const optionsRef = useRef(options)
-    optionsRef.current = options
+    useEffect(() => {
+        optionsRef.current = options
+    })
 
     const execute = useCallback(
         async (operation: () => Promise<void>) => {

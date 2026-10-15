@@ -19,6 +19,9 @@ export const DIMENSIONS = {
   PLUM_COUNT_CIRCLE_SIZE: 300,
 } as const;
 
+// Expanded touch target for small icon/dot controls (keeps them >= 44pt tappable).
+export const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 } as const;
+
 // ===== TYPOGRAPHY =====
 export const TYPOGRAPHY = {
   FONT_FAMILY_PRIMARY: 'Manrope',

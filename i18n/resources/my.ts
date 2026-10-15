@@ -15,6 +15,7 @@ export const my: TranslationSchema = {
     // Common buttons
     SAVE: 'သိမ်းဆည်းရန်',
     CANCEL: 'ပယ်ဖျက်ရန်',
+    RETRY: 'ထပ်ကြိုးစားရန်',
     CONFIRM: 'အတည်ပြုရန်',
     CONTINUE: 'ဆက်လုပ်ရန်',
     UNDO: 'ပြန်ပြင်မည်',
@@ -28,6 +29,7 @@ export const my: TranslationSchema = {
     // Specific buttons
     SAVE_PRICE: 'ဈေးနှုန်းသိမ်းဆည်းရန်',
     ADD_NEW_PRICE: 'ဈေးနှုန်းအသစ်ထည့်ရန်',
+    SORT_PRICES: 'ဈေးနှုန်းများစီရန်',
     COUNT: 'အရေအတွက်',
 
     // Form labels
@@ -66,11 +68,10 @@ export const my: TranslationSchema = {
     NO_PURCHASES_MATCHING: '"{{query}}" နှင့်ကိုက်ညီသော အဝယ်များ မရှိပါ',
     NO_SELLERS_MATCHING: '"{{query}}" နှင့်ကိုက်ညီသော ရောင်းချသူများ မရှိပါ',
     SHOWING_COUNT: '{{total}} အနက် {{filtered}}',
-    PRICE_SINGULAR: 'ဈေးနှုန်း',
-    PRICE_PLURAL: 'ဈေးနှုန်း',
-    SELLER_SINGULAR: 'ရောင်းချသူ',
-    SELLER_PLURAL: 'ရောင်းချသူ',
-    PRICE_TREND_SUMMARY: 'ဈေးနှုန်းအခြေအနေ ({{count}} ခု) — ပျမ်းမျှ {{avg}}ကျပ်',
+    PRICE_COUNT_one: 'ဈေးနှုန်း {{count}} ခု',
+    PRICE_COUNT_other: 'ဈေးနှုန်း {{count}} ခု',
+    LIST_HEADER_DESCRIPTION: '{{description}} • {{summary}}',
+    PRICE_TREND_SUMMARY: 'ဈေးနှုန်းအခြေအနေ ({{count}} ခု) — ပျမ်းမျှ {{avg}} $t(currency)',
 
     // Purchasing
     RECORD_PURCHASE: 'အဝယ်မှတ်တမ်းတင်ရန်',
@@ -193,6 +194,11 @@ export const my: TranslationSchema = {
     DELETE_PURCHASE_CONFIRM_MESSAGE: 'ဤအဝယ်ကို ဖျက်ပြီးပါက ပြန်လည်ရယူ၍ မရနိုင်ပါ။',
     DISCARD_CHANGES_TITLE: 'ပြောင်းလဲမှုကို ပယ်ဖျက်မည်လား?',
     DISCARD_CHANGES_MESSAGE: 'သိမ်းဆည်းမထားသော ပြောင်းလဲမှုများ ရှိနေပါသည်။ မသိမ်းဘဲ ထွက်မည်လား?',
+
+    // Seller screens
+    SELLER_COUNT_one: '{{count}} ရောင်းချသူ',
+    SELLER_COUNT_other: '{{count}} ရောင်းချသူ',
+    SELLERS_HEADER_DESCRIPTION: '{{description}} • {{summary}}',
   },
   messages: {
     PRICE_SAVED_SUCCESS: 'ဈေးနှုန်းကို ထည့်ပြီးပါပြီ!',
@@ -225,6 +231,8 @@ export const my: TranslationSchema = {
     ERROR_INVALID_INPUT: 'မမှန်ကန်သော ထည့်သွင်းမှု။ သင့်ဒေတာကို စစ်ဆေးပါ။',
     ERROR_INVALID_QUANTITY: 'အရေအတွက်သည် သုညထက် ကြီးရမည်။',
     ERROR_NETWORK: 'ကွန်ရက်အမှား။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပါ။',
+    ERROR_NOT_FOUND: 'ရှာဖွေနေသော အချက်အလက်ကို တွေ့ရှိမရပါ။',
+    ERROR_PRICE_NOT_FOUND: 'ရွေးချယ်ထားသော ဈေးနှုန်း မရှိတော့ပါ။',
     EMPTY_PRICE_LIST: 'ဈေးနှုန်းများ မရှိပါ',
     LOADING: 'အချက်လက်များရယူနေပါသည်...',
   },
@@ -257,8 +265,10 @@ export const my: TranslationSchema = {
     TOGGLE_SEARCH: 'ရှာဖွေမှု ဖွင့်/ပိတ်',
     GO_BACK: 'နောက်သို့ ပြန်သွားရန်',
     SELECT_THEME_MODE: 'အပြင်အဆင်မုဒ်ရွေးပါ',
-    PRICE_CARD: '{{unit}}, {{price}} ကျပ်',
-    PRICE_TREND_BAR: '{{category}} {{price}} ကျပ်',
+    PRICE_CARD: '{{unit}}, {{price}} $t(currency)',
+    PRICE_TREND_BAR: '{{category}} {{price}} $t(currency)',
+    SELLER_SUMMARY: '{{purchaseCount}} အဝယ်များ၊ စုစုပေါင်း {{purchaseTotal}}၊ လက်ကျန် {{balance}}',
+    LABELED_VALUE: '{{label}}: {{value}}',
   },
   paymentMethods: {
     cash: 'ငွေသား',

@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { PrimaryButton, SecondaryButton } from './buttons/Button'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../styles'
+import { onboardingSlideWidth } from '../styles/onboardingStyles'
+import { HIT_SLOP } from '../constants'
 
 const SLIDES = [
     { icon: 'pricetags-outline', titleKey: 'onboarding.pricesTitle', descKey: 'onboarding.pricesDescription' },
@@ -21,9 +23,6 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     const [idx, setIdx] = useState(0)
     const [pageWidth, setPageWidth] = useState(0)
     const last = idx === SLIDES.length - 1
-
-    const dotActiveStyle = { width: 20, backgroundColor: theme.colors.primary } as const
-    const dotInactiveStyle = { width: 6, backgroundColor: theme.colors.grey2 } as const
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         if (!pageWidth) return
@@ -53,7 +52,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
             >
                 {SLIDES.map((s) => (
-                    <View key={s.titleKey} style={[styles.onboardingSlide, { width: pageWidth || '100%' }]}>
+                    <View key={s.titleKey} style={[styles.onboardingSlide, onboardingSlideWidth(pageWidth)]}>
                         <View style={styles.onboardingIconCircle}>
                             <Ionicons name={s.icon as any} size={36} color={theme.colors.primary} />
                         </View>
@@ -67,16 +66,18 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                     <Pressable
                         key={i}
                         onPress={() => goTo(i)}
+                        hitSlop={HIT_SLOP}
                         accessibilityRole="button"
                         accessibilityLabel={t('onboarding.goToSlide', { index: i + 1 })}
+                        accessibilityState={{ selected: i === idx }}
                     >
-                        <View style={[styles.onboardingDot, i === idx ? dotActiveStyle : dotInactiveStyle]} />
+                        <View style={[styles.onboardingDot, i === idx ? styles.onboardingDotActive : styles.onboardingDotInactive]} />
                     </Pressable>
                 ))}
             </View>
             <View style={styles.onboardingButtons}>
                 <PrimaryButton title={last ? t('onboarding.getStarted') : t('onboarding.next')} onPress={handleNext} />
-                {!last && <SecondaryButton title={t('onboarding.skip')} onPress={onDone} />}
+                {!last && <SecondaryButton title={t('onboarding.skip')} onPress={onDone} testID="btn-Skip" />}
             </View>
         </View>
     )

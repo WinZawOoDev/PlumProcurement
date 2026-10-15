@@ -73,5 +73,3 @@ export function QuantityCounter({
         </View>
     )
 }
-
-export default QuantityCounter

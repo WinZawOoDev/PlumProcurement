@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { Alert } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { showSuccess, showError, getErrorMessage } from '../utils/notifications'
+import { showSuccess, showError } from '../utils/notifications'
+import { getErrorMessage } from '../utils/errors'
 
 interface UseConfirmDeleteOptions<TArgs extends unknown[]> {
     /** Performs the deletion. */
@@ -36,11 +37,19 @@ export function useConfirmDelete<TArgs extends unknown[]>({
                         ;(async () => {
                             try {
                                 await remove(...args)
-                                showSuccess(successMessage)
-                                await onDeleted?.()
                             } catch (error) {
-                                // DatabaseError carries a user-facing message
-                                showError(getErrorMessage(error, t('messages.ERROR_GENERIC')))
+                                // DatabaseError carries a user-facing message;
+                                // anything else becomes the generic message.
+                                showError(getErrorMessage(error))
+                                return
+                            }
+                            showSuccess(successMessage)
+                            // A refresh failure after a successful delete is its
+                            // own error — it must not read as "delete failed".
+                            try {
+                                await onDeleted?.()
+                            } catch (refreshError) {
+                                showError(getErrorMessage(refreshError))
                             }
                         })()
                     },

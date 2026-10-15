@@ -34,6 +34,8 @@ export const MESSAGES = {
   ERROR_INVALID_INPUT: 'Invalid input. Please check your data.',
   ERROR_INVALID_QUANTITY: 'Quantity must be a whole number greater than zero.',
   ERROR_NETWORK: 'Network error. Please check your connection.',
+  ERROR_NOT_FOUND: 'The requested item could not be found.',
+  ERROR_PRICE_NOT_FOUND: 'The selected price no longer exists.',
   EMPTY_PRICE_LIST: 'No prices available',
   LOADING: 'Loading...',
 } as const;

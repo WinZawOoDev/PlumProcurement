@@ -1,17 +1,22 @@
 import React from 'react'
 import { Button, ButtonProps } from '@rneui/themed'
-import { ViewStyle } from 'react-native'
+import { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { useStyles } from '../../styles'
 import { lightHaptic } from '../../utils/haptics'
+
+// Stable fallback ids. They must not come from the localized title: a
+// locale-dependent selector would break when the app language changes.
+const PRIMARY_TEST_ID = 'btn-primary'
+const SECONDARY_TEST_ID = 'btn-secondary'
 
 interface PrimaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'containerStyle' | 'titleStyle'> {
     title: string
     onPress?: () => void
     disabled?: boolean
-    containerStyle?: ViewStyle
+    containerStyle?: StyleProp<ViewStyle>
     compact?: boolean
-    buttonStyle?: ViewStyle
-    titleStyle?: any
+    buttonStyle?: StyleProp<ViewStyle>
+    titleStyle?: StyleProp<TextStyle>
     testID?: string
 }
 
@@ -27,22 +32,22 @@ export function PrimaryButton({ title, onPress, disabled, containerStyle, compac
             title={title}
             onPress={handlePress}
             disabled={disabled}
-            testID={testID ?? `btn-${title}`}
+            testID={testID ?? PRIMARY_TEST_ID}
             accessibilityRole="button"
             accessibilityLabel={title}
-            containerStyle={{
-                ...styles.raisedButtonContainer,
-                ...(compact ? styles.raisedButtonContainerCompact : null),
-                ...containerStyle,
-            }}
-            buttonStyle={{
-                ...(compact ? styles.primaryButtonCompact : styles.primaryButton),
-                ...buttonStyle,
-            }}
-            titleStyle={{
-                ...(compact ? styles.primaryButtonTitleCompact : styles.primaryButtonTitle),
-                ...titleStyle,
-            }}
+            containerStyle={[
+                styles.raisedButtonContainer,
+                compact && styles.raisedButtonContainerCompact,
+                containerStyle,
+            ]}
+            buttonStyle={[
+                compact ? styles.primaryButtonCompact : styles.primaryButton,
+                buttonStyle,
+            ]}
+            titleStyle={[
+                compact ? styles.primaryButtonTitleCompact : styles.primaryButtonTitle,
+                titleStyle,
+            ]}
         />
     )
 }
@@ -51,9 +56,9 @@ interface SecondaryButtonProps extends Omit<ButtonProps, 'buttonStyle' | 'contai
     title: string
     onPress?: () => void
     disabled?: boolean
-    containerStyle?: ViewStyle
-    buttonStyle?: ViewStyle
-    titleStyle?: any
+    containerStyle?: StyleProp<ViewStyle>
+    buttonStyle?: StyleProp<ViewStyle>
+    titleStyle?: StyleProp<TextStyle>
     testID?: string
 }
 
@@ -69,15 +74,12 @@ export function SecondaryButton({ title, onPress, disabled, containerStyle, butt
             title={title}
             onPress={handlePress}
             disabled={disabled}
-            testID={testID ?? `btn-${title}`}
+            testID={testID ?? SECONDARY_TEST_ID}
             accessibilityRole="button"
             accessibilityLabel={title}
-            containerStyle={{
-                ...styles.raisedButtonContainer,
-                ...containerStyle,
-            }}
-            buttonStyle={{ ...styles.secondaryButton, ...buttonStyle }}
-            titleStyle={{ ...styles.secondaryButtonTitle, ...(titleStyle as any) }}
+            containerStyle={[styles.raisedButtonContainer, containerStyle]}
+            buttonStyle={[styles.secondaryButton, buttonStyle]}
+            titleStyle={[styles.secondaryButtonTitle, titleStyle]}
         />
     )
 }

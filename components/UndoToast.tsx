@@ -3,6 +3,7 @@ import { Text as RNText, TouchableOpacity, View } from 'react-native'
 import Toast from 'react-native-toast-message'
 import { useStyles } from '../styles'
 import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
+import { HIT_SLOP } from '../constants'
 
 interface UndoToastProps {
     text1?: string
@@ -24,7 +25,7 @@ export function UndoToast({ text1, props }: UndoToastProps) {
                     Toast.hide()
                 }}
                 activeOpacity={0.7}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP}
                 accessible
                 accessibilityRole="button"
                 accessibilityLabel={UI_TEXT.UNDO}

@@ -48,7 +48,10 @@ export function PriceTrend({ prices, onSelect }: PriceTrendProps) {
                                 { height: h, backgroundColor: theme.colors.primary },
                             ]}
                             accessible
-                            accessibilityLabel={t('a11y.PRICE_TREND_BAR', { category: p.category, price: p.price })}
+                            accessibilityLabel={t('a11y.PRICE_TREND_BAR', {
+                                category: t(`categories.${p.category}`, { defaultValue: p.category }),
+                                price: formatNumber(p.price),
+                            })}
                             accessibilityRole="button"
                         />
                     )

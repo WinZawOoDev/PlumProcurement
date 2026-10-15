@@ -7,6 +7,7 @@ export const UI_TEXT = {
   // Common buttons
   SAVE: 'Save',
   CANCEL: 'Cancel',
+  RETRY: 'Retry',
   CONFIRM: 'Confirm',
   CONTINUE: 'Continue',
   UNDO: 'Undo',
@@ -20,6 +21,7 @@ export const UI_TEXT = {
   // Specific buttons
   SAVE_PRICE: 'Save Price',
   ADD_NEW_PRICE: 'Add New Price',
+  SORT_PRICES: 'Sort prices',
   COUNT: 'count',
 
   // Form labels
@@ -58,11 +60,11 @@ export const UI_TEXT = {
   NO_PURCHASES_MATCHING: 'No purchases matching "{{query}}"',
   NO_SELLERS_MATCHING: 'No sellers matching "{{query}}"',
   SHOWING_COUNT: '{{filtered}} of {{total}}',
-  PRICE_SINGULAR: 'price',
-  PRICE_PLURAL: 'prices',
-  SELLER_SINGULAR: 'seller',
-  SELLER_PLURAL: 'sellers',
-  PRICE_TREND_SUMMARY: 'Price Trend ({{count}} items) — Avg {{avg}}$',
+  PRICE_COUNT_one: '{{count}} price',
+  PRICE_COUNT_other: '{{count}} prices',
+  // Generic "<description> • <summary>" header (middot is typographic, shared across locales).
+  LIST_HEADER_DESCRIPTION: '{{description}} • {{summary}}',
+  PRICE_TREND_SUMMARY: 'Price Trend ({{count}} items) — Avg {{avg}} $t(currency)',
 
   // Purchasing
   RECORD_PURCHASE: 'Record Purchase',
@@ -185,6 +187,11 @@ export const UI_TEXT = {
   DELETE_PURCHASE_CONFIRM_MESSAGE: 'Delete this purchase? This cannot be undone.',
   DISCARD_CHANGES_TITLE: 'Discard changes?',
   DISCARD_CHANGES_MESSAGE: 'You have unsaved changes. Leave without saving?',
+
+  // Seller screens (plural forms follow i18next `_one` / `_other` suffixes)
+  SELLER_COUNT_one: '{{count}} seller',
+  SELLER_COUNT_other: '{{count}} sellers',
+  SELLERS_HEADER_DESCRIPTION: '{{description}} • {{summary}}',
 } as const;
 
 // ===== ACCESSIBILITY LABELS =====
@@ -207,6 +214,8 @@ export const A11Y_LABELS = {
   TOGGLE_SEARCH: 'Toggle search',
   GO_BACK: 'Go back',
   SELECT_THEME_MODE: 'Select theme mode',
-  PRICE_CARD: '{{unit}}, {{price}} dollars',
-  PRICE_TREND_BAR: '{{category}} {{price}} dollars',
+  PRICE_CARD: '{{unit}}, {{price}} $t(currency)',
+  PRICE_TREND_BAR: '{{category}} {{price}} $t(currency)',
+  SELLER_SUMMARY: '{{purchaseCount}} purchases, {{purchaseTotal}} total, {{balance}} balance',
+  LABELED_VALUE: '{{label}}: {{value}}',
 } as const;

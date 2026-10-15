@@ -2,9 +2,11 @@ import React from 'react'
 import ReactTestRenderer, { act } from 'react-test-renderer'
 import App from '../App'
 import { Onboarding } from '../components/Onboarding'
+import { ErrorFallback } from '../components/ErrorFallback'
 import { priceService } from '../services/priceService'
 import { sellerService } from '../services/sellerService'
 import { settingsService } from '../services/settingsService'
+import { MESSAGES } from '../constants'
 import { IPrice } from '../types/database'
 import { ISeller } from '../types/database'
 
@@ -12,6 +14,11 @@ jest.mock('react-native-safe-area-context', () => ({
     SafeAreaProvider: ({ children }: { children?: React.ReactNode }) => children ?? null,
     SafeAreaView: ({ children }: { children?: React.ReactNode }) => children ?? null,
     useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+    // BottomTabView renders SafeAreaInsetsContext.Consumer directly.
+    SafeAreaInsetsContext: {
+        Consumer: ({ children }: { children: (insets: object) => React.ReactNode }) =>
+            children({ top: 0, bottom: 0, left: 0, right: 0 }),
+    },
 }))
 jest.mock('../services/priceService', () => ({
     priceService: { getPrices: jest.fn() },
@@ -74,7 +81,9 @@ describe('onboarding skip on startup', () => {
         const root = await renderApp()
 
         expect(root.root.findAllByType(Onboarding)).toHaveLength(0)
-        expect(priceService.getPrices).not.toHaveBeenCalled()
+        // The persisted flag short-circuits the gate: the data heuristic
+        // (getSellers for the pre-flag-install check) is never consulted.
+        expect(sellerService.getSellers).not.toHaveBeenCalled()
     })
 
     test('skips onboarding and persists the flag when data exists', async () => {
@@ -94,11 +103,31 @@ describe('onboarding skip on startup', () => {
         expect(root.root.findAllByType(Onboarding)).toHaveLength(0)
     })
 
-    test('shows onboarding when the startup check fails', async () => {
+    test('shows an error with retry (not onboarding) when the startup check fails', async () => {
         ;(settingsService.isOnboarded as jest.Mock).mockRejectedValue(new Error('db down'))
 
         const root = await renderApp()
 
-        expect(root.root.findAllByType(Onboarding)).toHaveLength(1)
+        // Returning users must not be sent to onboarding as if they were new.
+        expect(root.root.findAllByType(Onboarding)).toHaveLength(0)
+        const fallback = root.root.findAllByType(ErrorFallback)
+        expect(fallback).toHaveLength(1)
+        // Raw internals never reach the UI: the generic message is shown.
+        expect(fallback[0].props.message).toBe(MESSAGES.ERROR_GENERIC)
+        expect(fallback[0].props.onRetry).toEqual(expect.any(Function))
+    })
+
+    test('retrying after a startup failure re-runs the check', async () => {
+        ;(settingsService.isOnboarded as jest.Mock).mockRejectedValueOnce(new Error('db down'))
+
+        const root = await renderApp()
+        expect(root.root.findAllByType(ErrorFallback)).toHaveLength(1)
+
+        ;(settingsService.isOnboarded as jest.Mock).mockResolvedValue(true)
+        await act(async () => {
+            root.root.findByType(ErrorFallback).props.onRetry()
+            await flush()
+        })
+        expect(root.root.findAllByType(ErrorFallback)).toHaveLength(0)
     })
 })

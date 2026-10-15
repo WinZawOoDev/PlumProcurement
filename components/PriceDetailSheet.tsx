@@ -66,7 +66,7 @@ export function PriceDetailSheet({ visible, price, onClose, onEdit, onDelete }: 
                             icon={<Ionicons name="trash-outline" size={15} color={theme.colors.error} />}
                             iconContainerStyle={styles.priceDetailButtonIcon}
                             buttonStyle={styles.priceDetailCompactButton}
-                            titleStyle={[styles.priceDetailCompactTitle, { color: theme.colors.error }]}
+                            titleStyle={[styles.priceDetailCompactTitle, styles.priceDetailDeleteTitle]}
                             containerStyle={styles.priceDetailAction}
                             onPress={() => onDelete(price.id)}
                         />

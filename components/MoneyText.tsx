@@ -1,7 +1,8 @@
 import React from 'react'
 import { StyleProp, StyleSheet, Text as RNText, TextStyle } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { formatNumber } from '../utils'
-import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
+import { moneyCurrencyStyle } from '../styles/moneyStyles'
 
 interface MoneyTextProps {
     amount: number
@@ -27,21 +28,14 @@ export function MoneyText({
     currency,
     numberOfLines,
 }: MoneyTextProps) {
-    const { CURRENCY } = useLocalizedConstants()
+    // Only the currency string is needed here; avoid the full constants hook.
+    const { t } = useTranslation()
     const valueFontSize = StyleSheet.flatten(valueStyle)?.fontSize
-    const fallbackCurrencyStyle: TextStyle = {
-        fontSize:
-            typeof valueFontSize === 'number'
-                ? Math.max(10, Math.round(valueFontSize * 0.65))
-                : 12,
-        fontWeight: '400',
-        opacity: 0.65,
-    }
     return (
         <RNText style={valueStyle} numberOfLines={numberOfLines}>
             {formatNumber(amount, fractionDigits)}
-            <RNText style={[fallbackCurrencyStyle, currencyStyle]}>
-                {' '}{currency ?? CURRENCY}
+            <RNText style={[moneyCurrencyStyle(valueFontSize), currencyStyle]}>
+                {' '}{currency ?? t('currency')}
             </RNText>
         </RNText>
     )

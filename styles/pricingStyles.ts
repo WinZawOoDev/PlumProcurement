@@ -173,6 +173,9 @@ export const pricingStyles = (theme: ThemeOptions) => StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
     },
+    priceDetailDeleteTitle: {
+        color: theme.colors.error,
+    },
     priceDetailHero: {
         gap: 10,
         marginTop: 14,

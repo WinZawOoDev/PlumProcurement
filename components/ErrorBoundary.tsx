@@ -1,15 +1,11 @@
 import React from 'react'
-import { Appearance, View, Text, StyleSheet } from 'react-native'
-import { makeAppTheme } from '../theme'
+import { ErrorFallback } from './ErrorFallback'
 import i18n from '../i18n'
-import { MYANMAR_FONT_FAMILY, MYANMAR_FONT_FAMILY_BOLD } from '../styles/fonts'
-
-const isDark = Appearance.getColorScheme() === 'dark'
-const appTheme = makeAppTheme(isDark)
-const palette = (isDark ? appTheme.darkColors : appTheme.lightColors) ?? {}
 
 interface ErrorBoundaryProps {
     children: React.ReactNode
+    /** Drives the fallback palette; read at render so in-app theme changes apply. */
+    isDarkMode?: boolean
 }
 
 interface ErrorBoundaryState {
@@ -31,43 +27,20 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         console.error('Unhandled error caught by ErrorBoundary:', error)
     }
 
+    private handleRetry = () => {
+        this.setState({ hasError: false, message: '' })
+    }
+
     render() {
         if (this.state.hasError) {
-            const isMyanmar = i18n.language === 'my'
             return (
-                <View style={fallbackStyles.container}>
-                    <Text style={[fallbackStyles.title, isMyanmar && fallbackStyles.myanmarBold]}>{i18n.t('uiText.SOMETHING_WENT_WRONG')}</Text>
-                    <Text style={[fallbackStyles.message, isMyanmar && fallbackStyles.myanmar]}>{this.state.message}</Text>
-                </View>
+                <ErrorFallback
+                    message={this.state.message || i18n.t('messages.ERROR_GENERIC')}
+                    isDarkMode={this.props.isDarkMode ?? false}
+                    onRetry={this.handleRetry}
+                />
             )
         }
         return this.props.children
     }
 }
-
-const fallbackStyles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: palette.background ?? '#121212',
-        padding: 24,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: palette.primary ?? '#D8A7CA',
-        marginBottom: 8,
-    },
-    message: {
-        fontSize: 14,
-        color: palette.black ?? '#ECECEC',
-        textAlign: 'center',
-    },
-    myanmar: {
-        fontFamily: MYANMAR_FONT_FAMILY,
-    },
-    myanmarBold: {
-        fontFamily: MYANMAR_FONT_FAMILY_BOLD,
-    },
-})

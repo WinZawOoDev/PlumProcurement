@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Pressable } from 'react-native'
 import { Input, useTheme } from '@rneui/themed'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../styles'
 import { useLocalizedConstants } from '../hooks/useLocalizedConstants'
 import { debounce } from '../utils'
+import { HIT_SLOP } from '../constants'
 
 interface SearchBarProps {
     value: string
@@ -68,13 +70,18 @@ export function SearchBar({ value, onChangeText, placeholder, debounceMs = 300 }
             }
             rightIcon={
                 localValue.length > 0 ? (
-                    <Ionicons
-                        name="close-circle-outline"
-                        size={20}
-                        color={theme.colors.tertiary}
+                    <Pressable
                         onPress={handleClear}
+                        hitSlop={HIT_SLOP}
+                        accessibilityRole="button"
                         accessibilityLabel={A11Y_LABELS.CLEAR_SEARCH}
-                    />
+                    >
+                        <Ionicons
+                            name="close-circle-outline"
+                            size={20}
+                            color={theme.colors.tertiary}
+                        />
+                    </Pressable>
                 ) : undefined
             }
             inputContainerStyle={styles.searchInputContainer}

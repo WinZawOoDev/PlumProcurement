@@ -1,11 +1,9 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
+ * PlumProcurement root: theme/language providers, tab navigator, onboarding
+ * gate and startup loading/error states.
  */
 
-import { StatusBar, StyleSheet, Text, useColorScheme } from 'react-native';
+import { StatusBar, Text, useColorScheme } from 'react-native';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import { DefaultTheme, DarkTheme, createStaticNavigation, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -22,24 +20,19 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { PriceProvider } from './context/PriceContext';
 import { ThemeModeContext } from './context/ThemeModeContext';
 import { LanguageContext, useLanguage } from './context/LanguageContext';
-import { MYANMAR_FONT_FAMILY_BOLD } from './styles/fonts';
 import { Onboarding } from './components/Onboarding';
 import { StartupLoader } from './components/StartupLoader';
-import { ROUTES, ThemeMode, Language, DEFAULT_LANGUAGE } from './constants';
+import { ErrorFallback } from './components/ErrorFallback';
+import { ROUTES, TAB_BAR, ThemeMode, Language, DEFAULT_LANGUAGE } from './constants';
+import { navigationStyles } from './styles/navigationStyles';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './components/UndoToast';
 import { priceService } from './services/priceService';
 import { sellerService } from './services/sellerService';
 import { settingsService } from './services/settingsService';
 import { changeLanguage } from './i18n';
-
-const tabLabelStyles = StyleSheet.create({
-  label: { fontWeight: '700', fontSize: 11, letterSpacing: 0.3, marginTop: 2 },
-  myanmar: { fontFamily: MYANMAR_FONT_FAMILY_BOLD },
-  // Letter-spacing breaks Myanmar shaping, so it is dropped alongside
-  // the font swap (mirrors the useStyles() Myanmar pass).
-  myanmarSpacing: { letterSpacing: 0 },
-});
+import { getErrorMessage } from './utils/errors';
+import { showError } from './utils/notifications';
 
 function LocalizedTabLabel({ label, color }: { label: string; color: string }) {
   const { t } = useTranslation();
@@ -48,10 +41,10 @@ function LocalizedTabLabel({ label, color }: { label: string; color: string }) {
   return (
     <Text
       style={[
-        tabLabelStyles.label,
+        navigationStyles.tabLabel,
         { color },
-        isMyanmar && tabLabelStyles.myanmar,
-        isMyanmar && tabLabelStyles.myanmarSpacing,
+        isMyanmar && navigationStyles.tabLabelMyanmar,
+        isMyanmar && navigationStyles.tabLabelMyanmarSpacing,
       ]}
     >
       {t(label)}
@@ -68,7 +61,7 @@ function PriceTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 function PurchaseTabIcon({ color, size }: { color: string; size: number }) {
-  return <Ionicons name="cart-outline" color={color} size={size + 2} />;
+  return <Ionicons name="cart-outline" color={color} size={size + TAB_BAR.PURCHASE_ICON_SIZE_BONUS} />;
 }
 
 function SellerTabIcon({ color, size }: { color: string; size: number }) {
@@ -84,27 +77,9 @@ const RootStack = createBottomTabNavigator({
   initialRouteName: ROUTES.PRICE_TAB,
   screenOptions: {
     headerShown: false,
-    tabBarStyle: {
-      minHeight: 68,
-      paddingTop: 6,
-      paddingBottom: 6,
-      alignItems: 'center',
-      borderTopWidth: 0.5,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 6,
-      elevation: 2,
-    },
-    tabBarLabelStyle: {
-      fontWeight: '700',
-      fontSize: 11,
-      letterSpacing: 0.3,
-      marginTop: 2,
-    },
-    tabBarIconStyle: {
-      marginTop: 2,
-    },
+    tabBarStyle: navigationStyles.tabBar,
+    tabBarLabelStyle: navigationStyles.tabBarLabel,
+    tabBarIconStyle: navigationStyles.tabBarIcon,
   },
   screens: {
     [ROUTES.PRICE_TAB]: {
@@ -112,6 +87,7 @@ const RootStack = createBottomTabNavigator({
       options: {
         tabBarIcon: PriceTabIcon,
         tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.PRICES" color={color} />,
+        tabBarButtonTestID: 'tab-prices',
       }
     },
     [ROUTES.PURCHASE_TAB]: {
@@ -119,6 +95,7 @@ const RootStack = createBottomTabNavigator({
       options: {
         tabBarIcon: PurchaseTabIcon,
         tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.PURCHASING" color={color} />,
+        tabBarButtonTestID: 'tab-purchasing',
       }
     },
     [ROUTES.SELLER_TAB]: {
@@ -126,6 +103,7 @@ const RootStack = createBottomTabNavigator({
       options: {
         tabBarIcon: SellerTabIcon,
         tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.SELLERS" color={color} />,
+        tabBarButtonTestID: 'tab-sellers',
       }
     },
     [ROUTES.SETTINGS_TAB]: {
@@ -133,6 +111,7 @@ const RootStack = createBottomTabNavigator({
       options: {
         tabBarIcon: SettingsTabIcon,
         tabBarLabel: ({ color }) => <LocalizedTabLabel label="tabs.SETTINGS" color={color} />,
+        tabBarButtonTestID: 'tab-settings',
       }
     },
   }
@@ -184,9 +163,16 @@ function AppShell({ isDarkMode }: AppShellProps) {
   const [onboarded, setOnboarded] = React.useState(false);
   const [checkingData, setCheckingData] = React.useState(true);
   const [mainReady, setMainReady] = React.useState(false);
+  // A failed startup check must not send returning users to onboarding as if
+  // they were new: surface an error with a retry instead.
+  const [startupError, setStartupError] = React.useState<unknown>(null);
+
+  const [startupAttempt, setStartupAttempt] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
+    setCheckingData(true);
+    setStartupError(null);
     (async () => {
       // Skip onboarding for returning users: persisted flag first,
       // then data heuristic for installs that predate the flag.
@@ -203,8 +189,8 @@ function AppShell({ isDarkMode }: AppShellProps) {
           setOnboarded(true);
           settingsService.setOnboarded().catch(() => undefined);
         }
-      } catch {
-        // DB unavailable — fall back to showing onboarding
+      } catch (error) {
+        if (!cancelled) setStartupError(error);
       } finally {
         if (!cancelled) setCheckingData(false);
       }
@@ -212,7 +198,9 @@ function AppShell({ isDarkMode }: AppShellProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [startupAttempt]);
+
+  const retryStartup = React.useCallback(() => setStartupAttempt((n) => n + 1), []);
 
   const handleOnboardingDone = () => {
     setOnboarded(true);
@@ -223,6 +211,10 @@ function AppShell({ isDarkMode }: AppShellProps) {
 
   if (checkingData) {
     return <StartupLoader />;
+  }
+
+  if (startupError) {
+    return <ErrorFallback message={getErrorMessage(startupError)} isDarkMode={isDarkMode} onRetry={retryStartup} />;
   }
 
   if (!onboarded) {
@@ -246,13 +238,13 @@ function App() {
 
   const handleSetThemeMode = useCallback((mode: ThemeMode) => {
     setThemeModeState(mode);
-    settingsService.setThemeMode(mode).catch(() => undefined);
+    settingsService.setThemeMode(mode).catch((error) => showError(getErrorMessage(error)));
   }, []);
 
   const handleSetLanguage = useCallback((next: Language) => {
     setLanguageState(next);
-    changeLanguage(next).catch(() => undefined);
-    settingsService.setLanguage(next).catch(() => undefined);
+    changeLanguage(next).catch((error) => showError(getErrorMessage(error)));
+    settingsService.setLanguage(next).catch((error) => showError(getErrorMessage(error)));
   }, []);
 
   const themeModeContextValue = useMemo(

@@ -32,12 +32,6 @@ export function showError(message: string): void {
     })
 }
 
-export function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message) return error.message
-    // DatabaseError extends Error, so above already handles it; keep fallback for non-Error throws
-    return fallback
-}
-
 /**
  * Shows a toast with an Undo action. Always uses react-native-toast-message
  * (even on Android) because the native toast cannot render an action button.

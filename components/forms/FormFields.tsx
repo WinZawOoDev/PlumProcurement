@@ -6,6 +6,7 @@ import { Picker } from '@react-native-picker/picker'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
 import { toWesternDigits } from '../../utils'
+import { PICKER_CONFIG } from '../../constants'
 
 interface FormSelectFieldProps<T extends FieldValues> {
     name: Path<T>
@@ -43,7 +44,7 @@ export function FormSelectField<T extends FieldValues>({
                             selectedValue={value}
                             onValueChange={onChange}
                             style={styles.picker}
-                            mode="dialog"
+                            mode={PICKER_CONFIG.MODE}
                         >
                             {placeholder && <Picker.Item label={placeholder} value="" />}
                             {options.map((option) => (
@@ -70,6 +71,7 @@ interface FormInputFieldProps<T extends FieldValues> {
     keyboardType?: 'default' | 'numeric' | 'decimal-pad' | 'email-address'
     required?: boolean
     rules?: RegisterOptions<T>
+    testID?: string
 }
 
 export function FormInputField<T extends FieldValues>({
@@ -80,6 +82,7 @@ export function FormInputField<T extends FieldValues>({
     keyboardType = 'default',
     required = false,
     rules,
+    testID,
 }: FormInputFieldProps<T>) {
     const styles = useStyles()
     // Numeric keyboards may emit Myanmar digits on a Myanmar device; normalize
@@ -103,6 +106,7 @@ export function FormInputField<T extends FieldValues>({
                     inputContainerStyle={styles.formInputContainer}
                     inputStyle={styles.formInput}
                     errorMessage={error?.message || ''}
+                    testID={testID}
                 />
             )}
         />

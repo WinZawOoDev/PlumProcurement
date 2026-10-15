@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   A11Y_LABELS as A11Y_LABELS_EN,
@@ -36,34 +37,39 @@ export interface LocalizedConstants {
 export function useLocalizedConstants(): LocalizedConstants {
   const { t } = useTranslation()
 
-  const uiText = t('uiText', { returnObjects: true }) as TranslationSchema['uiText']
-  const messages = t('messages', { returnObjects: true }) as TranslationSchema['messages']
-  const validation = t('validation', { returnObjects: true }) as TranslationSchema['validation']
-  const a11y = t('a11y', { returnObjects: true }) as TranslationSchema['a11y']
-  const tabLabels = t('tabs', { returnObjects: true }) as TranslationSchema['tabs']
+  // Memoized on `t` (its identity changes with the language): per-row callers
+  // such as MoneyText/SellerRow would otherwise rebuild five dictionaries and
+  // three mapped arrays on every render.
+  return useMemo(() => {
+    const uiText = t('uiText', { returnObjects: true }) as TranslationSchema['uiText']
+    const messages = t('messages', { returnObjects: true }) as TranslationSchema['messages']
+    const validation = t('validation', { returnObjects: true }) as TranslationSchema['validation']
+    const a11y = t('a11y', { returnObjects: true }) as TranslationSchema['a11y']
+    const tabLabels = t('tabs', { returnObjects: true }) as TranslationSchema['tabs']
 
-  const paymentMethods = PAYMENT_METHODS_EN.map((method) => ({
-    label: t(`paymentMethods.${method.value}`),
-    value: method.value,
-  })) as unknown as typeof PAYMENT_METHODS_EN
+    const paymentMethods = PAYMENT_METHODS_EN.map((method) => ({
+      label: t(`paymentMethods.${method.value}`),
+      value: method.value,
+    })) as unknown as typeof PAYMENT_METHODS_EN
 
-  const categories = t('categories', { returnObjects: true }) as TranslationSchema['categories']
-  const categoryList = CATEGORY_LIST_EN.map((item) => ({
-    label: categories[item.value as CategoryValue],
-    value: item.value,
-  })) as unknown as typeof CATEGORY_LIST_EN
+    const categories = t('categories', { returnObjects: true }) as TranslationSchema['categories']
+    const categoryList = CATEGORY_LIST_EN.map((item) => ({
+      label: categories[item.value as CategoryValue],
+      value: item.value,
+    })) as unknown as typeof CATEGORY_LIST_EN
 
-  const units = t('units', { returnObjects: true }) as Record<string, string>
+    const units = t('units', { returnObjects: true }) as Record<string, string>
 
-  return {
-    UI_TEXT: uiText as typeof UI_TEXT_EN,
-    MESSAGES: messages as typeof MESSAGES_EN,
-    VALIDATION_MESSAGES: validation as typeof VALIDATION_MESSAGES_EN,
-    A11Y_LABELS: a11y as typeof A11Y_LABELS_EN,
-    TAB_LABELS: tabLabels as typeof TAB_LABELS_EN,
-    PAYMENT_METHODS: paymentMethods,
-    CATEGORY_LIST: categoryList,
-    UNITS: units,
-    CURRENCY: t('currency'),
-  }
+    return {
+      UI_TEXT: uiText as typeof UI_TEXT_EN,
+      MESSAGES: messages as typeof MESSAGES_EN,
+      VALIDATION_MESSAGES: validation as typeof VALIDATION_MESSAGES_EN,
+      A11Y_LABELS: a11y as typeof A11Y_LABELS_EN,
+      TAB_LABELS: tabLabels as typeof TAB_LABELS_EN,
+      PAYMENT_METHODS: paymentMethods,
+      CATEGORY_LIST: categoryList,
+      UNITS: units,
+      CURRENCY: t('currency'),
+    }
+  }, [t])
 }

@@ -25,6 +25,8 @@ export function SearchIconButton({ active, onPress, accessibilityLabel }: Search
             variant="ghost"
             onPress={onPress}
             accessibilityLabel={accessibilityLabel}
+            // Announces whether the search bar is open ("expanded") to screen readers.
+            accessibilityState={{ expanded: active }}
         />
     )
 }

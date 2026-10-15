@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 /**
  * Shared search state for list screens: visibility toggle (clears the query
@@ -14,15 +14,26 @@ export function useSearchFilter<T>(
 ) {
     const [visible, setVisible] = useState(false)
     const [query, setQuery] = useState('')
+    // Written in an effect, never during render.
     const predicateRef = useRef(predicate)
-    predicateRef.current = predicate
+    useEffect(() => {
+        predicateRef.current = predicate
+    })
 
     const toggle = useCallback(() => {
-        setVisible((prev) => {
-            if (prev) setQuery('')
-            return !prev
-        })
+        // setState-in-updater is a side effect: clear the query via the
+        // visibility flag instead, applied after the toggle commits.
+        setVisible((prev) => !prev)
     }, [])
+
+    // Clearing the query when the bar closes (runs after render commits).
+    const wasVisible = useRef(visible)
+    useEffect(() => {
+        if (wasVisible.current && !visible) {
+            setQuery('')
+        }
+        wasVisible.current = visible
+    }, [visible])
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
