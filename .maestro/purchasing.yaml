@@ -2,30 +2,42 @@ appId: com.plumprocurement
 ---
 - launchApp:
     clearState: true
-- tapOn: "Skip"
-# Prerequisites: one price + one seller
+- tapOn:
+    id: "btn-Skip"
+# Prerequisites: one price + one seller (form defaults: Fruit, CUP)
 - tapOn: "Add New Price"
 - tapOn: "e.g. 12.50"
 - inputText: "5"
-- tapOn: "Save Price"
+- tapOn:
+    id: "btn-Save Price"
 - assertVisible: "Price saved successfully!"
-- tapOn: "Sellers"
-- tapOn: "Add Seller"
+- tapOn:
+    id: "tab-sellers"
+- tapOn:
+    id: "btn-Add Seller"
 - tapOn: "e.g. U Ba"
 - inputText: "Hist Seller"
-- tapOn: "Save"
+- tapOn: "e.g. 09-123-456-789"
+- inputText: "09-000-000-002"
+- tapOn: "e.g. No. 123, Main Road"
+- inputText: "Hist Road 2"
+- tapOn:
+    id: "btn-Save"
 - assertVisible: "Seller saved successfully!"
-# Record a purchase (stepper stays locked until seller + price are chosen)
-- tapOn: "Purchasing"
+# Record a purchase: pick the seller, then unlock the stepper via quantity
+- tapOn:
+    id: "tab-purchasing"
 - assertVisible: "Record Purchase"
 - assertVisible: "Select a seller and a price item to set the quantity"
 - tapOn: "Select seller"
 - tapOn: "Hist Seller"
-- tapOn: "Price Item"
-- tapOn: "fruit - 5.00"
-- tapOn: "Record Purchase"
+- tapOn: "Increase quantity Fruit"
+- tapOn:
+    id: "btn-Record Purchase"
+- tapOn: "Confirm"
 - assertVisible: "Purchase recorded successfully!"
-# History + export
-- tapOn: "View History"
+# History: CSV export is disabled in purchase history, so the flow stops at the recorded row
+- tapOn:
+    id: "btn-View History"
 - assertVisible: "Purchase History"
-- tapOn: "Export CSV"
+- assertVisible: ".*Hist Seller.*"

@@ -2,39 +2,47 @@ appId: com.plumprocurement
 ---
 - launchApp:
     clearState: true
-- tapOn: "Skip"
+- tapOn:
+    id: "btn-Skip"
 # Guard 1: duplicate price (same category + unit) is rejected
 - assertVisible: "Price Management"
 - tapOn: "Add New Price"
 - tapOn: "e.g. 12.50"
 - inputText: "10"
-- tapOn: "Save Price"
+- tapOn:
+    id: "btn-Save Price"
 - assertVisible: "Price saved successfully!"
 - tapOn: "Add New Price"
 - tapOn: "e.g. 12.50"
 - inputText: "10"
-- tapOn: "Save Price"
+- tapOn:
+    id: "btn-Save Price"
 - assertVisible: "A price for this category and unit already exists."
 # Guard 2: overpayment is rejected (pay more than owed)
-- tapOn: "Sellers"
-- tapOn: "Add Seller"
+- tapOn:
+    id: "tab-sellers"
+- tapOn:
+    id: "btn-Add Seller"
 - tapOn: "e.g. U Ba"
 - inputText: "Guard Seller"
 - tapOn: "e.g. 09-123-456-789"
 - inputText: "09-000-000-001"
 - tapOn: "e.g. No. 123, Main Road"
 - inputText: "Guard Road 1"
-- tapOn: "Save"
+- tapOn:
+    id: "btn-Save"
 - assertVisible: "Seller saved successfully!"
 - tapOn: "Guard Seller"
-- tapOn: "Payment"
+- tapOn: "Record Payment"
 - assertVisible: "Record Payment"
 - tapOn:
     id: "payment-amount-input"
 - inputText: "999999"
-- tapOn: "Continue"
+- tapOn:
+    id: "btn-Continue"
 - assertVisible: "Payment exceeds the outstanding balance."
 # Guard 3: search input is addressable by testID
-- tapOn: "Sellers"
+- tapOn:
+    id: "tab-sellers"
 - tapOn:
     id: "search-input"

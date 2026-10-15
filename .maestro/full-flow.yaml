@@ -2,33 +2,46 @@ appId: com.plumprocurement
 ---
 - launchApp:
     clearState: true
-- tapOn: "Skip"
-# Pricing: create a price
+- tapOn:
+    id: "btn-Skip"
+# Pricing: create a price (category/unit come from the form defaults: Fruit, CUP)
 - assertVisible: "Price Management"
 - tapOn: "Add New Price"
 - assertVisible: "Price Entry"
 - tapOn: "e.g. 12.50"
 - inputText: "9.99"
-- tapOn: "Save Price"
+- tapOn:
+    id: "btn-Save Price"
 - assertVisible: "Price saved successfully!"
-# Sellers: create a seller
-- tapOn: "Sellers"
-- tapOn: "Add Seller"
+# Sellers: create a seller (phone and address are mandatory)
+- tapOn:
+    id: "tab-sellers"
+- tapOn:
+    id: "btn-Add Seller"
 - tapOn: "e.g. U Ba"
 - inputText: "Flow Seller"
-- tapOn: "Save"
+- tapOn: "e.g. 09-123-456-789"
+- inputText: "09-123-456-789"
+- tapOn: "e.g. No. 123, Main Road"
+- inputText: "Flow Road 1"
+- tapOn:
+    id: "btn-Save"
 - assertVisible: "Seller saved successfully!"
-# Purchasing: stepper locked until seller + price are chosen
-- tapOn: "Purchasing"
-- assertVisible: "Record Purchase"
+# Purchasing: price items are shown as cards (no tap needed); pick seller, then increase quantity
+- tapOn:
+    id: "tab-purchasing"
+- assertVisible:
+    id: "btn-Record Purchase"
 - assertVisible: "Select a seller and a price item to set the quantity"
 - tapOn: "Select seller"
 - tapOn: "Flow Seller"
-- tapOn: "Price Item"
-- tapOn: "fruit - 9.99"
-- tapOn: "Record Purchase"
+- tapOn: "Increase quantity Fruit"
+- tapOn:
+    id: "btn-Record Purchase"
+- tapOn: "(?i)confirm"
 - assertVisible: "Purchase recorded successfully!"
-# History + export
-- tapOn: "View History"
+# History: CSV export is disabled in purchase history, so the flow stops at the recorded row
+- tapOn:
+    id: "btn-View History"
 - assertVisible: "Purchase History"
-- tapOn: "Export CSV"
+- assertVisible: ".*Flow Seller.*"
