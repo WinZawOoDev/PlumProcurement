@@ -17,6 +17,8 @@ import { showSuccess, showError } from '../../utils/notifications'
 import { formatDateDisplay, formatNumber } from '../../utils'
 import { MoneyText } from '../../components/MoneyText'
 import { useLoading } from '../../hooks/useAsync'
+import { getErrorMessage } from '../../utils/errors'
+import { exceedsBalance, isPositiveAmount } from './paymentAmount'
 
 type PaymentReviewRouteProp = RouteProp<
     Record<
@@ -68,6 +70,7 @@ export default function PaymentReview() {
     const { sellerId, sellerName, balance = 0, amount, method, note } = route.params ?? {}
     const { loading: saving, withLoading: withSaving } = useLoading(false)
     const [purchases, setPurchases] = useState<IPurchaseDetail[]>([])
+    const [purchasesError, setPurchasesError] = useState<unknown>(null)
 
     useEffect(() => {
         if (sellerId === undefined) return
@@ -75,9 +78,13 @@ export default function PaymentReview() {
         purchaseService
             .getUnpaidPurchasesBySeller(sellerId, 20)
             .then((items) => {
-                if (!cancelled) setPurchases(items)
+                if (cancelled) return
+                setPurchases(items)
+                setPurchasesError(null)
             })
-            .catch(() => undefined)
+            .catch((error) => {
+                if (!cancelled) setPurchasesError(error)
+            })
         return () => {
             cancelled = true
         }
@@ -98,9 +105,20 @@ export default function PaymentReview() {
     const methodLabel = method
         ? PAYMENT_METHODS.find((option) => option.value === method)?.label ?? method
         : '—'
-    const balanceAfter = Math.max(0, balance - amount)
+    // Defensive re-check: RecordPayment validates first, but route params can be
+    // constructed by other entry points, and an overpayment must never be recorded.
+    const amountError = !isPositiveAmount(amount)
+        ? MESSAGES.ERROR_INVALID_AMOUNT
+        : exceedsBalance(amount, balance)
+            ? MESSAGES.ERROR_PAYMENT_EXCEEDS_BALANCE
+            : null
+    const balanceAfter = balance - amount
 
     const performProcess = async () => {
+        if (amountError) {
+            showError(amountError)
+            return
+        }
         await withSaving(async () => {
             try {
                 await paymentService.recordPayment({
@@ -116,7 +134,7 @@ export default function PaymentReview() {
                 // SellerDetails loses it and renders "seller not found".
                 navigation.popTo(ROUTES.SELLER_DETAILS, { sellerId })
             } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError(getErrorMessage(error))
             }
         })
     }
@@ -165,9 +183,14 @@ export default function PaymentReview() {
                             label={UI_TEXT.OUTSTANDING_BALANCE}
                             value={<MoneyText amount={balance} />}
                         />
+                        {amountError && (
+                            <RNText style={styles.paymentFormError} accessibilityRole="alert">
+                                {amountError}
+                            </RNText>
+                        )}
                         <SlipRow
                             label={UI_TEXT.BALANCE_AFTER_PAYMENT}
-                            value={<MoneyText amount={balanceAfter} />}
+                            value={amountError ? '—' : <MoneyText amount={balanceAfter} />}
                             strong
                         />
 
@@ -177,7 +200,9 @@ export default function PaymentReview() {
                             <RNText style={styles.paymentPurchasesLabel}>
                                 {UI_TEXT.PAYMENT_FOR_PURCHASES}
                             </RNText>
-                            {purchases.length === 0 ? (
+                            {purchasesError ? (
+                                <RNText style={styles.paymentFormError}>{getErrorMessage(purchasesError)}</RNText>
+                            ) : purchases.length === 0 ? (
                                 <RNText style={styles.paymentPurchaseEmpty}>—</RNText>
                             ) : (
                                 <ScrollView
@@ -205,7 +230,7 @@ export default function PaymentReview() {
                 <View style={styles.editPurchaseFooter}>
                     <PrimaryButton
                         title={UI_TEXT.PROCESS_PAYMENT}
-                        disabled={saving}
+                        disabled={saving || !!amountError}
                         loading={saving}
                         onPress={handleProcess}
                     />

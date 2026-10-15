@@ -7,41 +7,40 @@ import RecordPayment from "./RecordPayment";
 import PaymentReview from "./PaymentReview";
 import PurchaseSummary from "../purchasing/PurchaseSummary";
 import { ROUTES } from "../../constants";
-import i18n from "../../i18n";
 
-
+// Screen titles are rendered by each screen's own SellerScreenHeader (or
+// SectionHeader), so the navigator does not carry per-screen i18n titles.
 const SellerStack = createNativeStackNavigator({
-  screenOptions: {
-    headerShown: false
-  },
+  // Options resolve against the active React Navigation theme (light/dark), so
+  // header colors follow the app theme whenever a native header is shown.
+  screenOptions: ({ theme }) => ({
+    headerShown: false,
+    headerStyle: { backgroundColor: theme.colors.background },
+    headerTintColor: theme.colors.primary,
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: theme.colors.background },
+  }),
   screens: {
     [ROUTES.SELLER]: {
       screen: Sellers,
-      options: { title: i18n.t('tabs.SELLERS') }
     },
     [ROUTES.SELLER_DETAILS]: {
       screen: SellerDetails,
-      options: { title: i18n.t('uiText.SELLER_DETAILS') }
     },
     [ROUTES.PURCHASE_SUMMARY]: {
       screen: PurchaseSummary,
-      options: { title: i18n.t('uiText.PURCHASE_SUMMARY_TITLE') }
     },
     [ROUTES.SELLER_PURCHASES]: {
       screen: SellerPurchases,
-      options: { title: i18n.t('uiText.PURCHASE_HISTORY_TITLE') }
     },
     [ROUTES.SELLER_PAYMENTS]: {
       screen: SellerPayments,
-      options: { title: i18n.t('uiText.PAYMENT_HISTORY') }
     },
     [ROUTES.RECORD_PAYMENT]: {
       screen: RecordPayment,
-      options: { title: i18n.t('uiText.RECORD_PAYMENT') }
     },
     [ROUTES.PAYMENT_REVIEW]: {
       screen: PaymentReview,
-      options: { title: i18n.t('uiText.PAYMENT_REVIEW_TITLE') }
     }
   }
 })

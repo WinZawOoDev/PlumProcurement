@@ -1,60 +1,33 @@
-import { FlatList, Pressable, RefreshControl, Text as RNText, View } from 'react-native'
+import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { ParamListBase } from '@react-navigation/native'
 import { useTheme } from '@rneui/themed'
-import { useTranslation } from 'react-i18next'
-import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { PAGINATION_CONFIG, ROUTES, SAFE_AREA } from '../../constants'
+import { PAGINATION_CONFIG, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
+import { sellerService } from '../../services/sellerService'
 import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail } from '../../types/database'
-import { formatDateDisplay, formatNumber } from '../../utils'
+import { formatNumber } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { CardSkeleton } from '../../components/Skeleton'
 import { EmptyState } from '../../components/EmptyState'
-import { IconButton } from '../../components/buttons/Button'
 import { MoneyText } from '../../components/MoneyText'
+import { SellerScreenHeader } from './SellerScreenHeader'
+import { SellerPurchaseRow } from './SellerPurchaseRow'
+import { LoadError } from '../../components/LoadError'
 
 type SellerPurchasesRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
-
-function SellerPurchasesRow({ item }: { item: IPurchaseDetail }) {
-    const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
-    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
-    return (
-        <Pressable
-            style={styles.purchaseItemRow}
-            onPress={() =>
-                navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })
-            }
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
-        >
-            <View style={styles.sellerInfo}>
-                <RNText style={styles.purchaseItemTitle}>
-                    {formatDateDisplay(item.created_at)}
-                </RNText>
-                <RNText style={styles.purchaseItemSubtitle}>
-                    {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
-                </RNText>
-            </View>
-            <View style={styles.purchaseItemActions}>
-                <MoneyText amount={item.total} valueStyle={styles.purchaseItemTotal} />
-            </View>
-        </Pressable>
-    )
-}
 
 export default function SellerPurchases() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { t } = useTranslation()
-    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
+    const { UI_TEXT } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPurchasesRouteProp>()
     const sellerId = route.params?.sellerId
@@ -63,22 +36,24 @@ export default function SellerPurchases() {
     const [sellerStats, setSellerStats] = useState<{ count: number; total: number } | null>(null)
     const [hasMore, setHasMore] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const { loading, withLoading } = useLoading(false)
+    // Set when the first page fails; replaces the list with a retry state so a
+    // failed fetch never reads as "no purchases".
+    const [loadError, setLoadError] = useState<unknown>(null)
+    const { loading, withLoading } = useLoading(true)
     // Keyset cursor (id of the last loaded row); undefined = first page.
     const cursorRef = useRef<number | undefined>(undefined)
 
     // Header totals are independent of the loaded pages, so they stay correct
-    // as the list paginates.
+    // as the list paginates. Scoped to this seller only.
     const loadStats = useCallback(async () => {
         if (sellerId === undefined || sellerId === null) {
             return
         }
         try {
-            const stats = await purchaseService.getSellerStats()
-            const stat = stats.find((s) => s.seller_id === sellerId)
-            setSellerStats(stat ? { count: stat.purchase_count, total: stat.total_spent } : { count: 0, total: 0 })
-        } catch {
-            // best-effort: the list still renders without the aggregate header
+            const stat = await sellerService.getSellerStatById(sellerId)
+            setSellerStats(stat ? { count: stat.purchase_count, total: stat.total_owed } : { count: 0, total: 0 })
+        } catch (error) {
+            showError(getErrorMessage(error))
         }
     }, [sellerId])
 
@@ -86,6 +61,9 @@ export default function SellerPurchases() {
         async (reset = true) => {
             if (sellerId === undefined || sellerId === null) {
                 return
+            }
+            if (reset) {
+                setLoadError(null)
             }
             const cursor = reset ? undefined : cursorRef.current
             const loader = reset
@@ -109,11 +87,14 @@ export default function SellerPurchases() {
                     cursorRef.current = nextCursor ?? undefined
                     setHasMore(nextCursor !== null)
                 } catch (error) {
-                    showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
+                    if (reset) {
+                        setLoadError(error)
+                    }
+                    showError(getErrorMessage(error))
                 }
             })
         },
-        [sellerId, withLoading, t],
+        [sellerId, withLoading],
     )
 
     const handleRefresh = useCallback(() => {
@@ -127,6 +108,10 @@ export default function SellerPurchases() {
         }
     }, [loading, loadingMore, hasMore, loadPurchases])
 
+    const renderItem = useCallback(({ item }: { item: IPurchaseDetail }) => {
+        return <SellerPurchaseRow variant="list" item={item} />
+    }, [])
+
     React.useEffect(() => {
         handleRefresh()
     }, [handleRefresh])
@@ -136,15 +121,10 @@ export default function SellerPurchases() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={[styles.priceListContainer, styles.fillContainer]}>
-                <View style={styles.sellerDetailsBackRow}>
-                    <IconButton
-                        icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                        variant="ghost"
-                        onPress={() => navigation.goBack()}
-                        accessibilityLabel={A11Y_LABELS.GO_BACK}
-                    />
-                    <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.PURCHASE_HISTORY_TITLE}</RNText>
-                </View>
+                <SellerScreenHeader
+                    title={UI_TEXT.PURCHASE_HISTORY_TITLE}
+                    onBack={() => navigation.goBack()}
+                />
 
                 <View style={styles.recentPurchasesHeader}>
                     <RNText style={styles.recentPurchasesTitle}>{UI_TEXT.RECENT_PURCHASES}</RNText>
@@ -155,19 +135,21 @@ export default function SellerPurchases() {
                     </RNText>
                 </View>
 
-                {loading && purchases.length === 0 ? (
+                {loading && purchases.length === 0 && !loadError ? (
                     <>
                         <CardSkeleton />
                         <CardSkeleton />
                         <CardSkeleton />
                     </>
+                ) : loadError && purchases.length === 0 ? (
+                    <LoadError error={loadError} onRetry={() => loadPurchases(true)} />
                 ) : (
                     <FlatList
                         style={styles.recentPurchasesList}
                         contentContainerStyle={styles.scrollContentGutter}
                         data={purchases}
                         keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => <SellerPurchasesRow item={item} />}
+                        renderItem={renderItem}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
                         ListFooterComponent={loadingMore ? (

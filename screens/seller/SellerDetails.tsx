@@ -14,34 +14,21 @@ import { purchaseService } from '../../services/purchaseService'
 import { paymentService } from '../../services/paymentService'
 import { ISeller, ISellerPaymentStat, IPayment, IPurchaseDetail } from '../../types/database'
 import { formatDateDisplay, formatNumber } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
-import { IconButton, PrimaryButton } from '../../components/buttons/Button'
+import { PrimaryButton } from '../../components/buttons/Button'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
 import { StatCell } from '../../components/StatCell'
 import { MoneyText } from '../../components/MoneyText'
+import { SellerScreenHeader } from './SellerScreenHeader'
+import { SellerPurchaseRow } from './SellerPurchaseRow'
+import { LoadError } from '../../components/LoadError'
 
 type SellerDetailsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
-
-function SellerBackRow({ onBack }: { onBack: () => void }) {
-    const styles = useStyles()
-    const { theme } = useTheme()
-    const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants()
-    return (
-        <View style={styles.sellerDetailsBackRow}>
-            <IconButton
-                icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                variant="ghost"
-                onPress={onBack}
-                accessibilityLabel={A11Y_LABELS.GO_BACK}
-            />
-            <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.SELLERS}</RNText>
-        </View>
-    )
-}
 
 function SellerProfileHeader({
     seller,
@@ -192,31 +179,6 @@ function RecentPaymentRow({ item, isLast }: { item: IPayment; isLast?: boolean }
     )
 }
 
-function RecentPurchaseRow({ item, isLast }: { item: IPurchaseDetail; isLast?: boolean }) {
-    const styles = useStyles()
-    const { UI_TEXT } = useLocalizedConstants()
-    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
-    return (
-        <Pressable
-            style={[styles.purchaseItemRow, styles.sellerRecentRow, isLast && styles.sellerRecentRowLast]}
-            onPress={() => navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })}
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${formatDateDisplay(item.created_at)}`}
-        >
-            <View style={styles.sellerInfo}>
-                <RNText style={styles.sellerRecentTitle}>{formatDateDisplay(item.created_at)}</RNText>
-                <RNText style={styles.sellerRecentSubtitle}>
-                    {formatNumber(item.items.length, 0)} {UI_TEXT.ITEMS.toLowerCase()}
-                </RNText>
-            </View>
-            <View style={styles.purchaseItemActions}>
-                <MoneyText amount={item.total} valueStyle={styles.sellerRecentTotal} />
-            </View>
-        </Pressable>
-    )
-}
-
 function SkeletonSectionHeader({ compact = false }: { compact?: boolean }) {
     const styles = useStyles()
     return (
@@ -323,6 +285,9 @@ export default function SellerDetails() {
     const [recentPurchases, setRecentPurchases] = useState<IPurchaseDetail[]>([])
     const [recentPayments, setRecentPayments] = useState<IPayment[]>([])
     const [notFound, setNotFound] = useState(false)
+    // Set when the load fails; replaces the skeleton with a retry state so a
+    // failed fetch is never shown as zeros or an endless loader.
+    const [loadError, setLoadError] = useState<unknown>(null)
     const { loading, withLoading } = useLoading(false)
 
     const confirmDelete = useConfirmDelete<[number]>({
@@ -337,14 +302,16 @@ export default function SellerDetails() {
             setNotFound(true)
             return
         }
+        setLoadError(null)
         await withLoading(async () => {
             try {
-                const [found, stats, stat, history, paid] = await Promise.all([
+                // Single-seller aggregates: no need to load every seller's stats.
+                const [found, stat, balance, history, paid] = await Promise.all([
                     sellerService.getSellerById(sellerId),
-                    purchaseService.getSellerStats().catch(() => [] as { seller_id: number; purchase_count: number; total_spent: number }[]),
-                    paymentService.getSellerPaymentStat(sellerId).catch(() => null),
-                    purchaseService.getRecentPurchasesBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT).catch(() => [] as IPurchaseDetail[]),
-                    paymentService.getRecentPaymentsBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT).catch(() => [] as IPayment[]),
+                    sellerService.getSellerStatById(sellerId),
+                    sellerService.getSellerBalanceById(sellerId),
+                    purchaseService.getRecentPurchasesBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT),
+                    paymentService.getRecentPaymentsBySeller(sellerId, PAGINATION_CONFIG.RECENT_SELLER_ITEMS_LIMIT),
                 ])
                 if (!found) {
                     setNotFound(true)
@@ -352,20 +319,20 @@ export default function SellerDetails() {
                 }
                 setNotFound(false)
                 setSeller(found)
-                const sellerStat = stats.find((s) => s.seller_id === sellerId)
                 setPurchaseStats(
-                    sellerStat
-                        ? { count: sellerStat.purchase_count, total: sellerStat.total_spent }
+                    stat
+                        ? { count: stat.purchase_count, total: stat.total_owed }
                         : { count: 0, total: 0 },
                 )
-                setPaymentStat(stat)
+                setPaymentStat(balance)
                 setRecentPurchases(history)
                 setRecentPayments(paid)
             } catch (error) {
-                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
+                setLoadError(error)
+                showError(getErrorMessage(error))
             }
         })
-    }, [sellerId, withLoading, t])
+    }, [sellerId, withLoading])
 
     useEffect(() => {
         loadDetails()
@@ -414,7 +381,7 @@ export default function SellerDetails() {
         return (
             <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
                 <View style={styles.priceListContainer}>
-                    <SellerBackRow onBack={() => navigation.goBack()} />
+                    <SellerScreenHeader title={UI_TEXT.SELLERS} onBack={() => navigation.goBack()} />
                     <EmptyState
                         icon="people-outline"
                         title={UI_TEXT.EMPTY_SELLER_LIST}
@@ -428,7 +395,7 @@ export default function SellerDetails() {
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={[styles.priceListContainer, styles.fillContainer]}>
-                <SellerBackRow onBack={() => navigation.goBack()} />
+                <SellerScreenHeader title={UI_TEXT.SELLERS} onBack={() => navigation.goBack()} />
 
                 {seller && (
                     <SellerProfileHeader
@@ -476,8 +443,9 @@ export default function SellerDetails() {
                                     />
                                 ) : (
                                     recentPurchases.map((purchase, index) => (
-                                        <RecentPurchaseRow
+                                        <SellerPurchaseRow
                                             key={purchase.id}
+                                            variant="recent"
                                             item={purchase}
                                             isLast={index === recentPurchases.length - 1}
                                         />
@@ -494,7 +462,7 @@ export default function SellerDetails() {
                         />
 
                         <PrimaryButton
-                            title={UI_TEXT.PAYMENT}
+                            title={UI_TEXT.RECORD_PAYMENT}
                             onPress={() =>
                                 navigation.navigate(ROUTES.RECORD_PAYMENT, {
                                     sellerId: seller.id,
@@ -537,6 +505,8 @@ export default function SellerDetails() {
                             </View>
                         )}
                     </ScrollView>
+                ) : loadError ? (
+                    <LoadError error={loadError} onRetry={loadDetails} />
                 ) : (
                     <SellerDetailsSkeleton />
                 )}
@@ -544,5 +514,3 @@ export default function SellerDetails() {
         </SafeAreaView>
     )
 }
-
-export const SELLER_DETAILS_ROUTE = ROUTES.SELLER_DETAILS

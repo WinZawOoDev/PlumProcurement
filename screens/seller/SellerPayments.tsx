@@ -1,5 +1,5 @@
 import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -7,11 +7,12 @@ import { useTheme } from '@rneui/themed'
 import { useTranslation } from 'react-i18next'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useStyles } from '../../styles'
-import { PAGINATION_CONFIG, SAFE_AREA } from '../../constants'
+import { PAYMENT_HISTORY_PAGE_SIZE, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { paymentService } from '../../services/paymentService'
 import { IPayment, ISellerPaymentStat } from '../../types/database'
 import { formatDateDisplay } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { showError } from '../../utils/notifications'
 import { useLoading } from '../../hooks/useAsync'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -20,6 +21,8 @@ import { EmptyState } from '../../components/EmptyState'
 import { IconButton } from '../../components/buttons/Button'
 import { StatCell } from '../../components/StatCell'
 import { MoneyText } from '../../components/MoneyText'
+import { SellerScreenHeader } from './SellerScreenHeader'
+import { LoadError } from '../../components/LoadError'
 
 type SellerPaymentsRouteProp = RouteProp<Record<string, { sellerId: number }>, string>
 
@@ -65,8 +68,7 @@ function PaymentRow({ item, onDelete }: { item: IPayment; onDelete: () => void }
 export default function SellerPayments() {
     const styles = useStyles()
     const { theme } = useTheme()
-    const { t } = useTranslation()
-    const { UI_TEXT, MESSAGES, A11Y_LABELS } = useLocalizedConstants()
+    const { UI_TEXT, MESSAGES } = useLocalizedConstants()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>()
     const route = useRoute<SellerPaymentsRouteProp>()
     const sellerId = route.params?.sellerId
@@ -75,7 +77,10 @@ export default function SellerPayments() {
     const [payments, setPayments] = useState<IPayment[]>([])
     const [hasMore, setHasMore] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const { loading, withLoading } = useLoading(false)
+    // Set when the first page (or its stats) fails; replaces the list with a retry state.
+    const [loadError, setLoadError] = useState<unknown>(null)
+    // Start in the loading state so the empty-list copy never flashes before the first page.
+    const { loading, withLoading } = useLoading(true)
     // Keyset cursor (id of the last loaded row); undefined = first page.
     const cursorRef = useRef<number | undefined>(undefined)
 
@@ -97,24 +102,31 @@ export default function SellerPayments() {
                 }
             await loader(async () => {
                 try {
-                    if (reset) {
-                        const stat = await paymentService.getSellerPaymentStat(sellerId).catch(() => null)
-                        setPaymentStat(stat)
-                    }
+                    const stat = reset ? await paymentService.getSellerPaymentStat(sellerId) : undefined
                     const { items, nextCursor } = await paymentService.getPaymentsPageBySeller({
                         sellerId,
-                        limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+                        limit: PAYMENT_HISTORY_PAGE_SIZE,
                         cursor,
                     })
+                    if (reset) {
+                        setPaymentStat(stat ?? null)
+                        setLoadError(null)
+                    }
                     setPayments((prev) => (reset ? items : [...prev, ...items]))
                     cursorRef.current = nextCursor ?? undefined
                     setHasMore(nextCursor !== null)
                 } catch (error) {
-                    showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
+                    if (reset) {
+                        setPaymentStat(null)
+                        setPayments([])
+                        setLoadError(error)
+                    } else {
+                        showError(getErrorMessage(error))
+                    }
                 }
             })
         },
-        [sellerId, withLoading, t],
+        [sellerId, withLoading],
     )
 
     const handleRefresh = useCallback(() => {
@@ -134,64 +146,62 @@ export default function SellerPayments() {
         onDeleted: handleRefresh,
     })
 
-    React.useEffect(() => {
+    useEffect(() => {
         loadPayments(true)
     }, [loadPayments])
 
     return (
         <SafeAreaView edges={SAFE_AREA.EDGES} style={styles.priceListScreen}>
             <View style={[styles.priceListContainer, styles.fillContainer]}>
-                <View style={styles.sellerDetailsBackRow}>
-                    <IconButton
-                        icon={<Ionicons name="arrow-back" size={22} color={theme.colors.primary} />}
-                        variant="ghost"
-                        onPress={() => navigation.goBack()}
-                        accessibilityLabel={A11Y_LABELS.GO_BACK}
-                    />
-                    <RNText style={styles.sellerDetailsBackTitle}>{UI_TEXT.PAYMENT_HISTORY}</RNText>
-                </View>
+                <SellerScreenHeader title={UI_TEXT.PAYMENT_HISTORY} onBack={() => navigation.goBack()} />
 
-                {paymentStat ? <PaymentStatsSection stat={paymentStat} /> : null}
-
-                {loading && payments.length === 0 && !paymentStat ? (
-                    <>
-                        <CardSkeleton />
-                        <CardSkeleton />
-                    </>
+                {loadError ? (
+                    <LoadError error={loadError} onRetry={handleRefresh} />
                 ) : (
-                    <FlatList
-                        style={styles.recentPurchasesList}
-                        contentContainerStyle={styles.scrollContentGutter}
-                        data={payments}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <PaymentRow item={item} onDelete={() => confirmDeletePayment(item.id)} />
-                        )}
-                        onEndReached={handleLoadMore}
-                        onEndReachedThreshold={0.5}
-                        ListFooterComponent={loadingMore ? (
+                    <>
+                        {paymentStat ? <PaymentStatsSection stat={paymentStat} /> : null}
+
+                        {loading && payments.length === 0 && !paymentStat ? (
                             <>
                                 <CardSkeleton />
                                 <CardSkeleton />
                             </>
-                        ) : null}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={loading}
-                                onRefresh={handleRefresh}
-                                colors={[theme.colors.primary]}
+                        ) : (
+                            <FlatList
+                                style={styles.recentPurchasesList}
+                                contentContainerStyle={styles.scrollContentGutter}
+                                data={payments}
+                                keyExtractor={(item) => item.id.toString()}
+                                renderItem={({ item }) => (
+                                    <PaymentRow item={item} onDelete={() => confirmDeletePayment(item.id)} />
+                                )}
+                                onEndReached={handleLoadMore}
+                                onEndReachedThreshold={0.5}
+                                ListFooterComponent={loadingMore ? (
+                                    <>
+                                        <CardSkeleton />
+                                        <CardSkeleton />
+                                    </>
+                                ) : null}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={loading}
+                                        onRefresh={handleRefresh}
+                                        colors={[theme.colors.primary]}
+                                    />
+                                }
+                                ListEmptyComponent={
+                                    loading ? null : (
+                                        <EmptyState
+                                            icon="cash-outline"
+                                            title={UI_TEXT.EMPTY_PAYMENT_LIST}
+                                            description={UI_TEXT.PAYMENT_SETTLE_HINT}
+                                        />
+                                    )
+                                }
                             />
-                        }
-                        ListEmptyComponent={
-                            loading ? null : (
-                                <EmptyState
-                                    icon="cash-outline"
-                                    title={UI_TEXT.EMPTY_PAYMENT_LIST}
-                                    description={UI_TEXT.PAYMENT_SETTLE_HINT}
-                                />
-                            )
-                        }
-                    />
+                        )}
+                    </>
                 )}
             </View>
         </SafeAreaView>

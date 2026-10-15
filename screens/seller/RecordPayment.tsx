@@ -1,25 +1,26 @@
-import { Pressable, ScrollView, Text as RNText, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text as RNText, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useTheme } from '@rneui/themed'
 import { useStyles } from '../../styles'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
+import { FormButtonGroupField, FormInputField } from '../../components/forms/FormFields'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { KeyboardAvoid } from '../../components/KeyboardAvoid'
 import { MoneyText } from '../../components/MoneyText'
 import { AMOUNT_PATTERN, ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
-import { showError } from '../../utils/notifications'
-import { toWesternDigits } from '../../utils'
+import { exceedsBalance, isPositiveAmount } from './paymentAmount'
 
 type FormData = {
     amount: string
-    method: string
+    /** Index into PAYMENT_METHODS (FormButtonGroupField stores indexes); null = none chosen. */
+    method: number | null
     note: string
 }
 
@@ -36,28 +37,29 @@ export default function RecordPayment() {
     const route = useRoute<RecordPaymentRouteProp>()
     const { sellerId, sellerName, sellerPhone, balance = 0 } = route.params ?? {}
 
-    const {
-        control,
-        handleSubmit,
-        setValue,
-        formState: { errors },
-    } = useForm<FormData>({
-        defaultValues: { amount: '', method: '', note: '' },
+    const { control, handleSubmit, setValue, setError } = useForm<FormData>({
+        defaultValues: { amount: '', method: null, note: '' },
         mode: 'onBlur',
     })
 
     const handleContinue = (data: FormData) => {
-        const amount = parseFloat(data.amount)
-        if (!AMOUNT_PATTERN.test(data.amount.trim()) || amount <= 0) {
-            showError(MESSAGES.ERROR_INVALID_AMOUNT)
+        const amountText = data.amount.trim()
+        const amount = parseFloat(amountText)
+        if (!AMOUNT_PATTERN.test(amountText) || !isPositiveAmount(amount)) {
+            setError('amount', { type: 'validate', message: MESSAGES.ERROR_INVALID_AMOUNT })
             return
         }
+        if (exceedsBalance(amount, balance)) {
+            setError('amount', { type: 'validate', message: MESSAGES.ERROR_PAYMENT_EXCEEDS_BALANCE })
+            return
+        }
+        const method = data.method === null ? undefined : PAYMENT_METHODS[data.method]
         navigation.navigate(ROUTES.PAYMENT_REVIEW, {
             sellerId,
             sellerName: sellerName ?? null,
             balance,
             amount,
-            method: data.method || null,
+            method: method?.value ?? null,
             note: data.note.trim() || null,
         })
     }
@@ -118,28 +120,16 @@ export default function RecordPayment() {
                         </View>
 
                         <View style={styles.paymentField}>
-                            <RNText style={styles.paymentFieldLabel}>{UI_TEXT.AMOUNT}</RNText>
-                            <Controller
-                                control={control}
+                            <FormInputField
                                 name="amount"
+                                control={control}
+                                label={UI_TEXT.AMOUNT}
+                                placeholder={UI_TEXT.AMOUNT_PLACEHOLDER}
+                                keyboardType="decimal-pad"
+                                required
                                 rules={{ required: VALIDATION_MESSAGES.AMOUNT_REQUIRED }}
-                                render={({ field: { onChange, value, onBlur } }) => (
-                                    <TextInput
-                                        style={styles.paymentInput}
-                                        value={value}
-                                        onChangeText={(text) => onChange(toWesternDigits(text))}
-                                        onBlur={onBlur}
-                                        keyboardType="decimal-pad"
-                                        placeholder={UI_TEXT.AMOUNT_PLACEHOLDER}
-                                        placeholderTextColor={theme.colors.grey3}
-                                        testID="payment-amount-input"
-                                        accessibilityLabel={UI_TEXT.AMOUNT}
-                                    />
-                                )}
+                                testID="payment-amount-input"
                             />
-                            {!!errors.amount && (
-                                <RNText style={styles.paymentFormError}>{errors.amount.message}</RNText>
-                            )}
                             {balance > 0 && (
                                 <Pressable
                                     style={styles.settleFullBalance}
@@ -161,63 +151,25 @@ export default function RecordPayment() {
                         </View>
 
                         <View style={styles.paymentField}>
-                            <RNText style={styles.paymentFieldLabel}>{UI_TEXT.PAYMENT_METHOD}</RNText>
-                            <Controller
-                                control={control}
+                            <FormButtonGroupField
                                 name="method"
-                                render={({ field: { onChange, value } }) => (
-                                    <View style={styles.paymentMethodChips}>
-                                        {PAYMENT_METHODS.map((option) => {
-                                            const selected = value === option.value
-                                            return (
-                                                <Pressable
-                                                    key={option.value}
-                                                    style={[
-                                                        styles.paymentMethodChip,
-                                                        selected && styles.paymentMethodChipActive,
-                                                    ]}
-                                                    onPress={() => onChange(option.value)}
-                                                    accessibilityRole="button"
-                                                    accessibilityState={{ selected }}
-                                                    accessibilityLabel={option.label}
-                                                >
-                                                    <RNText
-                                                        style={[
-                                                            styles.paymentMethodChipText,
-                                                            selected && styles.paymentMethodChipTextActive,
-                                                        ]}
-                                                    >
-                                                        {option.label}
-                                                    </RNText>
-                                                </Pressable>
-                                            )
-                                        })}
-                                    </View>
-                                )}
+                                control={control}
+                                label={UI_TEXT.PAYMENT_METHOD}
+                                buttons={PAYMENT_METHODS.map((option) => option.label)}
                             />
                         </View>
 
                         <View style={styles.paymentField}>
-                            <RNText style={styles.paymentFieldLabel}>{UI_TEXT.NOTE}</RNText>
-                            <Controller
-                                control={control}
+                            <FormInputField
                                 name="note"
-                                render={({ field: { onChange, value, onBlur } }) => (
-                                    <TextInput
-                                        style={styles.paymentInput}
-                                        value={value}
-                                        onChangeText={onChange}
-                                        onBlur={onBlur}
-                                        placeholder={UI_TEXT.OPTIONAL_NOTE_PLACEHOLDER}
-                                        placeholderTextColor={theme.colors.grey3}
-                                        accessibilityLabel={UI_TEXT.NOTE}
-                                    />
-                                )}
+                                control={control}
+                                label={UI_TEXT.NOTE}
+                                placeholder={UI_TEXT.OPTIONAL_NOTE_PLACEHOLDER}
                             />
                         </View>
                     </ScrollView>
                     <View style={styles.editPurchaseFooter}>
-                        <PrimaryButton title={UI_TEXT.CONTINUE} onPress={handleSubmit(handleContinue)} />
+                        <PrimaryButton title={UI_TEXT.CONTINUE} onPress={handleSubmit(handleContinue)} testID="btn-Continue" />
                         <SecondaryButton title={UI_TEXT.CANCEL} onPress={() => navigation.goBack()} />
                     </View>
                 </View>

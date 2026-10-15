@@ -1,7 +1,7 @@
 import { FlatList, RefreshControl, Text as RNText, View } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useStyles } from '../../styles'
 import { useTheme } from '@rneui/themed'
@@ -13,22 +13,27 @@ import { sellerService, type SellersCursor } from '../../services/sellerService'
 import { ISellerWithStats } from '../../types/database'
 import SellerFormSheet from './SellerFormSheet'
 import { SearchBar } from '../../components/SearchBar'
+import { getErrorMessage } from '../../utils/errors'
 import { showError } from '../../utils/notifications'
-import { formatNumber } from '../../utils'
 import { useSearchFilter } from '../../hooks/useSearchFilter'
 import { SearchIconButton } from '../../components/SearchIconButton'
 import { SellerRow } from './SellerRow'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { Skeleton } from '../../components/Skeleton'
+import { LoadError } from '../../components/LoadError'
 
 function SellerHeader({ count }: { count: number }) {
+    const { t } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
     return (
         <SectionHeader
             icon="people-outline"
             title={UI_TEXT.SELLERS}
-            description={`${UI_TEXT.SELLERS_DESCRIPTION} • ${formatNumber(count, 0)} ${count === 1 ? UI_TEXT.SELLER_SINGULAR : UI_TEXT.SELLER_PLURAL}`}
+            description={t('uiText.SELLERS_HEADER_DESCRIPTION', {
+                description: UI_TEXT.SELLERS_DESCRIPTION,
+                summary: t('uiText.SELLER_COUNT', { count }),
+            })}
         />
     )
 }
@@ -47,7 +52,7 @@ function SellerActions({
 
     return (
         <View style={styles.sellerActionsRow}>
-            <PrimaryButton compact title={UI_TEXT.ADD_SELLER} onPress={onAddSeller} />
+            <PrimaryButton compact title={UI_TEXT.ADD_SELLER} onPress={onAddSeller} testID="btn-Add Seller" />
             <SearchIconButton
                 active={searchVisible}
                 onPress={onToggleSearch}
@@ -124,8 +129,10 @@ function SellerList({
     loadingMore,
     hasQuery,
     searchQuery,
+    loadError,
     onRefresh,
     onEndReached,
+    onRetry,
     onOpenDetail,
     onEdit,
 }: {
@@ -134,8 +141,10 @@ function SellerList({
     loadingMore: boolean
     hasQuery: boolean
     searchQuery: string
+    loadError: unknown
     onRefresh: () => void
     onEndReached: () => void
+    onRetry: () => void
     onOpenDetail: (seller: ISellerWithStats) => void
     onEdit: (seller: ISellerWithStats) => void
 }) {
@@ -144,8 +153,25 @@ function SellerList({
     const { t } = useTranslation()
     const { UI_TEXT } = useLocalizedConstants()
 
-    if (loading && sellers.length === 0) {
+    // Stable row element: SellerRow is memoized on (seller + stable callbacks),
+    // so rows do not re-render when the list parent does.
+    const renderItem = useCallback(({ item }: { item: ISellerWithStats }) => (
+        <SellerRow
+            seller={item}
+            purchaseCount={item.purchase_count}
+            purchaseTotal={item.total_spent}
+            balance={item.balance}
+            onPress={onOpenDetail}
+            onEdit={onEdit}
+        />
+    ), [onOpenDetail, onEdit])
+
+    if (loading && sellers.length === 0 && !loadError) {
         return <SellerListSkeleton />
+    }
+
+    if (loadError && sellers.length === 0) {
+        return <LoadError error={loadError} onRetry={onRetry} />
     }
 
     return (
@@ -156,16 +182,7 @@ function SellerList({
             initialNumToRender={10}
             windowSize={10}
             removeClippedSubviews={true}
-            renderItem={({ item }) => (
-                <SellerRow
-                    seller={item}
-                    purchaseCount={item.purchase_count}
-                    purchaseTotal={item.total_spent}
-                    balance={item.balance}
-                    onPress={() => onOpenDetail(item)}
-                    onEdit={() => onEdit(item)}
-                />
-            )}
+            renderItem={renderItem}
             ListEmptyComponent={
                 <EmptyState
                     icon={hasQuery ? 'search-outline' : 'people-outline'}
@@ -215,8 +232,12 @@ export default function Sellers() {
     const [sellers, setSellers] = useState<ISellerWithStats[]>([])
     const [totalCount, setTotalCount] = useState(0)
     const [hasMore, setHasMore] = useState(true)
-    const [loading, setLoading] = useState(false)
+    // Start loading so the empty state never flashes before the first page.
+    const [loading, setLoading] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
+    // Set when a full reload fails; the list shows a retry state instead of
+    // the "no sellers yet" empty state.
+    const [loadError, setLoadError] = useState<unknown>(null)
     const [sheetVisible, setSheetVisible] = useState(false)
     const [editing, setEditing] = useState<ISellerWithStats | null>(null)
     // Keyset cursor (last row's name + id); undefined = first page.
@@ -246,8 +267,10 @@ export default function Sellers() {
             const trimmed = query.trim() || undefined
             const cursor = reset ? undefined : cursorRef.current
             const token = ++requestTokenRef.current
-            if (reset) setLoading(true)
-            else setLoadingMore(true)
+            if (reset) {
+                setLoading(true)
+                setLoadError(null)
+            } else setLoadingMore(true)
             try {
                 const [page, count] = await Promise.all([
                     sellerService.getSellersPage({
@@ -269,7 +292,10 @@ export default function Sellers() {
                 setHasMore(nextCursor !== null)
             } catch (error) {
                 if (!mountedRef.current || token !== requestTokenRef.current) return
-                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
+                if (reset) {
+                    setLoadError(error)
+                }
+                showError(getErrorMessage(error))
             } finally {
                 if (mountedRef.current && token === requestTokenRef.current) {
                     if (reset) setLoading(false)
@@ -277,12 +303,26 @@ export default function Sellers() {
                 }
             }
         },
-        [searchQuery, t],
+        [searchQuery],
     )
 
     useEffect(() => {
         loadSellers(true, '')
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Balances and purchase totals change in other tabs (recorded purchases
+    // and payments), so refetch whenever this screen regains focus. The first
+    // focus happens on mount, which the initial load above already covers.
+    const hasFocusedRef = useRef(false)
+    useFocusEffect(
+        useCallback(() => {
+            if (!hasFocusedRef.current) {
+                hasFocusedRef.current = true
+                return
+            }
+            loadSellers(true)
+        }, [loadSellers])
+    )
 
     // Reload on search changes, but skip the mount-time run (initial load above)
     const searchEffectReady = useRef(false)
@@ -312,6 +352,20 @@ export default function Sellers() {
         navigation.navigate(ROUTES.SELLER_DETAILS, { sellerId: seller.id })
     }, [navigation])
 
+    const handleEdit = useCallback((seller: ISellerWithStats) => {
+        setEditing(seller)
+        setSheetVisible(true)
+    }, [])
+
+    const handleAddSeller = useCallback(() => {
+        setEditing(null)
+        setSheetVisible(true)
+    }, [])
+
+    const handleRetry = useCallback(() => {
+        loadSellers(true, searchQuery)
+    }, [loadSellers, searchQuery])
+
     const isInitialLoading = loading && sellers.length === 0
 
     return (
@@ -320,10 +374,7 @@ export default function Sellers() {
                 <SellerHeader count={totalCount} />
                 <SellerActions
                     searchVisible={searchVisible}
-                    onAddSeller={() => {
-                        setEditing(null)
-                        setSheetVisible(true)
-                    }}
+                    onAddSeller={handleAddSeller}
                     onToggleSearch={handleToggleSearch}
                 />
                 <SellerSearch
@@ -345,13 +396,12 @@ export default function Sellers() {
                     loadingMore={loadingMore}
                     hasQuery={hasQuery}
                     searchQuery={searchQuery}
+                    loadError={loadError}
                     onRefresh={handleRefresh}
                     onEndReached={handleLoadMore}
+                    onRetry={handleRetry}
                     onOpenDetail={handleOpenDetail}
-                    onEdit={(seller) => {
-                        setEditing(seller)
-                        setSheetVisible(true)
-                    }}
+                    onEdit={handleEdit}
                 />
             </View>
 

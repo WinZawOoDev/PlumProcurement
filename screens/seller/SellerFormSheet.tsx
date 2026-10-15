@@ -1,14 +1,15 @@
-import { View, Text } from 'react-native'
+import { Text } from 'react-native'
 import React, { useEffect } from 'react'
-import { BottomSheet } from '@rneui/themed'
 import { Control, useForm } from 'react-hook-form'
 import { useStyles } from '../../styles'
 import { FormInputField } from '../../components/forms/FormFields'
 import { PrimaryButton, SecondaryButton } from '../../components/buttons/Button'
+import { DetailSheet } from '../../components/DetailSheet'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService, NewSeller } from '../../services/sellerService'
 import { ISeller } from '../../types/database'
 import { showSuccess, showError } from '../../utils/notifications'
+import { getErrorMessage } from '../../utils/errors'
 
 type FormData = {
     name: string
@@ -23,6 +24,12 @@ interface SellerFormSheetProps {
     onSaved: () => void
 }
 
+/** Rejects empty and whitespace-only values; `required` alone accepts "   ". */
+const nonBlank = (message: string) => ({
+    required: message,
+    validate: (value: string) => value.trim().length > 0 || message,
+})
+
 function SellerFormFields({ control }: { control: Control<FormData> }) {
     const { UI_TEXT, VALIDATION_MESSAGES } = useLocalizedConstants()
     return (
@@ -33,7 +40,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 label={UI_TEXT.SELLER_NAME}
                 placeholder={UI_TEXT.SELLER_NAME_PLACEHOLDER}
                 required
-                rules={{ required: VALIDATION_MESSAGES.NAME_REQUIRED }}
+                rules={nonBlank(VALIDATION_MESSAGES.NAME_REQUIRED)}
             />
             <FormInputField
                 name="phone"
@@ -42,7 +49,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 placeholder={UI_TEXT.PHONE_PLACEHOLDER}
                 keyboardType="default"
                 required
-                rules={{ required: VALIDATION_MESSAGES.PHONE_REQUIRED }}
+                rules={nonBlank(VALIDATION_MESSAGES.PHONE_REQUIRED)}
             />
             <FormInputField
                 name="address"
@@ -51,7 +58,7 @@ function SellerFormFields({ control }: { control: Control<FormData> }) {
                 placeholder={UI_TEXT.ADDRESS_PLACEHOLDER}
                 keyboardType="default"
                 required
-                rules={{ required: VALIDATION_MESSAGES.ADDRESS_REQUIRED }}
+                rules={nonBlank(VALIDATION_MESSAGES.ADDRESS_REQUIRED)}
             />
         </>
     )
@@ -78,6 +85,7 @@ function SellerFormActions({
                 loading={saving}
                 onPress={onSubmit}
                 containerStyle={styles.updateButtonContainerStyle}
+                testID="btn-Save"
             />
             <SecondaryButton
                 title={UI_TEXT.CANCEL}
@@ -91,7 +99,7 @@ function SellerFormActions({
 export default function SellerFormSheet({ visible, seller, onClose, onSaved }: SellerFormSheetProps) {
     const styles = useStyles()
     const { UI_TEXT, MESSAGES } = useLocalizedConstants()
-    const editing = !!seller
+    const editing = seller !== null
 
     const { control, handleSubmit, reset, formState } = useForm<FormData>({
         defaultValues: { name: '', phone: '', address: '' },
@@ -109,13 +117,14 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
     }, [visible, seller, reset])
 
     const handleSave = async (data: FormData) => {
+        // Trim again here: validation accepts padded values and the saved row must not carry the padding.
+        const payload: NewSeller = {
+            name: data.name.trim(),
+            phone: data.phone.trim(),
+            address: data.address.trim(),
+        }
         try {
-            const payload: NewSeller = {
-                name: data.name.trim(),
-                phone: data.phone.trim(),
-                address: data.address.trim(),
-            }
-            if (editing) {
+            if (seller) {
                 await sellerService.editSeller(seller.id, payload)
                 showSuccess(MESSAGES.SELLER_UPDATE_SUCCESS)
             } else {
@@ -124,29 +133,23 @@ export default function SellerFormSheet({ visible, seller, onClose, onSaved }: S
             }
             onSaved()
             onClose()
-        } catch {
-            showError(MESSAGES.ERROR_GENERIC)
+        } catch (error) {
+            showError(getErrorMessage(error))
         }
     }
 
     return (
-        <BottomSheet
-            isVisible={visible}
-            modalProps={{ animationType: 'slide' }}
-            onBackdropPress={onClose}
-        >
-            <View style={styles.bottomSheetContainer}>
-                <Text style={styles.bottomSheetTitle}>
-                    {editing ? UI_TEXT.EDIT_SELLER : UI_TEXT.ADD_SELLER}
-                </Text>
-                <SellerFormFields control={control} />
-                <SellerFormActions
-                    editing={editing}
-                    saving={formState.isSubmitting}
-                    onSubmit={handleSubmit(handleSave)}
-                    onCancel={onClose}
-                />
-            </View>
-        </BottomSheet>
+        <DetailSheet visible={visible} onClose={onClose}>
+            <Text style={styles.bottomSheetTitle}>
+                {editing ? UI_TEXT.EDIT_SELLER : UI_TEXT.ADD_SELLER}
+            </Text>
+            <SellerFormFields control={control} />
+            <SellerFormActions
+                editing={editing}
+                saving={formState.isSubmitting}
+                onSubmit={handleSubmit(handleSave)}
+                onCancel={onClose}
+            />
+        </DetailSheet>
     )
 }
