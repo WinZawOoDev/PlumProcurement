@@ -6,7 +6,8 @@ import { ThemeProvider } from '@rneui/themed'
 import EditPurchase from '../screens/purchasing/EditPurchase'
 import { PrimaryButton } from '../components/buttons/Button'
 import { purchaseService } from '../services/purchaseService'
-import { A11Y_LABELS, UI_TEXT, CATEGORY_LABELS } from '../constants'
+import { A11Y_LABELS, MESSAGES, UI_TEXT, CATEGORY_LABELS } from '../constants'
+import { DatabaseError } from '../services/errors'
 import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 
@@ -157,5 +158,40 @@ describe('EditPurchase screen', () => {
             UI_TEXT.DISCARD_CHANGES_MESSAGE,
             expect.any(Array)
         )
+    })
+
+    test('a failed save shows the generic message, not the raw error, and stays on screen', async () => {
+        const showSpy = jest.spyOn(Toast, 'show')
+        ;(purchaseService.editPurchase as jest.Mock).mockRejectedValueOnce(new Error('raw internal detail'))
+        const root = await renderScreen()
+        await act(async () => {
+            findIncrease(root).props.onPress()
+        })
+        await act(async () => {
+            root.root.findByType(PrimaryButton).props.onPress()
+        })
+
+        const messages = showSpy.mock.calls.map((call) => (call[0] as { text1?: string }).text1)
+        expect(messages).toContain(MESSAGES.ERROR_GENERIC)
+        expect(messages).not.toContain('raw internal detail')
+        expect(mockGoBack).not.toHaveBeenCalled()
+    })
+
+    test('a failed save shows a DatabaseError message as-is', async () => {
+        const showSpy = jest.spyOn(Toast, 'show')
+        ;(purchaseService.editPurchase as jest.Mock).mockRejectedValueOnce(
+            new DatabaseError(MESSAGES.ERROR_PURCHASE_LOCKED)
+        )
+        const root = await renderScreen()
+        await act(async () => {
+            findIncrease(root).props.onPress()
+        })
+        await act(async () => {
+            root.root.findByType(PrimaryButton).props.onPress()
+        })
+
+        const messages = showSpy.mock.calls.map((call) => (call[0] as { text1?: string }).text1)
+        expect(messages).toContain(MESSAGES.ERROR_PURCHASE_LOCKED)
+        expect(mockGoBack).not.toHaveBeenCalled()
     })
 })

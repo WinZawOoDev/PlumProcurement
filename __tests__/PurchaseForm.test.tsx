@@ -8,7 +8,7 @@ import { PriceProvider, usePrices } from '../context/PriceContext'
 import { PrimaryButton } from '../components/buttons/Button'
 import { priceService } from '../services/priceService'
 import { purchaseService } from '../services/purchaseService'
-import { A11Y_LABELS, UI_TEXT } from '../constants'
+import { A11Y_LABELS, MESSAGES, UI_TEXT } from '../constants'
 import { IPrice } from '../types/database'
 import { makeAppTheme } from '../theme'
 
@@ -238,6 +238,27 @@ describe('PurchaseForm', () => {
             await flush()
         })
         expect(textContent(root)).toContain('—')
+    })
+
+    test('a failed record shows the generic message, not the raw error', async () => {
+        const showSpy = jest.spyOn(Toast, 'show')
+        ;(purchaseService.recordPurchase as jest.Mock).mockRejectedValueOnce(new Error('raw internal detail'))
+        const root = await renderForm()
+
+        await selectSeller(root)
+        await act(async () => {
+            findIncreaseButton(root).props.onPress()
+            await flush()
+        })
+        await act(async () => {
+            findRecordButton(root).props.onPress()
+            await flush()
+        })
+
+        const messages = showSpy.mock.calls.map((call) => (call[0] as { text1?: string }).text1)
+        expect(messages).toContain(MESSAGES.ERROR_GENERIC)
+        expect(messages).not.toContain('raw internal detail')
+        expect(onRecorded).not.toHaveBeenCalled()
     })
 
     test('does not record without a selected seller', async () => {

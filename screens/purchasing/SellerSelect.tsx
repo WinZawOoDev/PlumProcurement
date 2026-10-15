@@ -11,14 +11,14 @@ import { ROUTES, SAFE_AREA } from '../../constants'
 import { useLocalizedConstants } from '../../hooks/useLocalizedConstants'
 import { sellerService } from '../../services/sellerService'
 import { ISeller } from '../../types/database'
-import { showError } from '../../utils/notifications'
 import { formatNumber } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { useLoading } from '../../hooks/useAsync'
 import { lightHaptic } from '../../utils/haptics'
 import { SearchBar } from '../../components/SearchBar'
 import { EmptyState } from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/Skeleton'
-import { IconButton } from '../../components/buttons/Button'
+import { IconButton, PrimaryButton } from '../../components/buttons/Button'
 
 type SellerSelectRouteProp = RouteProp<
     Record<string, { currentSellerId?: number }>,
@@ -41,18 +41,27 @@ export default function SellerSelect() {
 
     const [sellers, setSellers] = useState<ISeller[]>([])
     const [query, setQuery] = useState('')
-    const { loading, withLoading } = useLoading(false)
+    // Starts loading so the first render shows skeletons, not the empty state.
+    const { loading, withLoading } = useLoading(true)
+    // Localized message from the last failed load; null when healthy.
+    const [loadError, setLoadError] = useState<string | null>(null)
+
+    const loadSellers = useCallback(
+        () =>
+            withLoading(async () => {
+                try {
+                    setSellers(await sellerService.getSellers())
+                    setLoadError(null)
+                } catch (error) {
+                    setLoadError(getErrorMessage(error))
+                }
+            }),
+        [withLoading],
+    )
 
     useEffect(() => {
-        withLoading(async () => {
-            try {
-                setSellers(await sellerService.getSellers())
-            } catch (error) {
-                showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'))
-            }
-        })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+        loadSellers()
+    }, [loadSellers])
 
     const filtered = useMemo(
         () =>
@@ -113,6 +122,18 @@ export default function SellerSelect() {
                         <CardSkeleton />
                         <CardSkeleton />
                         <CardSkeleton />
+                    </>
+                ) : loadError !== null ? (
+                    <>
+                        <EmptyState
+                            compact
+                            icon="alert-circle-outline"
+                            title={UI_TEXT.SOMETHING_WENT_WRONG}
+                            description={loadError}
+                        />
+                        <View style={styles.emptyStateContainerCompact}>
+                            <PrimaryButton title={UI_TEXT.RETRY} compact onPress={loadSellers} />
+                        </View>
                     </>
                 ) : (
                     <FlatList

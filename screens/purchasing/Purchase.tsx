@@ -17,6 +17,7 @@ import { purchaseService } from '../../services/purchaseService'
 import { IPurchaseDetail, IPrice } from '../../types/database'
 import { showSuccess, showError, showUndo } from '../../utils/notifications'
 import { formatNumber } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { useLoading } from '../../hooks/useAsync'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
@@ -122,8 +123,8 @@ function PurchaseFormActions({
     const { UI_TEXT } = useLocalizedConstants()
     return (
         <View style={styles.formActions}>
-            <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !canRecord} loading={recording} onPress={onRecord} />
-            <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={onViewHistory} />
+            <PrimaryButton title={UI_TEXT.RECORD_PURCHASE} disabled={recording || !canRecord} loading={recording} onPress={onRecord} testID="btn-Record Purchase" />
+            <SecondaryButton title={UI_TEXT.VIEW_HISTORY} onPress={onViewHistory} testID="btn-View History" />
         </View>
     )
 }
@@ -234,8 +235,7 @@ export const PurchaseForm = React.memo(function PurchaseForm({ selectedSeller, o
                 onRecorded()
                 applyQuantities({})
             } catch (error) {
-                const message = error instanceof Error ? error.message : MESSAGES.ERROR_GENERIC
-                showError(message)
+                showError(getErrorMessage(error))
             }
         })
     }

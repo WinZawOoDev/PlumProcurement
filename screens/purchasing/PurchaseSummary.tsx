@@ -13,6 +13,7 @@ import { formatDateDisplay, formatNumber } from '../../utils'
 import { SectionHeader } from '../../components/SectionHeader'
 import { EmptyState } from '../../components/EmptyState'
 import { MoneyText } from '../../components/MoneyText'
+import { StatCell } from '../../components/StatCell'
 
 type PurchaseSummaryRouteProp = RouteProp<
     Record<string, { purchase: IPurchaseDetail }>,
@@ -41,18 +42,6 @@ function ItemDetailRow({ item }: { item: IPurchaseDetail['items'][number] }) {
                 </RNText>
             </View>
             <MoneyText amount={item.line_total} valueStyle={styles.purchaseDetailItemTotal} />
-        </View>
-    )
-}
-
-function StatCell({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
-    const styles = useStyles()
-    return (
-        <View style={styles.purchaseSummaryStatCell}>
-            <RNText style={styles.purchaseSummaryStatValue}>{value}</RNText>
-            <RNText style={[styles.purchaseSummaryStatLabel, highlight && styles.purchaseSummaryStatLabelHighlight]}>
-                {label}
-            </RNText>
         </View>
     )
 }
@@ -98,9 +87,9 @@ export default function PurchaseSummary() {
                         </View>
                     </View>
                     <View style={styles.purchaseSummaryStatsRow}>
-                        <StatCell label={UI_TEXT.TOTAL_ITEMS} value={formatNumber(purchase.items.length, 0)} />
+                        <StatCell label={UI_TEXT.TOTAL_ITEMS} value={formatNumber(purchase.items.length, 0)} icon="list-outline" />
                         <View style={styles.purchaseSummaryStatDivider} />
-                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={<MoneyText amount={purchase.total} />} highlight />
+                        <StatCell label={UI_TEXT.TOTAL_AMOUNT} value={<MoneyText amount={purchase.total} />} icon="cash-outline" />
                     </View>
                 </View>
                 <RNText style={styles.priceItemListTitle}>{UI_TEXT.ITEMS}</RNText>

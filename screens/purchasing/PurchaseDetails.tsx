@@ -30,8 +30,9 @@ import {
   formatNumber,
   // getCsvFilename,
 } from '../../utils';
+import { getErrorMessage } from '../../utils/errors';
 // import { shareOrSaveCsv } from '../../utils/csvExport';
-import { IconButton /* , SecondaryButton */ } from '../../components/buttons/Button';
+import { IconButton, PrimaryButton /* , SecondaryButton */ } from '../../components/buttons/Button';
 import { SearchBar } from '../../components/SearchBar';
 import { SearchIconButton } from '../../components/SearchIconButton';
 import { MoneyText } from '../../components/MoneyText';
@@ -133,27 +134,28 @@ function HighlightedText({
   return <RNText style={style}>{parts}</RNText>;
 }
 
-function PurchaseRow({
+// Memoized: rendered per list item. All props are stable (callbacks come from
+// the parent via useCallback), so unrelated list state changes skip rows.
+const PurchaseRow = React.memo(function PurchaseRow({
   item,
   locked,
   query,
+  onOpen,
   onEdit,
 }: {
   item: IPurchaseDetail;
   locked: boolean;
   query: string;
+  onOpen: (item: IPurchaseDetail) => void;
   onEdit: (item: IPurchaseDetail) => void;
 }) {
   const styles = useStyles();
   const { theme } = useTheme();
   const { UI_TEXT, A11Y_LABELS } = useLocalizedConstants();
-  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   return (
     <Pressable
       style={styles.purchaseItemRow}
-      onPress={() =>
-        navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item })
-      }
+      onPress={() => onOpen(item)}
       accessible
       accessibilityRole="button"
       accessibilityLabel={`${UI_TEXT.PURCHASE_SUMMARY_TITLE}: ${item.seller_name ?? UI_TEXT.NO_SELLER}`}
@@ -201,7 +203,7 @@ function PurchaseRow({
       </View>
     </Pressable>
   );
-}
+});
 
 function PurchaseListSkeleton() {
   const styles = useStyles();
@@ -236,7 +238,7 @@ function PurchaseActions({
   onToggleSearch: () => void;
 }) {
   const styles = useStyles();
-  // const { UI_TEXT } = useLocalizedConstants();
+  const { A11Y_LABELS } = useLocalizedConstants();
   return (
     <View style={[styles.actionButtonsRow, styles.purchaseActionsRow]}>
       {/* CSV export disabled
@@ -247,7 +249,11 @@ function PurchaseActions({
         buttonStyle={styles.exportButton}
       />
       */}
-      <SearchIconButton active={searchVisible} onPress={onToggleSearch} />
+      <SearchIconButton
+        active={searchVisible}
+        onPress={onToggleSearch}
+        accessibilityLabel={A11Y_LABELS.TOGGLE_SEARCH}
+      />
     </View>
   );
 }
@@ -283,8 +289,11 @@ export default function PurchaseDetails() {
   const [purchases, setPurchases] = useState<IPurchaseDetail[]>([]);
   const [summary, setSummary] = useState<{ count: number; total: number } | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  // Starts true so the first render shows skeletons, never the empty state.
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Localized message from the last failed first-page load; null when healthy.
+  const [loadError, setLoadError] = useState<string | null>(null);
   // Keyset cursor (id of the last loaded row); undefined = first page.
   const cursorRef = useRef<number | undefined>(undefined);
   // Monotonic token: only the latest load may commit, so an in-flight page
@@ -313,8 +322,12 @@ export default function PurchaseDetails() {
       const trimmed = query.trim() || undefined;
       const cursor = reset ? undefined : cursorRef.current;
       const token = ++requestTokenRef.current;
-      if (reset) setLoading(true);
-      else setLoadingMore(true);
+      if (reset) {
+        setLoading(true);
+        setLoadError(null);
+      } else {
+        setLoadingMore(true);
+      }
       try {
         const [page, nextSummary] = await Promise.all([
           purchaseService.getPurchasesPage({
@@ -338,7 +351,18 @@ export default function PurchaseDetails() {
         setHasMore(nextCursor !== null);
       } catch (error) {
         if (!mountedRef.current || token !== requestTokenRef.current) return;
-        showError((error as Error)?.message ?? t('messages.ERROR_GENERIC'));
+        if (reset) {
+          // First-page failure: clear stale rows and show the error state
+          // (with retry) instead of the "no purchases" empty state.
+          setPurchases([]);
+          setSummary(null);
+          cursorRef.current = undefined;
+          setHasMore(false);
+          setLoadError(getErrorMessage(error));
+        } else {
+          // Load-more failure keeps the loaded rows; surface it as a toast.
+          showError(getErrorMessage(error));
+        }
       } finally {
         if (mountedRef.current && token === requestTokenRef.current) {
           if (reset) setLoading(false);
@@ -346,7 +370,7 @@ export default function PurchaseDetails() {
         }
       }
     },
-    [searchQuery, t],
+    [searchQuery],
   );
 
   useEffect(() => {
@@ -368,6 +392,13 @@ export default function PurchaseDetails() {
       }
       loadPurchasesRef.current(true, searchQueryRef.current || '');
     }, [])
+  );
+
+  const handleOpen = useCallback(
+    (item: IPurchaseDetail) => {
+      navigation.navigate(ROUTES.PURCHASE_SUMMARY, { purchase: item });
+    },
+    [navigation]
   );
 
   const handleEdit = useCallback(
@@ -399,6 +430,10 @@ export default function PurchaseDetails() {
   }, [loading, loadingMore, hasMore, searchQuery, loadPurchases]);
 
   const handleRefresh = useCallback(() => {
+    loadPurchases(true, searchQuery);
+  }, [loadPurchases, searchQuery]);
+
+  const handleRetry = useCallback(() => {
     loadPurchases(true, searchQuery);
   }, [loadPurchases, searchQuery]);
 
@@ -491,7 +526,7 @@ export default function PurchaseDetails() {
           onChangeText={setSearchQuery}
         />
 
-        {hasQuery && !isInitialLoading ? (
+        {hasQuery && !isInitialLoading && loadError === null ? (
           <RNText style={styles.purchaseResultsCount}>
             {t('uiText.SHOWING_COUNT', {
               filtered: visiblePurchases.length,
@@ -513,11 +548,27 @@ export default function PurchaseDetails() {
                 item={item}
                 locked={Number(item.has_payment) > 0}
                 query={hasQuery ? searchQuery : ''}
+                onOpen={handleOpen}
                 onEdit={handleEdit}
               />
             )}
             ListEmptyComponent={
-              loading ? null : (
+              loading ? null : loadError !== null ? (
+                <>
+                  <EmptyState
+                    icon="alert-circle-outline"
+                    title={UI_TEXT.SOMETHING_WENT_WRONG}
+                    description={loadError}
+                  />
+                  <View style={styles.emptyStateContainerCompact}>
+                    <PrimaryButton
+                      title={UI_TEXT.RETRY}
+                      compact
+                      onPress={handleRetry}
+                    />
+                  </View>
+                </>
+              ) : (
                 <EmptyState
                   icon="receipt-outline"
                   title={

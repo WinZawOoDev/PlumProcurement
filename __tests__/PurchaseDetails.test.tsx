@@ -3,11 +3,13 @@ import ReactTestRenderer, { act } from 'react-test-renderer'
 import { FlatList } from 'react-native'
 import { ThemeProvider } from '@rneui/themed'
 import PurchaseDetails from '../screens/purchasing/PurchaseDetails'
-import { SecondaryButton } from '../components/buttons/Button'
+import { PrimaryButton, SecondaryButton } from '../components/buttons/Button'
 import { SearchBar } from '../components/SearchBar'
 import { SearchIconButton } from '../components/SearchIconButton'
+import { CardSkeleton } from '../components/Skeleton'
 import { purchaseService } from '../services/purchaseService'
-import { A11Y_LABELS, PAGINATION_CONFIG, UI_TEXT } from '../constants'
+import { DatabaseError } from '../services/errors'
+import { A11Y_LABELS, MESSAGES, PAGINATION_CONFIG, UI_TEXT } from '../constants'
 import { IPurchaseDetail } from '../types/database'
 import { makeAppTheme } from '../theme'
 import { shareOrSaveCsv } from '../utils/csvExport'
@@ -252,5 +254,100 @@ describe('PurchaseDetails screen', () => {
         const text = textContent(root)
         expect(text).toContain('2.00') // page2 committed
         expect(text).not.toContain('10.00') // stale page1 discarded
+    })
+
+    test('shows skeletons while the first page is pending, never the empty state', async () => {
+        let resolvePage!: (value: { items: IPurchaseDetail[]; nextCursor: number | null }) => void
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolvePage = resolve
+            })
+        )
+
+        let root!: ReactTestRenderer.ReactTestRenderer
+        await act(async () => {
+            root = ReactTestRenderer.create(
+                <ThemeProvider theme={makeAppTheme(false)}>
+                    <PurchaseDetails />
+                </ThemeProvider>
+            )
+        })
+
+        expect(root.root.findAllByType(CardSkeleton).length).toBeGreaterThan(0)
+        expect(textContent(root)).not.toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
+
+        await act(async () => {
+            resolvePage({ items: page1, nextCursor: null })
+            await flush()
+        })
+        expect(textContent(root)).toContain('U Ba')
+    })
+
+    test('shows an error state with retry instead of the empty state when the first page fails', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockRejectedValueOnce(new Error('raw internal detail'))
+
+        const root = await renderScreen()
+
+        const text = textContent(root)
+        expect(text).toContain(UI_TEXT.SOMETHING_WENT_WRONG)
+        expect(text).toContain(MESSAGES.ERROR_GENERIC)
+        expect(text).not.toContain(UI_TEXT.EMPTY_PURCHASE_LIST)
+        expect(text).not.toContain('raw internal detail')
+        expect(root.root.findByType(PrimaryButton).props.title).toBe(UI_TEXT.RETRY)
+    })
+
+    test('shows the message of a DatabaseError as-is in the error state', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockRejectedValueOnce(
+            new DatabaseError(MESSAGES.ERROR_NETWORK)
+        )
+
+        const root = await renderScreen()
+
+        expect(textContent(root)).toContain(MESSAGES.ERROR_NETWORK)
+    })
+
+    test('retry reloads the first page and replaces the error state with rows', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock)
+            .mockRejectedValueOnce(new Error('boom'))
+            .mockResolvedValueOnce({ items: page1, nextCursor: null })
+
+        const root = await renderScreen()
+        expect(textContent(root)).toContain(UI_TEXT.SOMETHING_WENT_WRONG)
+
+        await act(async () => {
+            root.root.findByType(PrimaryButton).props.onPress()
+            await flush()
+        })
+
+        expect(purchaseService.getPurchasesPage).toHaveBeenCalledTimes(2)
+        expect(purchaseService.getPurchasesPage).toHaveBeenLastCalledWith({
+            limit: PAGINATION_CONFIG.PURCHASE_PAGE_SIZE,
+            cursor: undefined,
+            query: undefined,
+        })
+        const text = textContent(root)
+        expect(text).not.toContain(UI_TEXT.SOMETHING_WENT_WRONG)
+        expect(text).toContain('U Ba')
+    })
+
+    test('retry that fails again keeps the error state', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockRejectedValue(new Error('still down'))
+
+        const root = await renderScreen()
+        await act(async () => {
+            root.root.findByType(PrimaryButton).props.onPress()
+            await flush()
+        })
+
+        expect(purchaseService.getPurchasesPage).toHaveBeenCalledTimes(2)
+        expect(textContent(root)).toContain(UI_TEXT.SOMETHING_WENT_WRONG)
+    })
+
+    test('search toggle has an accessibility label', async () => {
+        ;(purchaseService.getPurchasesPage as jest.Mock).mockResolvedValue({ items: page1, nextCursor: null })
+
+        const root = await renderScreen()
+
+        expect(root.root.findByType(SearchIconButton).props.accessibilityLabel).toBe(A11Y_LABELS.TOGGLE_SEARCH)
     })
 })

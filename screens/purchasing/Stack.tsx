@@ -5,9 +5,13 @@ import PurchaseSummary from "./PurchaseSummary";
 import EditPurchase from "./EditPurchase";
 import SellerSelect from "./SellerSelect";
 import { ROUTES } from "../../constants";
-import i18n from "../../i18n";
 
-
+// Headers are hidden for every screen (each screen renders its own
+// SectionHeader), so no static titles are declared here. They were previously
+// computed with i18n.t() at import time, which froze them to one language and
+// never reacted to a language change. If a native header is enabled later,
+// set titles per screen via useTranslation/useLocalizedConstants instead, and
+// theme header colors from the NavigationContainer theme (not a static theme).
 const PurchaseStack = createNativeStackNavigator({
   screenOptions: {
     headerShown: false,
@@ -15,24 +19,19 @@ const PurchaseStack = createNativeStackNavigator({
   screens: {
     [ROUTES.PURCHASE]: {
       screen: Purchase,
-      options: { title: i18n.t('tabs.PURCHASING') }
     },
     [ROUTES.PURCHASE_DETAILS]: {
       screen: PurchaseDetails,
-      options: { title: i18n.t('uiText.PURCHASE_HISTORY_TITLE') }
     },
     [ROUTES.PURCHASE_SUMMARY]: {
       screen: PurchaseSummary,
-      options: { title: i18n.t('uiText.PURCHASE_SUMMARY_TITLE') }
     },
     [ROUTES.EDIT_PURCHASE]: {
       screen: EditPurchase,
-      options: { title: i18n.t('uiText.EDIT_PURCHASE') }
     },
     [ROUTES.SELECT_SELLER]: {
       screen: SellerSelect,
       options: {
-        title: i18n.t('uiText.SELECT_SELLER'),
         animation: 'fade',
         animationDuration: 200,
       }

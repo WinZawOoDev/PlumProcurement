@@ -16,6 +16,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { MoneyText } from '../../components/MoneyText'
 import { showSuccess, showError, showUndo } from '../../utils/notifications'
 import { formatDateDisplay, formatNumber } from '../../utils'
+import { getErrorMessage } from '../../utils/errors'
 import { useLoading } from '../../hooks/useAsync'
 
 type EditPurchaseRouteProp = RouteProp<Record<string, { purchase: IPurchaseDetail }>, typeof ROUTES.EDIT_PURCHASE>
@@ -168,7 +169,7 @@ export default function EditPurchase() {
                 allowLeaveRef.current = true
                 navigation.goBack()
             } catch (error) {
-                showError((error as Error)?.message ?? MESSAGES.ERROR_GENERIC)
+                showError(getErrorMessage(error))
             }
         })
     }
