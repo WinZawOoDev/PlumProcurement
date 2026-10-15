@@ -5,10 +5,10 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 ## Features
 
 - **Prices** — create and edit (bottom sheet) price entries per category (fruit/seed) and unit (cup/gallon/bushels); list grouped by category with sticky headers and per-group counts; tap a row for a detail sheet with edit/delete actions; search by category or unit; sort by newest or price; sparkline trend of the last 12 prices
-- **Purchasing** — record purchases with multiple line items per transaction; each line is a price item with its own quantity stepper; live grand-total preview; full purchase history with count and grand total; per-line edit; CSV export
+- **Purchasing** — record purchases with multiple line items per transaction; each line is a price item with its own quantity stepper; live grand-total preview; full purchase history with count and grand total; per-line edit (CSV export is currently disabled in purchase history)
 - **Sellers** — add, edit and delete sellers with name, phone number and address (all mandatory); per-seller purchase stats aggregated in SQL; compact icon-led stat line per row (receipt = count · total, wallet = outstanding balance)
 - **Payments** — record payments against each seller's sold total; per-seller Owed/Paid/Balance summary; payment history with delete; overpayment guard (cannot pay more than the balance)
-- **Settings** — theme preference (system/light/dark), persisted on-device
+- **Settings** — theme preference (system/light/dark) and language (English/Myanmar), persisted on-device
 - **Notifications** — native toast on Android, in-app toast (react-native-toast-message) on iOS
 - **Loading states** — layout-accurate skeletons for price and seller screens
 - Referential safety: prices and sellers referenced by recorded purchases cannot be deleted (guarded inside transactions); payments are linked to purchase headers (oldest-first), and a purchase with a linked payment is locked against edit/delete, while edits/deletes that would leave the seller overpaid are blocked
@@ -18,67 +18,78 @@ A React Native app for plum procurement: manage market prices in a grouped, tapp
 - React Native 0.84 + React 19 + TypeScript
 - [@react-navigation](https://reactnavigation.org/) v7 (bottom tabs + native stacks)
 - [react-native-nitro-sqlite](https://github.com/NitroModules/nitro-sqlite) for local storage (singleton cached handle)
+- Money stored as integer minor units (see `database/money.ts`) so sums and balances are exact
 - [react-hook-form](https://react-hook-form.com/) for form state and validation
 - [RNEUI](https://rneui.dev/) themed components + Ionicons/FontAwesome icons
 - [react-native-toast-message](https://github.com/calintamas/react-native-toast-message) for iOS notifications (Android uses native toasts)
-- Jest + react-test-renderer + Detox/Maestro for unit & E2E tests
+- [i18next](https://www.i18next.com/) + react-i18next for English/Myanmar localization
+- Jest + react-test-renderer + @testing-library/react-native for unit tests (incl. real-SQLite integration via `node:sqlite`); Maestro flows for E2E
 
 ## Project Structure
 
 ```
-├── App.tsx                     # Root: theme (incl. persisted preference), providers, tab navigator
-├── database/                   # SQLite layer
+├── App.tsx                     # Root: theme/language providers, tab navigator, onboarding gate, startup error state
+├── database/                   # SQLite layer (amounts are integer minor units)
 │   ├── connection.ts           # Singleton cached handle, DatabaseError
 │   ├── schema.ts               # One-time bootstrap: all CREATE TABLE IF NOT EXISTS
-│   ├── migrations.ts           # Versioned migrations (PRAGMA user_version) + indexes
+│   ├── migrations.ts           # Versioned migrations (PRAGMA user_version) + LATEST_VERSION
+│   ├── money.ts                # toMinor/fromMinor helpers (service boundary stays in major units)
+│   ├── sql.ts                  # Shared SQL: LIKE escaping, owed/paid math, balance projection
 │   ├── prices.ts               # Transaction-guarded delete (referential check)
 │   ├── purchases.ts            # Paginated fetch (header + line items), edit/delete, SQL seller stats
-│   ├── payments.ts             # Payment CRUD, per-seller owed/paid/balance, overpayment guard
-│   ├── sellers.ts              # Transaction-guarded delete (referential check)
+│   ├── payments.ts             # Payment CRUD, per-seller owed/paid/balance, overpayment guard, FIFO reallocation
+│   ├── sellers.ts              # Transaction-guarded delete (referential check), single-seller stats
 │   └── settings.ts
 ├── types/database.ts           # IPrice/IPurchase/IPurchaseItem/IPayment/ISeller/ISellerStat/ISellerPaymentStat shared interfaces
-├── constants/index.ts          # Single source of truth (incl. PAGINATION_CONFIG, QUANTITY_PATTERN, THEME_MODES)
-├── services/                   # Data-access layer wrapping database/
+├── constants/                  # Single source of truth (per-domain files + index.ts)
+├── services/                   # Data-access layer wrapping database/ (UI imports services, never database/)
+│   ├── errors.ts               # Re-exports DatabaseError for UI code
 │   ├── priceService.ts
 │   ├── purchaseService.ts      # recent/page/count fetches + edit/remove + seller stats
 │   ├── paymentService.ts       # record/edit/remove payments + summaries
-│   ├── sellerService.ts
-│   └── settingsService.ts      # onboarded flag + theme preference
+│   ├── sellerService.ts        # incl. getSellerStatById/getSellerBalanceById (single-seller aggregates)
+│   └── settingsService.ts      # onboarded flag + theme/language preference
 ├── context/
-│   ├── PriceContext.tsx        # Shared price list state (refresh/add/edit/remove)
-│   └── ThemeModeContext.tsx    # Theme preference (system/light/dark)
+│   ├── PriceContext.tsx        # Shared price list state (refresh/add/edit/remove + error/retry)
+│   ├── ThemeModeContext.tsx    # Theme preference (system/light/dark)
+│   └── LanguageContext.tsx     # Language preference (en/my)
 ├── hooks/
 │   ├── useAsync.ts             # useAsync/useLoading (centralized loading/error)
 │   ├── useConfirmDelete.ts     # Shared confirm-dialog → delete → toast → refresh flow
+│   ├── useLocalizedConstants.ts # Memoized translated constants (shape of the English source)
 │   └── useSearchFilter.ts      # Shared search visibility/query/filtered-list state
 ├── components/
-│   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton (a11y)
+│   ├── buttons/Button.tsx      # PrimaryButton, SecondaryButton, IconButton (a11y + stable testIDs)
 │   ├── forms/FormFields.tsx    # FormSelectField, FormInputField, FormCheckboxField,
 │   │                           #   FormButtonGroupField (react-hook-form integrated)
 │   ├── SearchBar.tsx           # Debounced search (300ms)
 │   ├── SearchIconButton.tsx    # Shared search-toggle icon button
 │   ├── DetailSheet.tsx         # Shared BottomSheet scaffolding
-│   ├── SelectPicker.tsx        # Reusable Picker wrapper
-│   ├── QuantityStepper.tsx     # + / − stepper with a11y (supports disabled)
+│   ├── LoadError.tsx           # Shared list error state with retry
+│   ├── QuantityCounter.tsx     # + / − stepper with a11y (supports disabled)
 │   ├── PriceTrend.tsx          # Sparkline for last 12 prices
 │   ├── PriceDetailSheet.tsx    # Price detail (uses DetailSheet)
 │   ├── StartupLoader.tsx       # Splash/overlay while bootstrapping
-│   └── ErrorBoundary.tsx       # Top-level crash fallback
+│   ├── ErrorBoundary.tsx       # Top-level crash fallback
+│   └── ErrorFallback.tsx       # Full-screen error with retry (also used at startup)
 ├── screens/
-│   ├── pricing/                # Price list + PriceTrend, create, edit sheet, cards
-│   ├── purchasing/             # Record purchase (multi-line), paginated history (LIKE search), edit sheet, CSV export
+│   ├── pricing/                # Price list + PriceTrend, create, shared PriceForm, edit sheet, cards
+│   ├── purchasing/             # Record purchase (multi-line), paginated history (LIKE search), edit sheet
 │   ├── seller/                 # Seller list + SQL-aggregated stats + balances, form sheet, detail + payments
-│   └── settings/               # Theme preference
+│   └── settings/               # Theme + language preference
 ├── utils/
-│   ├── index.ts                # Formatting/validation + CSV builders (BOM, filename)
-│   ├── notifications.ts        # Cross-platform showSuccess/showError
+│   ├── index.ts                # Formatting (Myanmar digits) + CSV builders (BOM, filename)
+│   ├── errors.ts               # getErrorMessage: safe user-facing message from any error
+│   ├── notifications.ts        # Cross-platform showSuccess/showError (+ Undo toast)
 │   ├── haptics.ts              # Shared light haptic feedback
-│   └── csvExport.ts            # shareOrSaveCsv (Share sheet)
-├── styles/                     # Per-domain theme-aware style factories (shared, onboarding,
-│                               #   pricing, purchasing, seller, settings) composed into useStyles()
-├── theme.ts                    # RNEUI theme + navigation theme
-├── e2e/                        # Detox (ios.sim.debug, android.emu.debug)
-└── .maestro/                   # Maestro flows (pricing, sellers, purchasing, full-flow)
+│   └── csvExport.ts            # shareOrSaveCsv (Share sheet; currently unused — export UI is disabled)
+├── testHelpers/
+│   ├── inMemorySqlite.ts       # Hand-rolled fake (fast unit tests; no FKs, no rollback)
+│   └── sqliteAdapter.ts        # Real SQLite via node:sqlite (migration/FIFO/rollback tests)
+├── styles/                     # Per-domain theme-aware style factories composed into useStyles()
+├── theme.ts                    # RNEUI theme factory
+├── e2e/                        # Detox shell (app.test.js; Detox is not installed — use Maestro)
+└── .maestro/                   # Maestro flows (pricing, sellers, purchasing, guards, full-flow)
 ```
 
 ## Architecture Conventions
@@ -122,24 +133,48 @@ npm run ios
 | `npm run android` | Run on Android |
 | `npm run ios` | Run on iOS |
 | `npm run lint` | ESLint (e2e ignored) |
-| `npm test` | Jest unit tests (129 tests, 26 suites) |
-| `npm run e2e:ios` | Detox iOS (ios.sim.debug) |
-| `npm run e2e:android` | Detox Android (android.emu.debug) |
+| `npm test` | Jest unit tests (260 tests, 47 suites) |
+| `npm run e2e:ios` | Detox iOS (ios.sim.debug; Detox is not installed — Maestro is the working E2E path) |
+| `npm run e2e:android` | Detox Android (android.emu.debug; Detox is not installed — Maestro is the working E2E path) |
 | `npm run maestro:test` | Maestro flows (`.maestro/`) |
 
 ## Testing
 
-Unit tests cover utilities (incl. all CSV builders/BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`, purchase edit/delete, seller stats), the schema/migration runner (bootstrap memoization, legacy `seller_id` migration, `sellers.address` migration, retry on failure), `useAsync`/`useLoading`, notification helpers, price context flows, the purchase record form (seller+price gating, stepper validation), the transaction-guarded price and seller delete guards, and error boundary. SQLite is mocked via `__mocks__/`. E2E via Detox + Maestro.
+Unit tests cover utilities (incl. all CSV builders/BOM/filename, debounce), every service (incl. paginated fetch + `hasMore`, purchase edit/delete, seller stats), the schema/migration runner (bootstrap memoization, legacy `seller_id` migration, `sellers.address` migration, retry on failure, link-source + minor-units + index-cleanup migrations), `useAsync`/`useLoading`, notification helpers, price context flows (incl. error/retry), the purchase record form (seller+price gating, stepper validation), the seller form/detail/payments screens, the shared detail sheet and confirm-delete flow, the transaction-guarded price and seller delete guards, and error boundary. SQLite is faked via `testHelpers/inMemorySqlite.ts` for speed; migration bodies, FIFO reallocation, integer money math and rollback run against real SQLite (`testHelpers/sqliteAdapter.ts` + `__tests__/dbSqlite.test.ts`). E2E via Maestro (`.maestro/`); the Detox shell in `e2e/` is not wired to an installed Detox.
 
 ```sh
-npm test              # 129 tests, 26 suites
-npm run e2e:ios        # Detox
+npm test              # 260 tests, 47 suites
 maestro test .maestro/ # Maestro
 ```
 
 ## Changelog
 
 > Version tags/releases are intentionally paused — the app stays at dev version `0.1.0` until the core business feature set is stable. Entries below are chronological.
+
+### Unreleased (correctness, i18n-safe errors, test health)
+
+**Database**
+- Money is stored as integer minor units (`database/money.ts`, migration v11 with a marker row so a re-run can never double-convert): sums, totals and balance comparisons are exact integer math, no epsilon. Service/type boundaries stay in major units.
+- `deletePayment` FIFO reallocation rewritten without `LIMIT`/`OFFSET` (SQLite rejects correlated outer references there — the old statement always failed on-device) and now only re-ranks `auto` links: explicit user-chosen links are never moved (migration v10 `link_source`, pre-existing links default to `explicit`).
+- Migration v9 unlinks `purchase_items.price_id` (nullable) before deleting blank prices — previously it failed with `FOREIGN KEY constraint failed` on affected installs and retried every launch.
+- Versioned migrations export `LATEST_VERSION` (test fakes use it instead of a hardcoded copy); new migration v12 drops the unused `idx_purchases_created_at`/`idx_payments_paid_at` indexes and the write-only `purchases.purchased_at` column.
+- New `database/sql.ts` holds the shared SQL helpers (LIKE escaping, FK/unique detection, seller existence, owed/paid math, seller balance projection) instead of three copy-pasted copies.
+- Validation: `Number.isFinite` amounts/prices/quantities (NaN/Infinity rejected), `price_id` must reference an existing price (`ERROR_PRICE_NOT_FOUND`), page limits clamped to 1–100.
+- Errors: literal English `DatabaseError('Failed to …')` replaced with the localized `ERROR_DATABASE`; initializers rethrow the original error; updates/deletes of missing rows throw `ERROR_NOT_FOUND` consistently.
+
+**App / UX**
+- Failed list loads render an error state with retry (`components/LoadError`) instead of an empty list, fake zeros, or an endless skeleton (prices, sellers, seller detail/payments/purchases, purchase history).
+- Raw error text never reaches the UI: single `getErrorMessage` helper (`utils/errors.ts`, `DatabaseError` message or the generic message); `services/errors.ts` re-export keeps UI code off `database/*` imports.
+- Overpayments are validated up front in Record Payment / Payment Review (cents comparison) instead of only at commit.
+- Seller list refetches on tab focus; seller detail uses single-seller aggregates (`getSellerStatById`/`getSellerBalanceById`).
+- Startup DB failure shows an error with retry instead of sending returning users to onboarding.
+- A11y: labels/roles on search, sort, stepper, row and retry controls; skeletons hidden from assistive tech; larger hit targets.
+- Perf: memoized price sort/rows, stable seller-row callbacks, memoized localized constants.
+
+**Tests / tooling**
+- 260 tests / 47 suites. New `testHelpers/sqliteAdapter.ts` (real SQLite via `node:sqlite`) backs `__tests__/dbSqlite.test.ts`: FIFO reallocation, explicit-link preservation, v9 blank-row repair, minor-units conversion, rollback.
+- Maestro flows rewritten against real texts/testIDs (new stable testIDs on tabs, key buttons and inputs); Detox selectors use testIDs. `e2e/` remains a Detox shell (Detox not installed).
+- Removed unused dependencies and dead code (`SelectPicker`, dead utils, duplicate settings tiles, shared price/seller form and row components).
 
 ### 2026-09-16
 
