@@ -2,18 +2,21 @@ import {
     countSellers,
     createSeller,
     deleteSeller,
+    fetchSellerBalanceById,
     fetchSellerById,
+    fetchSellerStatById,
     fetchSellers,
     fetchSellersPage,
     initializeSellers,
     updateSeller,
+    type SellerStatDetail,
     type SellersCursor,
     type SellersPage,
 } from '../database/sellers'
-import { ISeller } from '../types/database'
+import { ISeller, ISellerPaymentStat } from '../types/database'
 
 export type NewSeller = Omit<ISeller, 'id'>
-export type { SellersCursor, SellersPage }
+export type { SellerStatDetail, SellersCursor, SellersPage }
 
 /**
  * Abstraction layer over the sellers database.
@@ -43,6 +46,21 @@ export class SellerService {
     async getSellerById(id: number): Promise<ISeller | null> {
         await initializeSellers()
         return fetchSellerById(id)
+    }
+
+    /**
+     * Purchase aggregate (count + total) for a single seller, without loading
+     * every seller's stats.
+     */
+    async getSellerStatById(sellerId: number): Promise<SellerStatDetail | null> {
+        await initializeSellers()
+        return fetchSellerStatById(sellerId)
+    }
+
+    /** Owed / paid / balance summary for a single seller. */
+    async getSellerBalanceById(sellerId: number): Promise<ISellerPaymentStat | null> {
+        await initializeSellers()
+        return fetchSellerBalanceById(sellerId)
     }
 
     async addSeller(data: NewSeller): Promise<number> {

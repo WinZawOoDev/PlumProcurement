@@ -1,14 +1,16 @@
 import { tMessage } from '../i18n'
 import type { IPrice } from '../types/database'
 import { DatabaseError, initDb } from './connection'
+import { fromMinor, toMinor } from './money'
 import { initializeSchema } from './schema'
+import { isForeignKeyViolation, isUniqueViolation } from './sql'
 
 export async function initializePrices(): Promise<void> {
-    try {
-        await initializeSchema()
-    } catch (error) {
-        throw new DatabaseError('Failed to initialize prices table', error)
-    }
+    await initializeSchema()
+}
+
+function toMajorPrice(row: IPrice): IPrice {
+    return { ...row, price: fromMinor(row.price) }
 }
 
 export async function fetchPrices(): Promise<IPrice[]> {
@@ -18,9 +20,9 @@ export async function fetchPrices(): Promise<IPrice[]> {
         const { results } = await db.executeAsync(`
             SELECT * FROM prices ORDER BY id DESC
         `);
-        return results as unknown as IPrice[]
+        return (results as unknown as IPrice[]).map(toMajorPrice)
     } catch (error) {
-        throw new DatabaseError('Failed to fetch prices', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -30,7 +32,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         const { price, unit, category } = priceData;
 
         // Validate input
-        if (!price || price <= 0) {
+        if (!Number.isFinite(price) || price <= 0) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
         const cleanCategory = category?.trim()
@@ -56,7 +58,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
             const { insertId } = await tx.executeAsync(`
                 INSERT INTO prices (price, unit, category)
                 VALUES (?, ?, ?)
-            `, [price, cleanUnit, cleanCategory]);
+            `, [toMinor(price), cleanUnit, cleanCategory]);
 
             return insertId as number;
         })
@@ -65,7 +67,7 @@ export async function createPrice(priceData: Omit<IPrice, 'id'>): Promise<number
         if (isUniqueViolation(error)) {
             throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'), error)
         }
-        throw new DatabaseError('Failed to create price', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -76,11 +78,11 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         const values: any[] = []
 
         if (priceData.price !== undefined) {
-            if (priceData.price <= 0) {
+            if (!Number.isFinite(priceData.price) || priceData.price <= 0) {
                 throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
             }
             updates.push('price = ?')
-            values.push(priceData.price)
+            values.push(toMinor(priceData.price))
         }
         if (priceData.unit !== undefined) {
             const cleanUnit = priceData.unit?.trim()
@@ -110,7 +112,8 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
         await db.transaction(async (tx) => {
             // Guard the merged row (unchanged fields keep their stored value)
             // against colliding with another price, mirroring createPrice so the
-            // rule holds even when the unique index is absent.
+            // rule holds even when the unique index is absent. The comparison
+            // uses the trimmed values actually being stored.
             const { results } = await tx.executeAsync(
                 `SELECT category, unit FROM prices WHERE id = ?`,
                 [id]
@@ -119,30 +122,34 @@ export async function updatePrice(id: number, priceData: Partial<Omit<IPrice, 'i
                 category: string
                 unit: string
             }>)[0];
-            if (current) {
-                const nextCategory = priceData.category ?? current.category
-                const nextUnit = priceData.unit ?? current.unit
-                const { results: duplicates } = await tx.executeAsync(
-                    `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND id <> ? LIMIT 1`,
-                    [nextCategory, nextUnit, id]
-                );
-                if ((duplicates as unknown as Array<{ id: number }>).length > 0) {
-                    throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
-                }
+            if (!current) {
+                throw new DatabaseError(tMessage('ERROR_NOT_FOUND'))
+            }
+            const nextCategory = priceData.category?.trim() ?? current.category
+            const nextUnit = priceData.unit?.trim() ?? current.unit
+            const { results: duplicates } = await tx.executeAsync(
+                `SELECT id FROM prices WHERE category IS ? AND unit IS ? AND id <> ? LIMIT 1`,
+                [nextCategory, nextUnit, id]
+            );
+            if ((duplicates as unknown as Array<{ id: number }>).length > 0) {
+                throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'))
             }
 
-            await tx.executeAsync(`
+            const updateResult = await tx.executeAsync(`
                 UPDATE prices 
                 SET ${updates.join(', ')}
                 WHERE id = ?
             `, values)
+            if (updateResult.rowsAffected === 0) {
+                throw new DatabaseError(tMessage('ERROR_NOT_FOUND'))
+            }
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isUniqueViolation(error)) {
             throw new DatabaseError(tMessage('ERROR_PRICE_EXISTS'), error)
         }
-        throw new DatabaseError('Failed to update price', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -163,23 +170,16 @@ export async function deletePrice(id: number): Promise<void> {
             if (referencedCount > 0) {
                 throw new DatabaseError(tMessage('ERROR_PRICE_IN_USE'))
             }
-            await tx.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
+            const deleteResult = await tx.executeAsync(`DELETE FROM prices WHERE id = ?`, [id])
+            if (deleteResult.rowsAffected === 0) {
+                throw new DatabaseError(tMessage('ERROR_NOT_FOUND'))
+            }
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isForeignKeyViolation(error)) {
             throw new DatabaseError(tMessage('ERROR_PRICE_IN_USE'), error)
         }
-        throw new DatabaseError('Failed to delete price', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
-}
-
-function isForeignKeyViolation(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error ?? '')
-    return /FOREIGN KEY constraint failed/i.test(message)
-}
-
-function isUniqueViolation(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error ?? '')
-    return /UNIQUE constraint failed/i.test(message)
 }

@@ -1,5 +1,6 @@
 export interface IPrice {
     id: number
+    /** Major units (e.g. 9.99). Stored as integer minor units in SQLite. */
     price: number
     unit: string
     category: string
@@ -10,8 +11,8 @@ export interface IPrice {
 export interface IPurchase {
     id: number
     seller_id: number | null
+    /** Major units (e.g. 9.99). Stored as integer minor units in SQLite. */
     total: number
-    purchased_at?: string
     created_at?: string
     updated_at?: string
 }
@@ -41,15 +42,12 @@ export interface IPayment {
     id: number
     seller_id: number
     purchase_id: number | null
+    /** Major units (e.g. 9.99). Stored as integer minor units in SQLite. */
     amount: number
     method: string | null
     note: string | null
     paid_at?: string
     created_at?: string
-}
-
-export interface IPaymentWithSeller extends IPayment {
-    seller_name: string | null
 }
 
 export interface ISeller {

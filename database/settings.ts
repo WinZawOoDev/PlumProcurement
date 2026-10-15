@@ -1,12 +1,9 @@
+import { tMessage } from '../i18n'
 import { DatabaseError, initDb } from './connection'
 import { initializeSchema } from './schema'
 
 export async function initializeSettings(): Promise<void> {
-    try {
-        await initializeSchema()
-    } catch (error) {
-        throw new DatabaseError('Failed to initialize settings table', error)
-    }
+    await initializeSchema()
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -19,7 +16,7 @@ export async function getSetting(key: string): Promise<string | null> {
         );
         return (results as unknown as Array<{ value: string | null }>)[0]?.value ?? null
     } catch (error) {
-        throw new DatabaseError('Failed to read setting', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -32,6 +29,6 @@ export async function setSetting(key: string, value: string): Promise<void> {
             [key, value]
         )
     } catch (error) {
-        throw new DatabaseError('Failed to save setting', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }

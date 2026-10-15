@@ -70,9 +70,16 @@ describe('price uniqueness', () => {
 
     test('updatePrice surfaces a duplicate-price error from the unique index', async () => {
         executeAsync
-            .mockResolvedValueOnce({ results: [] }) // row not found -> no app-level guard
+            .mockResolvedValueOnce({ results: [{ category: 'fruit', unit: 'CUP' }] }) // current row
+            .mockResolvedValueOnce({ results: [] }) // no app-level duplicate
             .mockRejectedValueOnce(uniqueError()) // UPDATE collides at the index
 
         await expect(updatePrice(1, { price: 5 })).rejects.toThrow(MESSAGES.ERROR_PRICE_EXISTS)
+    })
+
+    test('updatePrice throws not-found when the row does not exist', async () => {
+        executeAsync.mockResolvedValueOnce({ results: [] }) // no current row
+
+        await expect(updatePrice(1, { price: 5 })).rejects.toThrow(MESSAGES.ERROR_NOT_FOUND)
     })
 })

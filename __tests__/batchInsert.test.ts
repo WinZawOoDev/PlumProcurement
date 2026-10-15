@@ -57,7 +57,10 @@ describe('insertMany', () => {
 
 describe('purchase item writes use a bounded number of statements', () => {
     test('createPurchase inserts every line item in a single statement', async () => {
-        executeAsync.mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
+        executeAsync
+            .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // price 1 exists
+            .mockResolvedValueOnce({ results: [{ id: 2 }] }) // price 2 exists
         await createPurchase({ seller_id: 1, items })
 
         const inserts = executeAsync.mock.calls.filter(([sql]) =>
@@ -73,6 +76,8 @@ describe('purchase item writes use a bounded number of statements', () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // not locked
             .mockResolvedValueOnce({ results: [{ seller_id: null, total: 10 }] })
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // price 1 exists
+            .mockResolvedValueOnce({ results: [{ id: 2 }] }) // price 2 exists
 
         await updatePurchase(3, { items })
 

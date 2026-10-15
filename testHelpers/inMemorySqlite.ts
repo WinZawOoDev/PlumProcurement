@@ -1,11 +1,18 @@
+import { LATEST_VERSION } from '../database/migrations'
+
 /**
  * Unified in-memory fake of `react-native-nitro-sqlite` that persists rows
  * across prices / sellers / purchases / purchase_items / payments /
- * app_settings. Bootstrap reports `user_version` 9 so the migration runner is
- * skipped; all other DDL is a no-op.
+ * app_settings. Bootstrap reports the current LATEST_VERSION so the migration
+ * runner is skipped; all other DDL is a no-op.
  *
  * Query matching is intentionally narrow: it handles exactly the SQL shapes
  * emitted by database/*. Hand-rolled mocks elsewhere should migrate to this.
+ *
+ * KNOWN GAPS (covered by testHelpers/sqliteAdapter.ts + __tests__/dbSqlite*):
+ * transactions never roll back, foreign keys are not enforced, and migration
+ * bodies run as no-ops, so migration/FIFO/rollback behavior must be tested
+ * against real SQLite instead.
  */
 
 type PriceRow = {
@@ -51,6 +58,8 @@ type PaymentRow = {
     seller_id: number
     purchase_id: number | null
     amount: number
+    /** 'auto' | 'explicit'; missing mirrors the column DEFAULT 'explicit' */
+    link_source?: string
     method: string | null
     note: string | null
     paid_at: string
@@ -92,7 +101,7 @@ function norm(query: string): string {
 function runQuery(query: string, params: unknown[] = []): QueryResult {
     const q = norm(query)
     // --- pragmas / DDL ---
-    if (/^PRAGMA user_version$/i.test(q)) return { results: [{ user_version: 9 }] }
+    if (/^PRAGMA user_version$/i.test(q)) return { results: [{ user_version: LATEST_VERSION }] }
     if (/^PRAGMA/i.test(q)) return { results: [] }
     if (/^CREATE TABLE/i.test(q)) return { results: [] }
     if (/^CREATE (UNIQUE )?INDEX/i.test(q)) return { results: [] }
@@ -131,6 +140,11 @@ function runQuery(query: string, params: unknown[] = []): QueryResult {
         const [id] = params as [number]
         const row = prices.find((p) => p.id === id)
         return { results: row ? [{ category: row.category, unit: row.unit }] : [] }
+    }
+    if (/^SELECT id FROM prices WHERE id = \? LIMIT 1$/i.test(q)) {
+        const [id] = params as [number]
+        const row = prices.find((p) => p.id === id)
+        return { results: row ? [{ id: row.id }] : [] }
     }
     if (/^SELECT \* FROM prices ORDER BY id DESC$/i.test(q)) {
         return { results: [...prices].sort((a, b) => b.id - a.id) }
@@ -360,11 +374,11 @@ function runQuery(query: string, params: unknown[] = []): QueryResult {
         return { results: row ? [{ seller_id: row.seller_id }] : [] }
     }
     if (/^INSERT INTO payments/i.test(q)) {
-        const [seller_id, purchase_id, amount, method, note] = params as [
-            number, number | null, number, string | null, string | null,
+        const [seller_id, purchase_id, amount, link_source, method, note] = params as [
+            number, number | null, number, string, string | null, string | null,
         ]
         const row: PaymentRow = {
-            id: nextPaymentId++, seller_id, purchase_id, amount, method, note,
+            id: nextPaymentId++, seller_id, purchase_id, amount, link_source, method, note,
             paid_at: '', created_at: '',
         }
         payments.push(row)
@@ -380,14 +394,23 @@ function runQuery(query: string, params: unknown[] = []): QueryResult {
         return { results: [] }
     }
     if (/^UPDATE payments SET purchase_id = \(/i.test(q)) {
+        // Mirrors reallocateSellerPayments: only 'auto' rows move (a missing
+        // link_source means the column DEFAULT 'explicit'), ranked by id and
+        // mapped onto purchases not held by an explicit link.
         const [sellerId] = params as [number]
+        const isExplicit = (p: PaymentRow): boolean => p.link_source !== 'auto'
+        const heldByExplicit = new Set(
+            payments
+                .filter((p) => p.seller_id === sellerId && isExplicit(p) && p.purchase_id != null)
+                .map((p) => p.purchase_id as number)
+        )
         const sellerPurchases = purchases
-            .filter((p) => p.seller_id === sellerId)
+            .filter((p) => p.seller_id === sellerId && !heldByExplicit.has(p.id))
             .sort((a, b) => a.id - b.id)
-        const sellerPayments = payments
-            .filter((p) => p.seller_id === sellerId)
+        const sellerAutoPayments = payments
+            .filter((p) => p.seller_id === sellerId && !isExplicit(p))
             .sort((a, b) => a.id - b.id)
-        sellerPayments.forEach((pay, i) => {
+        sellerAutoPayments.forEach((pay, i) => {
             pay.purchase_id = sellerPurchases[i]?.id ?? null
         })
         return { results: [] }

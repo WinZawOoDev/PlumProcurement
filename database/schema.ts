@@ -1,5 +1,5 @@
 import { DatabaseError, initDb } from './connection'
-import { runMigrations } from './migrations'
+import { __resetMigrationsForTests, runMigrations } from './migrations'
 
 /**
  * One-time database bootstrap.
@@ -9,9 +9,12 @@ import { runMigrations } from './migrations'
  * Memoized: repeated calls (e.g. from every service method) are no-ops.
  */
 const TABLE_STATEMENTS = [
+    // Money columns are INTEGER minor units (see database/money.ts) so sums
+    // and balance comparisons are exact. Legacy installs keep REAL-affinity
+    // columns holding exact integer values after migration v11 — equivalent.
     `CREATE TABLE IF NOT EXISTS prices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        price REAL NOT NULL,
+        price INTEGER NOT NULL,
         unit TEXT NOT NULL,
         category TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -28,8 +31,7 @@ const TABLE_STATEMENTS = [
     `CREATE TABLE IF NOT EXISTS purchases (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         seller_id INTEGER REFERENCES sellers(id) ON DELETE RESTRICT,
-        total REAL NOT NULL,
-        purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        total INTEGER NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -39,15 +41,16 @@ const TABLE_STATEMENTS = [
         price_id INTEGER REFERENCES prices(id) ON DELETE RESTRICT,
         category TEXT NOT NULL,
         unit TEXT NOT NULL,
-        unit_price REAL NOT NULL,
+        unit_price INTEGER NOT NULL,
         quantity INTEGER NOT NULL CHECK(quantity > 0),
-        line_total REAL NOT NULL
+        line_total INTEGER NOT NULL
     )`,
     `CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         seller_id INTEGER NOT NULL REFERENCES sellers(id) ON DELETE RESTRICT,
         purchase_id INTEGER REFERENCES purchases(id) ON DELETE SET NULL,
-        amount REAL NOT NULL CHECK(amount > 0),
+        amount INTEGER NOT NULL CHECK(amount > 0),
+        link_source TEXT NOT NULL DEFAULT 'explicit',
         method TEXT,
         note TEXT,
         paid_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -89,4 +92,7 @@ async function bootstrapSchema(): Promise<void> {
 
 export function __resetSchemaForTests(): void {
     initPromise = null
+    // The migrations memo must go too, otherwise a reset schema reports the
+    // old version and pending migrations are silently skipped in tests.
+    __resetMigrationsForTests()
 }

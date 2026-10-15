@@ -1,6 +1,7 @@
 import { open } from 'react-native-nitro-sqlite'
 import { deleteSeller } from '../database/sellers'
 import { __resetDbForTests } from '../database/connection'
+import { MESSAGES } from '../constants'
 
 jest.mock('react-native-nitro-sqlite', () => ({
     open: jest.fn(),
@@ -61,7 +62,7 @@ describe('deleteSeller referential guard', () => {
             .mockResolvedValueOnce({ results: [{ count: 0 }] }) // SELECT COUNT payments
             .mockRejectedValueOnce(new Error('disk error')) // DELETE
 
-        await expect(deleteSeller(5)).rejects.toThrow('Failed to delete seller')
+        await expect(deleteSeller(5)).rejects.toThrow(MESSAGES.ERROR_DATABASE)
     })
 })
 

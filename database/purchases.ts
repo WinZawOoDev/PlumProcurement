@@ -7,20 +7,24 @@ import type {
 } from '../types/database'
 import { insertMany } from './batch'
 import { DatabaseError, DbExecutor, initDb } from './connection'
+import { fromMinor, lineTotalMinor, toMinor } from './money'
 import { initializeSchema } from './schema'
+import {
+    assertSellerExists,
+    clampPageLimit,
+    escapeLikePattern,
+    fetchOwedAndPaid,
+} from './sql'
 
 export async function initializePurchases(): Promise<void> {
-    try {
-        await initializeSchema()
-    } catch (error) {
-        throw new DatabaseError('Failed to initialize purchases table', error)
-    }
+    await initializeSchema()
 }
 
 export interface NewPurchaseItem {
     price_id: number | null
     category: string
     unit: string
+    /** Major units (e.g. 9.99); converted to minor units at the SQL boundary. */
     unit_price: number
     quantity: number
 }
@@ -39,14 +43,6 @@ export interface PurchasesPage {
     items: IPurchaseDetail[]
     /** id of the last item of this page; null when there are no more rows */
     nextCursor: number | null
-}
-
-/**
- * Escape LIKE wildcards so a search for `100%` or `a_b` matches literally.
- * Backslash is the ESCAPE character used in the queries below.
- */
-export function escapeLikePattern(value: string): string {
-    return value.replace(/[\\%_]/g, (char) => `\\${char}`)
 }
 
 /**
@@ -85,6 +81,10 @@ function buildPurchaseFilters(options: { sellerId?: number; query?: string }): {
     return { clauses, params }
 }
 
+function toMajorItem(item: IPurchaseItem): IPurchaseItem {
+    return { ...item, unit_price: fromMinor(item.unit_price), line_total: fromMinor(item.line_total) }
+}
+
 /** Loads the line items for a page of purchase headers and assembles details. */
 async function attachItems(db: ReturnType<typeof initDb>, purchases: IPurchaseWithSeller[]): Promise<IPurchaseDetail[]> {
     if (purchases.length === 0) return []
@@ -97,10 +97,10 @@ async function attachItems(db: ReturnType<typeof initDb>, purchases: IPurchaseWi
     const byPurchase = new Map<number, IPurchaseItem[]>()
     for (const item of rows) {
         const list = byPurchase.get(item.purchase_id) ?? []
-        list.push(item)
+        list.push(toMajorItem(item))
         byPurchase.set(item.purchase_id, list)
     }
-    return purchases.map((p) => ({ ...p, items: byPurchase.get(p.id) ?? [] }))
+    return purchases.map((p) => ({ ...p, total: fromMinor(p.total), items: byPurchase.get(p.id) ?? [] }))
 }
 
 /**
@@ -123,7 +123,8 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
     let db;
     try {
         db = initDb()
-        const { limit, cursor, query, sellerId } = options
+        const { cursor, query, sellerId } = options
+        const limit = clampPageLimit(options.limit)
 
         const filters = buildPurchaseFilters({ sellerId, query })
         const where = [...filters.clauses]
@@ -155,7 +156,7 @@ export async function fetchPurchasesPage(options: { limit: number; cursor?: numb
         const details = await attachItems(db, items)
         return { items: details, nextCursor: hasMore && last ? last.id : null }
     } catch (error) {
-        throw new DatabaseError('Failed to fetch purchases', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -182,9 +183,9 @@ export async function fetchPurchasesSummary(options: { query?: string; sellerId?
             params
         );
         const row = (results as unknown as Array<{ count: number; total: number }>)[0]
-        return { count: row?.count ?? 0, total: row?.total ?? 0 }
+        return { count: row?.count ?? 0, total: fromMinor(row?.total ?? 0) }
     } catch (error) {
-        throw new DatabaseError('Failed to summarize purchases', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -210,41 +211,29 @@ async function isPurchaseLocked(db: DbExecutor, purchaseId: number): Promise<boo
 
 /**
  * Blocks a mutation that would leave the seller with more paid than owed.
- * `newTotal` is the purchase's total after the change (0 when deleting).
- * Must be called inside a transaction.
- * Uses a small epsilon so float REAL sums cannot false-trigger the guard.
+ * Totals are integer minor units; `newTotalMinor` is the purchase's total
+ * after the change (0 when deleting). Must be called inside a transaction.
  */
 async function assertSellerNotOverpaid(
     db: DbExecutor,
     sellerId: number,
-    oldTotal: number,
-    newTotal: number
+    oldTotalMinor: number,
+    newTotalMinor: number
 ): Promise<void> {
-    const owed = await db.executeAsync(
-        `SELECT COALESCE(SUM(total), 0) AS total FROM purchases WHERE seller_id = ?`,
-        [sellerId]
-    )
-    const totalOwed = (owed.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
-
-    const paid = await db.executeAsync(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE seller_id = ?`,
-        [sellerId]
-    )
-    const totalPaid = (paid.results as unknown as Array<{ total: number }>)[0]?.total ?? 0
-
-    if (totalPaid - (totalOwed - oldTotal + newTotal) > 1e-9) {
+    const { owed, paid } = await fetchOwedAndPaid(db, sellerId)
+    if (paid - (owed - oldTotalMinor + newTotalMinor) > 0) {
         throw new DatabaseError(tMessage('ERROR_PURCHASE_OVERPAY'))
     }
 }
 
-/** Throws when the seller id does not reference an existing seller. */
-async function assertSellerExists(db: DbExecutor, sellerId: number): Promise<void> {
+/** Throws when the price id does not reference an existing price row. */
+async function assertPriceExists(db: DbExecutor, priceId: number): Promise<void> {
     const { results } = await db.executeAsync(
-        `SELECT 1 AS ok FROM sellers WHERE id = ? LIMIT 1`,
-        [sellerId]
+        `SELECT id FROM prices WHERE id = ? LIMIT 1`,
+        [priceId]
     )
     if ((results as unknown as unknown[]).length === 0) {
-        throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
+        throw new DatabaseError(tMessage('ERROR_PRICE_NOT_FOUND'))
     }
 }
 
@@ -263,11 +252,11 @@ function toPurchaseItemRows(purchaseId: number, items: NewPurchaseItem[]) {
     return items.map((item) => [
         purchaseId,
         item.price_id ?? null,
-        item.category,
-        item.unit,
-        item.unit_price,
+        item.category.trim(),
+        item.unit.trim(),
+        toMinor(item.unit_price),
         item.quantity,
-        item.unit_price * item.quantity,
+        lineTotalMinor(item.unit_price, item.quantity),
     ])
 }
 
@@ -276,15 +265,27 @@ function validateItems(items: NewPurchaseItem[]): void {
         throw new DatabaseError(tMessage('ERROR_NO_ITEMS'))
     }
     for (const item of items) {
-        if (!item.category || !item.unit) {
+        if (!item.category?.trim() || !item.unit?.trim()) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
-        if (!item.unit_price || item.unit_price <= 0) {
+        if (!Number.isFinite(item.unit_price) || item.unit_price <= 0) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
-        if (!item.quantity || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+        if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
             throw new DatabaseError(tMessage('ERROR_INVALID_QUANTITY'))
         }
+    }
+}
+
+/** Sums validated line totals in minor units (exact integer arithmetic). */
+function totalMinor(items: NewPurchaseItem[]): number {
+    return items.reduce((sum, item) => sum + lineTotalMinor(item.unit_price, item.quantity), 0)
+}
+
+async function assertItemPricesExist(db: DbExecutor, items: NewPurchaseItem[]): Promise<void> {
+    const ids = [...new Set(items.map((item) => item.price_id).filter((id): id is number => id != null))]
+    for (const id of ids) {
+        await assertPriceExists(db, id)
     }
 }
 
@@ -293,7 +294,7 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
     try {
         const { seller_id, items } = data
         validateItems(items)
-        const total = items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
+        const total = totalMinor(items)
         if (total <= 0) {
             throw new DatabaseError(tMessage('ERROR_INVALID_INPUT'))
         }
@@ -301,8 +302,9 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
         db = initDb()
         return await db.transaction(async (tx) => {
             if (seller_id != null) {
-                await assertSellerExists(tx, seller_id)
+                await assertSellerExists(tx, seller_id, new DatabaseError(tMessage('ERROR_INVALID_INPUT')))
             }
+            await assertItemPricesExist(tx, items)
             const { insertId } = await tx.executeAsync(
                 `INSERT INTO purchases (seller_id, total) VALUES (?, ?)`,
                 [seller_id ?? null, total]
@@ -313,7 +315,7 @@ export async function createPurchase(data: NewPurchase): Promise<number> {
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
-        throw new DatabaseError('Failed to create purchase', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -335,10 +337,9 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
             }
             if (updates.items !== undefined) {
                 validateItems(updates.items)
+                await assertItemPricesExist(tx, updates.items)
             }
-            const newTotal = updates.items === undefined
-                ? existing.total
-                : updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
+            const newTotal = updates.items === undefined ? existing.total : totalMinor(updates.items)
             const sellerChanging = updates.seller_id !== undefined && updates.seller_id !== existing.seller_id
             if (!sellerChanging) {
                 // Same owner (or no seller change): the purchase total moves
@@ -353,7 +354,7 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                     await assertSellerNotOverpaid(tx, existing.seller_id, existing.total, 0)
                 }
                 if (updates.seller_id != null) {
-                    await assertSellerExists(tx, updates.seller_id)
+                    await assertSellerExists(tx, updates.seller_id, new DatabaseError(tMessage('ERROR_INVALID_INPUT')))
                     await assertSellerNotOverpaid(tx, updates.seller_id, 0, newTotal)
                 }
             }
@@ -364,18 +365,17 @@ export async function updatePurchase(id: number, updates: PurchaseUpdates): Prom
                 )
             }
             if (updates.items !== undefined) {
-                const total = updates.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0)
                 await tx.executeAsync(`DELETE FROM purchase_items WHERE purchase_id = ?`, [id])
                 await insertMany(tx, 'purchase_items', PURCHASE_ITEM_COLUMNS, toPurchaseItemRows(id, updates.items))
                 await tx.executeAsync(
                     `UPDATE purchases SET total = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-                    [total, id]
+                    [newTotal, id]
                 )
             }
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
-        throw new DatabaseError('Failed to update purchase', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -405,7 +405,7 @@ export async function deletePurchase(id: number): Promise<void> {
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
-        throw new DatabaseError('Failed to delete purchase', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -419,9 +419,10 @@ export async function fetchSellerStats(): Promise<ISellerStat[]> {
              WHERE seller_id IS NOT NULL
              GROUP BY seller_id`
         )
-        return results as unknown as ISellerStat[]
+        const rows = results as unknown as ISellerStat[]
+        return rows.map((row) => ({ ...row, total_spent: fromMinor(row.total_spent) }))
     } catch (error) {
-        throw new DatabaseError('Failed to fetch seller stats', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -439,6 +440,7 @@ export async function fetchUnpaidPurchasesBySeller(sellerId: number, limit = 5):
     let db;
     try {
         db = initDb()
+        const clamped = clampPageLimit(limit)
         const { results } = await db.executeAsync(
             `
             SELECT p.*, s.name AS seller_name,
@@ -450,10 +452,10 @@ export async function fetchUnpaidPurchasesBySeller(sellerId: number, limit = 5):
             ORDER BY p.id ASC
             LIMIT ?
             `,
-            [sellerId, limit]
+            [sellerId, clamped]
         )
         return attachItems(db, results as unknown as IPurchaseWithSeller[])
     } catch (error) {
-        throw new DatabaseError('Failed to fetch unpaid purchases', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }

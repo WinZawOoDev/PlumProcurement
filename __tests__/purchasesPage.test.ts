@@ -164,7 +164,8 @@ describe('fetchRecentPurchases', () => {
 
 describe('fetchPurchasesSummary', () => {
     test('aggregates count + total over all matching purchases (filters shared with the page)', async () => {
-        executeAsync.mockResolvedValueOnce({ results: [{ count: 3, total: 42 }] })
+        // SUM feed is integer minor units, as stored by the database layer.
+        executeAsync.mockResolvedValueOnce({ results: [{ count: 3, total: 4200 }] })
 
         const result = await fetchPurchasesSummary({ query: 'fruit', sellerId: 2 })
 

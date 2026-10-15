@@ -40,8 +40,9 @@ describe('updatePurchase payment lock', () => {
     test('allows edits when no payment is linked and the seller is not overpaid', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // no linked payment
-            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 10 }] }) // purchase
-            .mockResolvedValueOnce({ results: [{ total: 10 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 1000 }] }) // purchase ($10)
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // price exists
+            .mockResolvedValueOnce({ results: [{ total: 1000 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({}) // DELETE purchase_items
             .mockResolvedValueOnce({}) // INSERT purchase_item
@@ -50,22 +51,23 @@ describe('updatePurchase payment lock', () => {
         await expect(updatePurchase(3, { items: [item] })).resolves.toBeUndefined()
         expect(executeAsync).toHaveBeenLastCalledWith(
             expect.stringContaining('UPDATE purchases SET total'),
-            [5, 3]
+            [500, 3]
         )
     })
 
     test('blocks edits that would overpay the seller', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // no linked payment
-            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 10 }] }) // purchase
-            .mockResolvedValueOnce({ results: [{ total: 10 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 10 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 1000 }] }) // purchase ($10)
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // price exists
+            .mockResolvedValueOnce({ results: [{ total: 1000 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ total: 1000 }] }) // SUM(amount) paid
 
-        // new line total = 5, so owed would fall to 5 while 10 is already paid
+        // new line total = $5, so owed would fall to $5 while $10 is already paid
         await expect(updatePurchase(3, { items: [item] })).rejects.toThrow(
             MESSAGES.ERROR_PURCHASE_OVERPAY
         )
-        expect(executeAsync).toHaveBeenCalledTimes(4)
+        expect(executeAsync).toHaveBeenCalledTimes(5)
         expect(executeAsync).not.toHaveBeenCalledWith(
             expect.stringContaining('DELETE FROM purchase_items'),
             expect.anything()
@@ -75,13 +77,14 @@ describe('updatePurchase payment lock', () => {
     test('allows edits for purchases with no seller (no payment lookup)', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // no linked payment
-            .mockResolvedValueOnce({ results: [{ seller_id: null, total: 10 }] }) // purchase
+            .mockResolvedValueOnce({ results: [{ seller_id: null, total: 1000 }] }) // purchase
+            .mockResolvedValueOnce({ results: [{ id: 1 }] }) // price exists
             .mockResolvedValueOnce({}) // DELETE purchase_items
             .mockResolvedValueOnce({}) // INSERT purchase_item
             .mockResolvedValueOnce({}) // UPDATE purchases total
 
         await expect(updatePurchase(3, { items: [item] })).resolves.toBeUndefined()
-        expect(executeAsync).toHaveBeenCalledTimes(5)
+        expect(executeAsync).toHaveBeenCalledTimes(6)
     })
 })
 
@@ -96,9 +99,9 @@ describe('deletePurchase payment lock', () => {
     test('blocks deletion that would overpay the seller', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // no linked payment
-            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 10 }] }) // purchase
-            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 1000 }] }) // purchase ($10)
+            .mockResolvedValueOnce({ results: [{ total: 2000 }] }) // SUM(total) owed ($20)
+            .mockResolvedValueOnce({ results: [{ total: 2000 }] }) // SUM(amount) paid ($20)
 
         await expect(deletePurchase(3)).rejects.toThrow(MESSAGES.ERROR_PURCHASE_OVERPAY)
         expect(executeAsync).toHaveBeenCalledTimes(4)
@@ -107,9 +110,9 @@ describe('deletePurchase payment lock', () => {
     test('deletes when no payment is linked and the seller is not overpaid (commits)', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [] }) // no linked payment
-            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 10 }] }) // purchase
-            .mockResolvedValueOnce({ results: [{ total: 20 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 5 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ seller_id: 2, total: 1000 }] }) // purchase ($10)
+            .mockResolvedValueOnce({ results: [{ total: 2000 }] }) // SUM(total) owed ($20)
+            .mockResolvedValueOnce({ results: [{ total: 500 }] }) // SUM(amount) paid ($5)
             .mockResolvedValueOnce({}) // DELETE
 
         await expect(deletePurchase(3)).resolves.toBeUndefined()

@@ -1,6 +1,6 @@
 import { open } from 'react-native-nitro-sqlite'
 import { initializeSchema, __resetSchemaForTests } from '../database/schema'
-import { __resetMigrationsForTests } from '../database/migrations'
+import { LATEST_VERSION, __resetMigrationsForTests } from '../database/migrations'
 import { __resetDbForTests, DatabaseError } from '../database/connection'
 
 jest.mock('react-native-nitro-sqlite', () => ({
@@ -70,7 +70,7 @@ describe('initializeSchema', () => {
     test('skips migrations when the schema version is current', async () => {
         executeAsync.mockImplementation(async (query: string) => {
             if (query === 'PRAGMA user_version') {
-                return { results: [{ user_version: 9 }] }
+                return { results: [{ user_version: LATEST_VERSION }] }
             }
             return { results: [], insertId: 1 }
         })
@@ -183,6 +183,92 @@ describe('initializeSchema', () => {
                     q.includes('ON prices(category, unit)')
             )
         ).toBe(true)
+    })
+
+    test('v9 unlinks purchase items before deleting blank prices (RESTRICT guard)', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 8 }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        const unlinkIdx = sql.findIndex((q) => q.includes('SET price_id = NULL'))
+        const deleteIdx = sql.findIndex((q) => q.includes(`DELETE FROM prices WHERE category = ''`))
+        expect(unlinkIdx).toBeGreaterThanOrEqual(0)
+        expect(deleteIdx).toBeGreaterThanOrEqual(0)
+        expect(unlinkIdx).toBeLessThan(deleteIdx)
+    })
+
+    test('v10 adds the payment link_source column for installs missing it', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 9 }] }
+            }
+            if (query === 'PRAGMA table_info(payments)') {
+                return { results: [{ name: 'id' }, { name: 'seller_id' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        expect(queries().some((q) => q.includes('ADD COLUMN link_source'))).toBe(true)
+    })
+
+    test('v11 converts money to minor units once, guarded by a marker row', async () => {
+        const settings: Record<string, string> = {}
+        executeAsync.mockImplementation(async (query: string, params?: unknown[]) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 10 }] }
+            }
+            if (query.startsWith('SELECT value FROM app_settings')) {
+                const key = (params as string[])[0]
+                return { results: settings[key] !== undefined ? [{ value: settings[key] }] : [] }
+            }
+            if (query.startsWith('INSERT OR REPLACE INTO app_settings')) {
+                const [key, value] = params as [string, string]
+                settings[key] = value
+                return { results: [] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('UPDATE prices SET price = ROUND(price * 100)'))).toBe(true)
+        expect(sql.some((q) => q.includes('UPDATE payments SET amount = ROUND(amount * 100)'))).toBe(true)
+        expect(settings.money_minor_units_v11).toBe('1')
+
+        // A re-run sees the marker and skips the conversion (no double x100).
+        // The version mock still reports 10, so v11 genuinely re-runs here.
+        const conversionsBefore = sql.filter((q) => q.includes('ROUND(')).length
+        __resetSchemaForTests()
+        __resetMigrationsForTests()
+        await expect(initializeSchema()).resolves.toBeUndefined()
+        expect(queries().filter((q) => q.includes('ROUND(')).length).toBe(conversionsBefore)
+    })
+
+    test('v12 drops unused indexes', async () => {
+        executeAsync.mockImplementation(async (query: string) => {
+            if (query === 'PRAGMA user_version') {
+                return { results: [{ user_version: 11 }] }
+            }
+            if (query === 'PRAGMA table_info(purchases)') {
+                return { results: [{ name: 'id' }, { name: 'total' }] }
+            }
+            return { results: [], insertId: 1 }
+        })
+
+        await expect(initializeSchema()).resolves.toBeUndefined()
+
+        const sql = queries()
+        expect(sql.some((q) => q.includes('DROP INDEX IF EXISTS idx_purchases_created_at'))).toBe(true)
+        expect(sql.some((q) => q.includes('DROP INDEX IF EXISTS idx_payments_paid_at'))).toBe(true)
     })
 
     test('v4 backfills payment -> purchase links oldest-first', async () => {

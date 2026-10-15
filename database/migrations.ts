@@ -11,6 +11,12 @@ type Migration = {
 }
 
 const MIGRATIONS: Migration[] = [
+    // NOTE on editing migrations: entries that already ran on an install are
+    // never re-run (gated by PRAGMA user_version), so touching a migration body
+    // only affects installs that have not applied it yet. v9 below is edited
+    // for exactly that reason: on installs with blank price rows it always
+    // failed *before* the version bump, so it was never recorded there; on
+    // installs where it succeeded it will never run again.
     {
         version: 1,
         up: async () => {
@@ -285,6 +291,14 @@ const MIGRATIONS: Migration[] = [
                 await tx.executeAsync(`UPDATE prices SET unit = TRIM(unit) WHERE unit IS NOT NULL`)
                 await tx.executeAsync(`UPDATE prices SET category = '' WHERE category IS NULL`)
                 await tx.executeAsync(`UPDATE prices SET unit = '' WHERE unit IS NULL`)
+                // purchase_items.price_id is ON DELETE RESTRICT: unlink the
+                // line items first (price_id is nullable; the category/unit/unit_price
+                // snapshots on the item itself are preserved) or the DELETE
+                // below fails with FOREIGN KEY constraint failed on installs
+                // that still reference a blank row.
+                await tx.executeAsync(`UPDATE purchase_items
+                    SET price_id = NULL
+                    WHERE price_id IN (SELECT id FROM prices WHERE category = '' OR unit = '')`)
                 await tx.executeAsync(`DELETE FROM prices WHERE category = '' OR unit = ''`)
                 await tx.executeAsync(`DROP TABLE IF EXISTS price_dupes`)
                 await tx.executeAsync(`CREATE TEMP TABLE price_dupes AS
@@ -310,7 +324,80 @@ const MIGRATIONS: Migration[] = [
             })
         },
     },
+    {
+        version: 10,
+        up: async () => {
+            const db = initDb()
+            // Track whether a payment -> purchase link was chosen explicitly by
+            // the user ('explicit') or derived from the FIFO rule ('auto').
+            // Pre-existing links default to 'explicit' so the reallocator can
+            // never silently move them (which would change purchase locks);
+            // only 'auto' rows are re-ranked on delete. Guarded ADD COLUMN, so
+            // re-running is a no-op. Fresh installs get the column from schema.ts.
+            const { results } = await db.executeAsync(`PRAGMA table_info(payments)`)
+            const columns = (results as unknown as Array<{ name: string }>).map((col) => col.name)
+            if (!columns.includes('link_source')) {
+                await db.executeAsync(
+                    `ALTER TABLE payments ADD COLUMN link_source TEXT NOT NULL DEFAULT 'explicit'`
+                )
+            }
+        },
+    },
+    {
+        version: 11,
+        up: async () => {
+            const db = initDb()
+            // Store money as integer minor units (x100, see database/money.ts)
+            // so sums and balance comparisons are exact. Guarded by a marker
+            // row written in the same transaction, so a crash between this
+            // migration and the user_version bump can never double-convert.
+            const { results } = await db.executeAsync(
+                `SELECT value FROM app_settings WHERE key = ?`,
+                ['money_minor_units_v11']
+            )
+            const done = (results as unknown as Array<{ value: string }>)[0]?.value === '1'
+            if (done) return
+            await db.transaction(async (tx) => {
+                await tx.executeAsync(`UPDATE prices SET price = ROUND(price * 100)`)
+                await tx.executeAsync(`UPDATE purchases SET total = ROUND(total * 100)`)
+                await tx.executeAsync(
+                    `UPDATE purchase_items SET unit_price = ROUND(unit_price * 100), line_total = ROUND(line_total * 100)`
+                )
+                await tx.executeAsync(`UPDATE payments SET amount = ROUND(amount * 100)`)
+                await tx.executeAsync(
+                    `INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)`,
+                    ['money_minor_units_v11', '1']
+                )
+            })
+        },
+    },
+    {
+        version: 12,
+        up: async () => {
+            const db = initDb()
+            // Drop indexes nothing queries (lists order by id; created_at is
+            // only ever matched with a leading-wildcard LIKE) and the
+            // write-only purchases.purchased_at column (CSV and the UI use
+            // created_at). The DROP COLUMN is best-effort: if the bundled
+            // SQLite predates ALTER TABLE DROP COLUMN support, the unused
+            // column simply stays — it is never read.
+            await db.executeAsync(`DROP INDEX IF EXISTS idx_purchases_created_at`)
+            await db.executeAsync(`DROP INDEX IF EXISTS idx_payments_paid_at`)
+            const { results } = await db.executeAsync(`PRAGMA table_info(purchases)`)
+            const columns = (results as unknown as Array<{ name: string }>).map((col) => col.name)
+            if (columns.includes('purchased_at')) {
+                try {
+                    await db.executeAsync(`ALTER TABLE purchases DROP COLUMN purchased_at`)
+                } catch (error) {
+                    console.warn('v12: could not drop purchases.purchased_at, leaving it unused', error)
+                }
+            }
+        },
+    },
 ]
+
+/** Highest migration version. Test helpers must use this, never a hardcoded copy. */
+export const LATEST_VERSION: number = MIGRATIONS.reduce((max, m) => Math.max(max, m.version), 0)
 
 let migrationsPromise: Promise<void> | null = null
 

@@ -1,15 +1,12 @@
 import { tMessage } from '../i18n'
-import type { ISeller, ISellerWithStats } from '../types/database'
+import type { ISeller, ISellerPaymentStat, ISellerWithStats } from '../types/database'
 import { DatabaseError, initDb } from './connection'
-import { escapeLikePattern } from './purchases'
+import { fromMinor } from './money'
 import { initializeSchema } from './schema'
+import { clampPageLimit, escapeLikePattern, isForeignKeyViolation, SELLER_BALANCE_SELECT } from './sql'
 
 export async function initializeSellers(): Promise<void> {
-    try {
-        await initializeSchema()
-    } catch (error) {
-        throw new DatabaseError('Failed to initialize sellers table', error)
-    }
+    await initializeSchema()
 }
 
 export async function fetchSellers(): Promise<ISeller[]> {
@@ -21,7 +18,7 @@ export async function fetchSellers(): Promise<ISeller[]> {
         `);
         return results as unknown as ISeller[]
     } catch (error) {
-        throw new DatabaseError('Failed to fetch sellers', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -35,7 +32,7 @@ export async function fetchSellerById(id: number): Promise<ISeller | null> {
         const rows = results as unknown as ISeller[]
         return rows[0] ?? null
     } catch (error) {
-        throw new DatabaseError('Failed to fetch seller', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -69,6 +66,14 @@ function buildSellerFilters(query?: string): { clauses: string[]; params: string
     return { clauses, params }
 }
 
+function toMajorSellerWithStats(row: ISellerWithStats): ISellerWithStats {
+    return {
+        ...row,
+        total_spent: fromMinor(row.total_spent),
+        balance: fromMinor(row.balance),
+    }
+}
+
 /**
  * Keyset pagination over sellers (name ASC, id ASC) with their purchase
  * aggregate and outstanding balance rolled in, so the list screen no longer
@@ -82,7 +87,8 @@ export async function fetchSellersPage(options: {
     let db;
     try {
         db = initDb()
-        const { limit, cursor, query } = options
+        const { cursor, query } = options
+        const limit = clampPageLimit(options.limit)
         const filters = buildSellerFilters(query)
         const where = [...filters.clauses]
         const params: Array<string | number> = [...filters.params]
@@ -113,7 +119,7 @@ export async function fetchSellersPage(options: {
             `,
             [...params, limit + 1]
         )
-        const rows = results as unknown as ISellerWithStats[]
+        const rows = (results as unknown as ISellerWithStats[]).map(toMajorSellerWithStats)
         const hasMore = rows.length > limit
         const items = hasMore ? rows.slice(0, limit) : rows
         const last = items[items.length - 1]
@@ -122,7 +128,70 @@ export async function fetchSellersPage(options: {
             nextCursor: hasMore && last ? { name: last.name, id: last.id } : null,
         }
     } catch (error) {
-        throw new DatabaseError('Failed to fetch sellers', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
+    }
+}
+
+export interface SellerStatDetail {
+    seller_id: number
+    seller_name: string | null
+    purchase_count: number
+    total_owed: number
+    total_paid: number
+    balance: number
+}
+
+/**
+ * Purchase aggregate + balance for a single seller, so detail screens do not
+ * have to load every seller's stats to read one seller's numbers.
+ */
+export async function fetchSellerStatById(sellerId: number): Promise<SellerStatDetail | null> {
+    let db;
+    try {
+        db = initDb()
+        const { results } = await db.executeAsync(
+            `SELECT s.id AS seller_id, s.name AS seller_name,
+                    COALESCE(pc.purchase_count, 0) AS purchase_count,
+                    COALESCE(pc.total_owed, 0) AS total_owed,
+                    COALESCE(pay.total_paid, 0) AS total_paid
+             FROM sellers s
+             LEFT JOIN (
+                 SELECT seller_id, COUNT(*) AS purchase_count, SUM(total) AS total_owed
+                 FROM purchases WHERE seller_id IS NOT NULL GROUP BY seller_id
+             ) pc ON pc.seller_id = s.id
+             LEFT JOIN (
+                 SELECT seller_id, SUM(amount) AS total_paid
+                 FROM payments GROUP BY seller_id
+             ) pay ON pay.seller_id = s.id
+             WHERE s.id = ?`,
+            [sellerId]
+        )
+        const row = (results as unknown as Array<Omit<SellerStatDetail, 'balance'>>)[0]
+        if (!row) return null
+        const total_owed = fromMinor(row.total_owed)
+        const total_paid = fromMinor(row.total_paid)
+        return { ...row, total_owed, total_paid, balance: total_owed - total_paid }
+    } catch (error) {
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
+    }
+}
+
+/** Balance summary for a single seller (owed / paid / balance, major units). */
+export async function fetchSellerBalanceById(sellerId: number): Promise<ISellerPaymentStat | null> {
+    let db;
+    try {
+        db = initDb()
+        const { results } = await db.executeAsync(
+            `${SELLER_BALANCE_SELECT} WHERE s.id = ?`,
+            [sellerId]
+        )
+        const row = (results as unknown as Array<Omit<ISellerPaymentStat, 'balance'>>)[0]
+        if (!row) return null
+        const total_owed = fromMinor(row.total_owed)
+        const total_paid = fromMinor(row.total_paid)
+        return { ...row, total_owed, total_paid, balance: total_owed - total_paid }
+    } catch (error) {
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -138,7 +207,7 @@ export async function countSellers(query?: string): Promise<number> {
         )
         return (results as unknown as Array<{ count: number }>)[0]?.count ?? 0
     } catch (error) {
-        throw new DatabaseError('Failed to count sellers', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -160,7 +229,7 @@ export async function createSeller(sellerData: Omit<ISeller, 'id'>): Promise<num
         return insertId as number;
     } catch (error) {
         if (error instanceof DatabaseError) throw error
-        throw new DatabaseError('Failed to create seller', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -194,14 +263,17 @@ export async function updateSeller(id: number, sellerData: Partial<Omit<ISeller,
         values.push(id)
 
         db = initDb()
-        await db.executeAsync(`
+        const updateResult = await db.executeAsync(`
             UPDATE sellers
             SET ${updates.join(', ')}
             WHERE id = ?
         `, values)
+        if (updateResult.rowsAffected === 0) {
+            throw new DatabaseError(tMessage('ERROR_NOT_FOUND'))
+        }
     } catch (error) {
         if (error instanceof DatabaseError) throw error
-        throw new DatabaseError('Failed to update seller', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
 }
 
@@ -231,18 +303,16 @@ export async function deleteSeller(id: number): Promise<void> {
             if (paymentCount > 0) {
                 throw new DatabaseError(tMessage('ERROR_SELLER_HAS_PAYMENTS'))
             }
-            await tx.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
+            const deleteResult = await tx.executeAsync(`DELETE FROM sellers WHERE id = ?`, [id])
+            if (deleteResult.rowsAffected === 0) {
+                throw new DatabaseError(tMessage('ERROR_NOT_FOUND'))
+            }
         })
     } catch (error) {
         if (error instanceof DatabaseError) throw error
         if (isForeignKeyViolation(error)) {
             throw new DatabaseError(tMessage('ERROR_SELLER_IN_USE'), error)
         }
-        throw new DatabaseError('Failed to delete seller', error)
+        throw new DatabaseError(tMessage('ERROR_DATABASE'), error)
     }
-}
-
-function isForeignKeyViolation(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error ?? '')
-    return /FOREIGN KEY constraint failed/i.test(message)
 }

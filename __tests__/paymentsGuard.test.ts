@@ -20,11 +20,12 @@ beforeEach(() => {
 })
 
 describe('createPayment overpayment guard', () => {
+    // SUM feeds are integer minor units, matching what the database stores.
     test('blocks a payment that exceeds the outstanding balance', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 10000 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ total: 5000 }] }) // SUM(amount) paid
 
         await expect(
             createPayment({ seller_id: 5, purchase_id: null, amount: 60, method: null, note: null })
@@ -40,8 +41,8 @@ describe('createPayment overpayment guard', () => {
     test('records a payment within the balance and auto-links the oldest unlinked purchase', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
-            .mockResolvedValueOnce({ results: [{ total: 50 }] }) // SUM(amount) paid
+            .mockResolvedValueOnce({ results: [{ total: 10000 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ total: 5000 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({ results: [{ id: 7 }] }) // oldest unlinked purchase
             .mockResolvedValueOnce({ insertId: 9 }) // INSERT
 
@@ -51,14 +52,14 @@ describe('createPayment overpayment guard', () => {
 
         expect(executeAsync).toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO payments'),
-            [5, 7, 50, 'cash', null]
+            [5, 7, 5000, 'auto', 'cash', null]
         )
     })
 
     test('keeps an explicit purchase link and skips the FIFO lookup', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // SUM(total) owed
+            .mockResolvedValueOnce({ results: [{ total: 10000 }] }) // SUM(total) owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // SUM(amount) paid
             .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 5 }] }) // linked purchase row
             .mockResolvedValueOnce({ results: [] }) // not already settled
@@ -70,14 +71,14 @@ describe('createPayment overpayment guard', () => {
 
         expect(executeAsync).toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO payments'),
-            [5, 3, 20, null, null]
+            [5, 3, 2000, 'explicit', null, null]
         )
     })
 
     test('rejects an explicit link to another seller’s purchase', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // owed
+            .mockResolvedValueOnce({ results: [{ total: 10000 }] }) // owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // paid
             .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 6 }] }) // wrong owner
 
@@ -89,7 +90,7 @@ describe('createPayment overpayment guard', () => {
     test('rejects an explicit link to an already-settled purchase', async () => {
         executeAsync
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // seller exists
-            .mockResolvedValueOnce({ results: [{ total: 100 }] }) // owed
+            .mockResolvedValueOnce({ results: [{ total: 10000 }] }) // owed
             .mockResolvedValueOnce({ results: [{ total: 0 }] }) // paid
             .mockResolvedValueOnce({ results: [{ id: 3, seller_id: 5 }] }) // owned
             .mockResolvedValueOnce({ results: [{ ok: 1 }] }) // already linked
@@ -120,8 +121,12 @@ describe('deletePayment FIFO rebalance', () => {
         expect(executeAsync).toHaveBeenCalledTimes(3)
         const [sql, params] = executeAsync.mock.calls[2]
         expect(sql).toContain('UPDATE payments')
-        expect(sql).toContain('LIMIT 1 OFFSET')
+        // Rank-based mapping (no LIMIT/OFFSET: SQLite rejects correlated
+        // outer references there), auto rows only, explicit links untouched.
+        expect(sql).not.toContain('LIMIT 1 OFFSET')
         expect(sql).toContain('earlier.id < payments.id')
+        expect(sql).toContain(`link_source = 'auto'`)
+        expect(sql).toContain(`link_source = 'explicit'`)
         expect(params).toEqual([2])
         // No per-payment update loop (N+1).
         expect(
@@ -134,9 +139,9 @@ describe('fetchPaymentsPage (keyset pagination per seller)', () => {
     test('scopes to the seller, applies the cursor and detects more pages', async () => {
         executeAsync.mockResolvedValueOnce({
             results: [
-                { id: 5, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
-                { id: 4, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
-                { id: 3, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null },
+                { id: 5, seller_id: 2, purchase_id: null, amount: 1000, method: null, note: null },
+                { id: 4, seller_id: 2, purchase_id: null, amount: 1000, method: null, note: null },
+                { id: 3, seller_id: 2, purchase_id: null, amount: 1000, method: null, note: null },
             ],
         })
 
@@ -148,17 +153,20 @@ describe('fetchPaymentsPage (keyset pagination per seller)', () => {
         expect(sql).toContain('ORDER BY id DESC LIMIT ?')
         expect(params).toEqual([2, 6, 3])
         expect(items.map((p) => p.id)).toEqual([5, 4])
+        // Stored minor units are converted back to major units on read.
+        expect(items.map((p) => p.amount)).toEqual([10, 10])
         expect(nextCursor).toBe(4)
     })
 
     test('returns a null cursor when fewer rows than the limit are returned', async () => {
         executeAsync.mockResolvedValueOnce({
-            results: [{ id: 2, seller_id: 2, purchase_id: null, amount: 10, method: null, note: null }],
+            results: [{ id: 2, seller_id: 2, purchase_id: null, amount: 1000, method: null, note: null }],
         })
 
         const { items, nextCursor } = await fetchPaymentsPage({ sellerId: 2, limit: 5 })
 
         expect(items).toHaveLength(1)
+        expect(items[0].amount).toBe(10)
         expect(nextCursor).toBeNull()
     })
 })
