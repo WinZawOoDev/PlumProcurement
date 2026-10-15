@@ -16,7 +16,7 @@ export function DetailSheet({ visible, onClose, children, containerStyle }: Deta
     const styles = useStyles()
     return (
         <BottomSheet isVisible={visible} onBackdropPress={onClose} modalProps={{ animationType: ANIMATIONS.BOTTOM_SHEET_ANIMATION }}>
-            <View style={[styles.bottomSheetContainer, styles.responsiveSheet, containerStyle]}>
+            <View style={[styles.bottomSheetContainer, containerStyle]}>
                 {children}
             </View>
         </BottomSheet>

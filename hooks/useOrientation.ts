@@ -18,7 +18,6 @@ export const RESPONSIVE = {
     WIDE_BREAKPOINT: 700,
     MAX_CONTENT_WIDTH_PORTRAIT: 640,
     MAX_CONTENT_WIDTH_LANDSCAPE: 960,
-    MAX_SHEET_WIDTH: 560,
 } as const
 
 export function useOrientation() {

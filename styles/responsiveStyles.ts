@@ -43,13 +43,6 @@ export const responsiveStyles = (theme: ThemeOptions) =>
             flex: 1,
             minWidth: 0,
         },
-        // Bottom sheets / dialogs stay readable in landscape.
-        responsiveSheet: {
-            width: '100%',
-            maxWidth: RESPONSIVE.MAX_SHEET_WIDTH,
-            alignSelf: 'center',
-            maxHeight: '90%',
-        },
         // Onboarding + form actions go horizontal when width allows.
         responsiveActionsRow: {
             flexDirection: 'row',
